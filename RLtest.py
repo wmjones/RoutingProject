@@ -95,4 +95,4 @@ data = data.rename(columns={0: "x", 1: "p0", 2: "p1"})
 data = pd.melt(data, id_vars=["x"])
 
 p = ggplot(data, aes(x="x", y="value", colour="variable")) + geom_line() + ylim(-.1, 1.1) + labs(title="Episode Length={}".format(N)) + xlab("distance")
-p.save(filename="./figs/plot_{}_{}_{}_{}.png".format(time.time(), N, lr, total_episodes))
+p.save(filename="plot_{}_{}_{}_{}.png".format(time.time(), N, lr, total_episodes))

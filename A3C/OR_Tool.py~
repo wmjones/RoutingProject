@@ -1,0 +1,20 @@
+import numpy as np
+from ortools.constraint_solver import pywrapcp
+from ortools.constraint_solver import routing_enums_pb2
+
+class gen_matrix(object):
+    def __init__(self, size):
+        self.matrix = [[np.linalg.norm(data[i]-data[j]) for i in range(size)]
+                       for j in range(size)]
+
+    def Distance(self, from_node, to_node):
+        return self.matrix[from_node][to_node]
+
+class OR_Model():
+    def __init__(self):
+
+    def objective(route):
+        out = 0
+        for i in range(len(route)-1):
+            out += np.linalg.norm(data[route[i]]-data[route[i+1]])
+        return(out)

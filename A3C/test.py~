@@ -1,0 +1,38 @@
+from multiprocessing import Process, Queue, Value
+import time, random
+import threading
+
+
+class ProcessAgent(Process):
+    def __init__(self, id):
+        super(ProcessAgent, self).__init__()
+        self.id = id
+        self.exit_flag = Value('i', 0)
+        self.count = 0
+
+    def run(self):
+        print("process agent is main_thread ", threading.current_thread() == threading.main_thread())
+        while self.exit_flag.value == 0:
+            self.count += 1
+
+
+class Server:
+    def __init__(self):
+        self.agents = []
+
+    def main(self):
+        self.agents.append(ProcessAgent(0))
+        self.agents[-1].start()
+        self.agents.append(ProcessAgent(1))
+        self.agents[-1].start()
+        time.sleep(random.randint(1, 2) / 10)
+        print(self.agents[-1].count)
+        self.agents[-1].terminate()
+        self.agents.pop()
+        self.agents[-1].terminate()
+        self.agents.pop()
+        # print(self.agents[-1].count)
+        # self.agents[-1].join(1)
+
+
+Server().main()

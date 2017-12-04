@@ -1,0 +1,10 @@
+#!/bin/sh
+#$ -l p100=true
+
+module load cuda/8.0.61
+module load cudnn/6.0_cuda-8.0.61
+module load python/3.5.3_parallel_studio-2017.1
+
+source ~/virENV/bin/activate
+cd ~/GA3C
+make all

@@ -1,0 +1,65 @@
+import numpy as np
+import tensorflow as tf
+
+from Config import Config
+
+
+class NetworkVP:
+    def __init__(self, device, model_name, d=2):
+        self.device = device
+        self.model_name = model_name
+        self.d = d
+
+        self.learning_rate = Config.LEARNING_RATE
+
+        self.graph = tf.Graph()
+        with self.graph.as_default() as g:
+            with tf.device(self.device):
+                self._create_graph()
+
+                self.sess = tf.Session(
+                    graph=self.graph,
+                    # trying to make it run on one thread
+                    config=tf.ConfigProto(
+                        intra_op_parallelism_threads=1,
+                        inter_op_parallelism_threads=1
+                    )
+                    # config=tf.ConfigProto(
+                    #     allow_soft_placement=True,
+                    #     log_device_placement=False,
+                    #     gpu_options=tf.GPUOptions(allow_growth=True))
+                )
+                self.sess.run(tf.global_variables_initializer())
+
+    def _create_graph(self):
+        self.x = tf.placeholder(tf.float32, shape=[None, self.d], name='X')
+        self.y_r = tf.placeholder(tf.float32, [None, 1], name='Yr')
+
+        self.global_step = tf.Variable(0, trainable=False, name='step')
+
+        num_of_nodes = 10
+        actf = tf.nn.relu
+        self.hidden1 = tf.layers.dense(inputs=self.x, units=num_of_nodes, activation=actf)
+        self.hidden2 = tf.layers.dense(inputs=self.hidden1, units=num_of_nodes, activation=actf)
+        self.hidden3 = tf.layers.dense(inputs=self.hidden2, units=num_of_nodes, activation=actf)
+        self.hidden4 = tf.layers.dense(inputs=self.hidden3, units=num_of_nodes, activation=actf)
+        self.output = tf.layers.dense(inputs=self.hidden4, units=1)
+
+        self.cost = tf.losses.mean_squared_error(self.y_r, self.output)
+        self.opt = tf.train.AdamOptimizer(Config.LEARNING_RATE)
+        self.train_opt = self.opt.minimize(self.cost, global_step=self.global_step)
+
+    def get_global_step(self):
+        step = self.sess.run(self.global_step)
+        return step
+
+    def predict_single(self, x):
+        return self.predict_p(x[None, :])[0]
+
+    def predict(self, x):
+        prediction = self.sess.run(self.output, feed_dict={self.x: x})
+        return prediction
+
+    def train(self, x, y_r, trainer_id):
+        feed_dict = {self.x: x, self.y_r: y_r}
+        self.sess.run(self.train_opt, feed_dict=feed_dict)

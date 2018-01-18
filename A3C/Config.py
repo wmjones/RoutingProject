@@ -14,6 +14,6 @@ class Config:
     RESTORE = False
     NUM_OF_CUSTOMERS = 8
     LAYERS_STACKED_COUNT = 2
-    RNN_HIDDEN_DIM = 10
-    DNN_HIDDEN_DIM = 10
+    RNN_HIDDEN_DIM = 15
+    DNN_HIDDEN_DIM = 15
     OR_TOOLS = True

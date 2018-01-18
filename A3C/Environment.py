@@ -17,18 +17,21 @@ class Environment:
 
     def reset(self):
         self.customer_locations = np.vstack((np.array([0, 0]), np.random.rand(Config.NUM_OF_CUSTOMERS, 2)*10))
+        # self.customer_locations = np.random.rand(Config.NUM_OF_CUSTOMERS, 2)*10
         self.distance_matrix = [[np.linalg.norm(self.customer_locations[i]-self.customer_locations[j])
-                                 for i in range(Config.NUM_OF_CUSTOMERS)]
-                                for j in range(Config.NUM_OF_CUSTOMERS)]
+                                 for i in range(Config.NUM_OF_CUSTOMERS+1)]
+                                for j in range(Config.NUM_OF_CUSTOMERS+1)]
         self.current_state = self.customer_locations
 
-    def G(self, route):
-        # dist = self.Distance(0, route[0])  # depot to first customer
-        dist = 0
+    def G(self, route, current_location):
+        dist = np.linalg.norm(current_location - self.customer_locations[route[0]])  # current_location to first customer
         for i in range(0, len(route)-1):
             dist += self.Distance(route[i], route[i+1])
         # dist += self.Distance(route[len(route)], 0)  # return to depot
         return(dist)
+
+    def get_current_location(self):
+        return np.array([0.0, 0.0], dtype=np.float32)
 
     # def step(self, action):
     #     customer_location = self.customers[action]

@@ -85,25 +85,26 @@ class ProcessAgent(Process):
 
     #         time_count += 1
 
-    def predict(self, state):
-        self.prediction_q.put((self.id, state))
+    def predict(self, state, current_location):
+        self.prediction_q.put((self.id, state, current_location))
         a, v = self.wait_q.get()
         return a, v
 
     def run_episode(self):
         self.env.reset()
-        action, base_line = self.predict(self.env.current_state)
-        sampled_value = self.env.G(action)
+        current_location = self.env.get_current_location()
+        action, base_line = self.predict(self.env.current_state, current_location)
+        sampled_value = self.env.G(action, current_location)
         if Config.OR_TOOLS:
-            or_model = OR_Tool(self.env.current_state)
-            or_model.solve()
-            # add in what i want to return from this and where the data should go (maybe to gpu to help train)
-        return action, base_line, sampled_value
+            or_model = OR_Tool(self.env.current_state, current_location)
+            or_route, or_cost = or_model.solve()
+        return action, base_line, sampled_value, or_route, or_cost
 
     def run(self):
         np.random.seed(np.int32(time.time() % 1 * 1000 + self.id * 10))
 
         while self.exit_flag.value == 0:
-            a_, b_, r_ = self.run_episode()
+            a_, b_, r_, ora_, orr_ = self.run_episode()
             x_ = self.env.current_state
-            self.training_q.put(([x_], [a_], [r_]))
+            y_ = self.env.get_current_location()
+            self.training_q.put(([x_], [y_], [a_], [ora_], [r_], [orr_]))

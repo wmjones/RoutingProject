@@ -50,8 +50,8 @@ class Server:
         self.trainers[-1].join(0.1)
         self.trainers.pop()
 
-    def train_model(self, x__, a__, r__, trainer_id):
-        self.model.train(x__, a__, r__, trainer_id)
+    def train_model(self, x__, y__, a__, ora__, r__, orr__, trainer_id):
+        self.model.train(x__, y__, a__, ora__, r__, orr__, trainer_id)
         self.training_step += 1
 
     def or_model(self, x__, trainer_id):
@@ -78,7 +78,7 @@ class Server:
         #     self.model.learning_rate = Config.LEARNING_RATE
         #     # self.model.beta = Config.BETA_START + beta_multiplier * step
 
-        time.sleep(10)
+        time.sleep(120)
 
         print(self.model.get_global_step())
 

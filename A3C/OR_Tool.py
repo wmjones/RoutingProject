@@ -13,9 +13,13 @@ class gen_matrix(object):
 
 
 class OR_Tool:
-    def __init__(self, data):
-        self.data = data
-        self.size = data.shape[0]
+    def __init__(self, env_current_state, env_current_location):
+        # print(env_current_location)
+        # print(env_current_state)
+        # self.data = np.vstack([env_current_location, env_current_state])
+        self.data = env_current_state
+        self.size = self.data.shape[0]
+        # print("self.size", self.size)
 
     def objective(self, route):
         out = 0
@@ -40,4 +44,5 @@ class OR_Tool:
             while not routing.IsEnd(index):
                 index = assignment.Value(routing.NextVar(index))
                 route.append(routing.IndexToNode(index))
-        return(self.objective(route))
+        # return(self.objective(route))
+        return(route[1:], self.objective(route))

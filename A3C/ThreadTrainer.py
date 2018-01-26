@@ -19,12 +19,12 @@ class ThreadTrainer(Thread):
             while batch_size < Config.TRAINING_MIN_BATCH_SIZE:
                 x_, y_, a_, ora_, r_, orr_ = self.server.training_q.get()
                 if batch_size == 0:
-                    x__ = x_
-                    y__ = y_
-                    a__ = a_
-                    r__ = r_
-                    ora__ = ora_
-                    orr__ = orr_
+                    x__ = np.asarray(x_)
+                    y__ = np.asarray(y_)
+                    a__ = np.asarray(a_)
+                    r__ = np.asarray([r_])  # not sure why this one needed brackets
+                    ora__ = np.asarray(ora_)
+                    orr__ = np.asarray([orr_])  # not sure why this one needed brackets
                 else:
                     x__ = np.vstack((x__, x_))
                     y__ = np.vstack((y__, y_))
@@ -32,8 +32,7 @@ class ThreadTrainer(Thread):
                     r__ = np.vstack((r__, r_))
                     ora__ = np.vstack((ora__, ora_))
                     orr__ = np.vstack((orr__, orr_))
-                batch_size += 1
-            # print(ora__, orr__)
+                batch_size += x__.shape[0]
             self.server.train_model(x__, y__, a__, ora__, r__, orr__, self.id)
 
             #     print("state: ", x__)

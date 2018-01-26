@@ -78,7 +78,7 @@ class Server:
         #     self.model.learning_rate = Config.LEARNING_RATE
         #     # self.model.beta = Config.BETA_START + beta_multiplier * step
 
-        time.sleep(120)
+        time.sleep(Config.RUN_TIME)
 
         print(self.model.get_global_step())
 

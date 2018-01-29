@@ -3,10 +3,10 @@ import multiprocessing
 
 class Config:
     # AGENTS = multiprocessing.cpu_count()
-    AGENTS = 8
+    AGENTS = 4
     PREDICTORS = 1
     TRAINERS = 1
-    DEVICE = 'cpu:0'
+    DEVICE = 'gpu:0'
 
     MAX_BATCH_SIZE = 10
     PREDICTION_BATCH_SIZE = 10
@@ -18,4 +18,4 @@ class Config:
     RNN_HIDDEN_DIM = 128
     DNN_HIDDEN_DIM = 15
     OR_TOOLS = True
-    RUN_TIME = 1200
+    RUN_TIME = 120

@@ -80,7 +80,7 @@ class NetworkVP:
             with tf.variable_scope('RNN_{}'.format(i)):
                 self.cell = tf.nn.rnn_cell.LSTMCell(Config.RNN_HIDDEN_DIM)
                 # self.cell = tf.contrib.cudnn_rnn.CudnnCompatibleLSTMCell(Config.RNN_HIDDEN_DIM)
-                self.cell = tf.nn.rnn_cell.DropoutWrapper(self.cell, output_keep_prob=self.keep_prob)
+                # self.cell = tf.nn.rnn_cell.DropoutWrapper(self.cell, output_keep_prob=self.keep_prob)
                 self.in_cells.append(self.cell)
         self.in_cell = tf.nn.rnn_cell.MultiRNNCell(self.in_cells)
         self.encoder_outputs, self.encoder_final_state = tf.nn.dynamic_rnn(self.in_cell,
@@ -96,11 +96,10 @@ class NetworkVP:
             with tf.variable_scope('RNN_{}'.format(i)):
                 self.cell = tf.nn.rnn_cell.LSTMCell(Config.RNN_HIDDEN_DIM)
                 # self.cell = tf.contrib.cudnn_rnn.CudnnCompatibleLSTMCell(Config.RNN_HIDDEN_DIM)
-                self.cell = tf.nn.rnn_cell.DropoutWrapper(self.cell, output_keep_prob=self.keep_prob)
+                # self.cell = tf.nn.rnn_cell.DropoutWrapper(self.cell, output_keep_prob=self.keep_prob)
                 self.out_cells.append(self.cell)
         self.out_cell = tf.nn.rnn_cell.MultiRNNCell(self.out_cells)
-        # not sure about alignment_history
-        self.out_cell = tf.contrib.seq2seq.AttentionWrapper(self.out_cell, self.attention_mechanism, alignment_history=True)
+        self.out_cell = tf.contrib.seq2seq.AttentionWrapper(self.out_cell, self.attention_mechanism)
         self.out_cell = tf.contrib.rnn.OutputProjectionWrapper(self.out_cell, Config.NUM_OF_CUSTOMERS+1)
 
         self.initial_state = self.out_cell.zero_state(dtype=tf.float32, batch_size=self.batch_size)
@@ -153,8 +152,8 @@ class NetworkVP:
             # with tf.variable_scope("mask"):
             #     sample_ids = tf.stop_gradient(tf.argmax(tf.nn.softmax(outputs) - tf.get_variable("m", [self.batch_size, Config.NUM_OF_CUSTOMERS+1]), axis=1, output_type=tf.int32))
 
-            mask_subset = tf.stop_gradient(tf.gather(self.mask, tf.range(0, tf.shape(outputs)[0])))
-            sample_ids = tf.stop_gradient(tf.argmax(tf.nn.softmax(outputs)-mask_subset, axis=1, output_type=tf.int32))
+            mask_subset = tf.gather(self.mask, tf.range(0, tf.shape(outputs)[0]))
+            sample_ids = tf.argmax(tf.nn.softmax(outputs)-mask_subset, axis=1, output_type=tf.int32)
             # self.all_alignments = self.all_alignments + tf.cast(tf.one_hot(sample_ids, depth=9, on_value=1), dtype=tf.float32)
             # assign_op = tf.assign(self.mask, tf.ones(tf.shape(self.mask)), name="control_dependencies_thing")
             # assign = tf.assign(self.all_alignments,
@@ -373,8 +372,8 @@ class NetworkVP:
 
         # print(self.sess.run(self.tmp, feed_dict=feed_dict))
         summary, _ = self.sess.run([self.merged, self.train_op], feed_dict=feed_dict)
-        self.log_writer.add_summary(summary, step)
         if step % 100 == 0:
+            self.log_writer.add_summary(summary, step)
             print(self.sess.run(self.loss, feed_dict=feed_dict))
         if step % 1000 == 0:
             self.saver.save(self.sess, "./checkpoint/model.ckpt")

@@ -12,8 +12,8 @@ from ThreadTrainer import ThreadTrainer
 
 class Server:
     def __init__(self):
-        self.training_q = Queue(maxsize=10)
-        self.prediction_q = Queue(maxsize=10)
+        self.training_q = Queue(maxsize=50)
+        self.prediction_q = Queue(maxsize=20)
 
         self.model = NetworkVP(Config.DEVICE, 'network')
         self.training_step = 0
@@ -81,6 +81,8 @@ class Server:
         time.sleep(Config.RUN_TIME)
 
         print(self.model.get_global_step())
+        if Config.TRAIN:
+            self.model.finish()
 
         while self.agents:
             self.remove_agent()

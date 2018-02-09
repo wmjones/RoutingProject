@@ -5,7 +5,7 @@ import pandas as pd
 import time
 
 N = 200
-batch_size = 50
+batch_size = 10
 if N < batch_size:
     batch_size = N
 ep_per_batch = 2
@@ -37,8 +37,8 @@ def next_batch(batch_size, ep_per_batch):
         s_ep = np.random.uniform(0, 1, N).reshape(-1, 1)
         prob_weights_ep = sess.run(action, feed_dict={s: s_ep})
 
-        actions = [np.random.binomial(1, p=prob_weights_ep[i][1]) for i in range(N)]
-        # actions = np.argmax(prob_weights_ep, axis=1)
+        # actions = [np.random.binomial(1, p=prob_weights_ep[i][1]) for i in range(N)]
+        actions = np.argmax(prob_weights_ep, axis=1)
 
         G_batch.append(np.zeros(batch_size))
         idx = np.random.randint(0, N, batch_size)
@@ -51,6 +51,7 @@ def next_batch(batch_size, ep_per_batch):
            np.asarray(A_batch, dtype=np.int32).reshape(-1))
 
 
+step = tf.Variable(0, trainable=False, name='step')
 s = tf.placeholder(tf.float32, shape=[None, 1])
 reward_holder = tf.placeholder(tf.float32, shape=[None])
 action_holder = tf.placeholder(tf.int32, shape=[None])
@@ -67,7 +68,10 @@ action = tf.nn.softmax(output)
 # applies softmax so need to pass unscaled output
 neg_log_prob = tf.nn.sparse_softmax_cross_entropy_with_logits(logits=output, labels=action_holder)
 loss = tf.reduce_mean(neg_log_prob * reward_holder)
-train = tf.train.AdamOptimizer(lr).minimize(loss)
+train = tf.train.AdamOptimizer(lr).minimize(loss, global_step=step)
+lr = tf.train.exponential_decay(
+    .001, step, 1000,
+    .96, staircase=True, name="learning_rate")
 init = tf.global_variables_initializer()
 
 
@@ -83,7 +87,7 @@ with tf.Session() as sess:
         feed_dict = {s: s_batch, reward_holder: G_batch, action_holder: A_batch}
         sess.run(train, feed_dict=feed_dict)
         if i % (total_episodes//20) == 0:
-            print("Batch avg_loss = ", sess.run(loss, feed_dict=feed_dict),
+            print("Batch avg_loss = ", sess.run([loss, tf.nn.softmax(output), neg_log_prob], feed_dict=feed_dict),
                   "\tBatch avg_reward = ", sess.run(avg_reward, feed_dict=feed_dict))
 
     x = np.linspace(0, 1, 20).reshape(-1, 1)

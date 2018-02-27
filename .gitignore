@@ -4,3 +4,4 @@ A3C/logs/
 A3C/__pycache__/
 A3C/checkpoint/
 *~
+SimpleRLTest/figs/

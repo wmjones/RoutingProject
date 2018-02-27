@@ -29,7 +29,7 @@ class NetworkVP:
                         '_EncEmb' + str(Config.ENC_EMB) + '_DecEmb' + str(Config.DEC_EMB) + \
                         '_Drop' + str(Config.DROPOUT) + '_MaxGrad_' + str(Config.MAX_GRAD) + \
                         '_BnF_GPU_' + str(Config.GPU) + '_LogitPen_' + str(Config.LOGIT_PENALTY) + \
-                        '_NormTrainT' + \
+                        '_NormTrainF' + \
                         time.strftime("_%Y_%m_%d__%H_%M_%s")
             print("Running Model ", self.name)
             if Config.TRAIN:
@@ -142,12 +142,6 @@ class NetworkVP:
                                                                          self.enc_inputs,
                                                                          dtype=tf.float32)
 
-        def embed_fn(sample_ids):
-            return(tf.gather_nd(
-                    self.state, tf.concat([tf.reshape(tf.range(0, self.batch_size), [-1, 1]),
-                                           tf.reshape(sample_ids, [-1, 1])], 1)
-                ))
-        self.tmp = embed_fn(self.start_tokens)
         ########## Helpers ##########
         self.gather_ids = tf.concat([tf.expand_dims(
             tf.reshape(tf.tile(tf.reshape(tf.range(self.batch_size), [-1, 1]), [1, tf.shape(self.state)[1]]), [-1]), -1),
@@ -155,8 +149,6 @@ class NetworkVP:
         self.training_inputs = tf.reshape(tf.gather_nd(self.state, self.gather_ids), [self.batch_size, tf.shape(self.state)[1], 2])
         self.training_inputs = tf.concat([tf.zeros([self.batch_size, 1, 2]), self.training_inputs], axis=1)
         self.training_inputs = self.training_inputs[:, :-1, :]
-        train_helper = tf.contrib.seq2seq.TrainingHelper(self.training_inputs,
-                                                         tf.fill([self.batch_size], Config.NUM_OF_CUSTOMERS+1))
         if Config.DEC_EMB:
             pred_helper = tf.contrib.seq2seq.GreedyEmbeddingHelper(
                 lambda sample_ids: tf.reshape(tf.nn.conv1d(
@@ -174,6 +166,8 @@ class NetworkVP:
                 ),
                 self.start_tokens,
                 self.end_token)
+        train_helper = tf.contrib.seq2seq.TrainingHelper(self.training_inputs,
+                                                         tf.fill([self.batch_size], Config.NUM_OF_CUSTOMERS+1))
         # self.training_inputs = tf.expand_dims(tf.gather_nd(self.state, tf.concat([tf.reshape(tf.range(0, self.batch_size), [-1, 1]),
         #                                                                          tf.reshape(self.or_action[:, 0], [-1, 1])], 1)), 1)
         # for i in range(1, Config.NUM_OF_CUSTOMERS+1):
@@ -190,8 +184,8 @@ class NetworkVP:
                     self.cell = _build_rnn_cell()
                     self.out_cells.append(self.cell)
             self.out_cell = tf.nn.rnn_cell.MultiRNNCell(self.out_cells)
-            self.out_cell = _build_attention(self.out_cell, self.encoder_outputs)
             self.out_cell = tf.contrib.rnn.OutputProjectionWrapper(self.out_cell, Config.NUM_OF_CUSTOMERS+1)
+            self.out_cell = _build_attention(self.out_cell, self.encoder_outputs)
             self.out_cell = MaskWrapper(self.out_cell)
             self.initial_state = self.out_cell.zero_state(dtype=tf.float32, batch_size=self.batch_size)
             self.initial_state = self.initial_state.clone(cell_state=self.encoder_state)
@@ -342,7 +336,7 @@ class NetworkVP:
         # else:
         #     self.logits = self.pred_final_output.rnn_output
 
-        self.logits = self.train_final_output.rnn_output
+        self.logits = self.pred_final_output.rnn_output
         if Config.LOGIT_CLIP_SCALAR != 0:
             self.logits = Config.LOGIT_CLIP_SCALAR*tf.nn.tanh(self.logits)
 
@@ -404,7 +398,6 @@ class NetworkVP:
         step = self.get_global_step()
         feed_dict = {self.state: state, self.current_location: current_location, self.or_action: or_action,
                      self.sampled_cost: sampled_cost, self.or_cost: or_cost, self.start_tokens: depot_idx, self.keep_prob: .8}
-        print(self.sess.run(tf.shape(self.tmp), feed_dict=feed_dict))
         # print("step", step)
         # print("or_Action")
         # print(self.sess.run([self.or_action], feed_dict=feed_dict))

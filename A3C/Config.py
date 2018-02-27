@@ -16,15 +16,15 @@ class Config:
     RUN_TIME = 10
 
     DIRECTION = 3
-    ENC_EMB = False
-    DEC_EMB = False
+    ENC_EMB = True
+    DEC_EMB = True
     CELL_TYPE = 0
     TRAIN = False
     GPU = False
     MODEL_TO_RESTORE = ''
     DROPOUT = False
     LOGIT_CLIP_SCALAR = 10
-    LOGIT_PENALTY = 100
-    MAX_GRAD = .5
+    LOGIT_PENALTY = 1e6
+    MAX_GRAD = 0
     # PATH = "/Users/wyatt/Documents/Github_Repositories/RoutingProject/A3C/"
     PATH = "./"

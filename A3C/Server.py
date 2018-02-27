@@ -15,7 +15,7 @@ class Server:
         self.training_q = Queue(maxsize=50)
         self.prediction_q = Queue(maxsize=20)
 
-        self.model = NetworkVP(Config.DEVICE, 'network')
+        self.model = NetworkVP(Config.DEVICE)
         self.training_step = 0
 
         self.agents = []
@@ -50,8 +50,8 @@ class Server:
         self.trainers[-1].join(0.1)
         self.trainers.pop()
 
-    def train_model(self, x__, y__, a__, ora__, r__, orr__, trainer_id):
-        self.model.train(x__, y__, a__, ora__, r__, orr__, trainer_id)
+    def train_model(self, x__, y__, a__, ora__, r__, orr__, idx__, trainer_id):
+        self.model.train(x__, y__, a__, ora__, r__, orr__, idx__, trainer_id)
         self.training_step += 1
 
     def or_model(self, x__, trainer_id):
@@ -80,7 +80,6 @@ class Server:
 
         time.sleep(Config.RUN_TIME)
 
-        print(self.model.get_global_step())
         if Config.TRAIN:
             self.model.finish()
 
@@ -90,3 +89,4 @@ class Server:
             self.remove_predictor()
         while self.trainers:
             self.remove_trainer()
+        print("total steps:", self.model.get_global_step())

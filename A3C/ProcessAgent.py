@@ -85,26 +85,27 @@ class ProcessAgent(Process):
 
     #         time_count += 1
 
-    def predict(self, state, current_location):
-        self.prediction_q.put((self.id, state, current_location))
+    def predict(self, state, current_location, depot_idx):
+        self.prediction_q.put((self.id, state, current_location, depot_idx))
         a, v = self.wait_q.get()
         return a, v
 
     def run_episode(self):
         self.env.reset()
         current_location = self.env.get_current_location()
-        action, base_line = self.predict(self.env.current_state, current_location)
+        idx = int(self.env.get_depot_idx())
+        action, base_line = self.predict(self.env.current_state, current_location, idx)
         sampled_value = self.env.G(action, current_location)
         if Config.OR_TOOLS:
-            or_model = OR_Tool(self.env.current_state, current_location)
+            or_model = OR_Tool(self.env.current_state, current_location, idx)
             or_route, or_cost = or_model.solve()
-        return action, base_line, sampled_value, or_route, or_cost
+        return action, base_line, sampled_value, or_route, or_cost, idx
 
     def run(self):
         np.random.seed(np.int32(time.time() % 1 * 1000 + self.id * 10))
 
         while self.exit_flag.value == 0:
-            a_, b_, r_, ora_, orr_ = self.run_episode()
+            a_, b_, r_, ora_, orr_, idx_ = self.run_episode()
             x_ = self.env.current_state
             y_ = self.env.get_current_location()
-            self.training_q.put(([x_], [y_], [a_], [ora_], [r_], [orr_]))
+            self.training_q.put(([x_], [y_], [a_], [ora_], [r_], [orr_], [idx_]))

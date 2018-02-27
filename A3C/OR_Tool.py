@@ -13,12 +13,13 @@ class gen_matrix(object):
 
 
 class OR_Tool:
-    def __init__(self, env_current_state, env_current_location):
+    def __init__(self, env_current_state, env_current_location, depot_idx):
         # print(env_current_location)
         # print(env_current_state)
         # self.data = np.vstack([env_current_location, env_current_state])
         self.data = env_current_state
         self.size = self.data.shape[0]
+        self.depot_idx = depot_idx
         # print("self.size", self.size)
 
     def objective(self, route):
@@ -28,11 +29,11 @@ class OR_Tool:
         return(out)
 
     def solve(self):
-        routing = pywrapcp.RoutingModel(self.size, 1, 0)
+        routing = pywrapcp.RoutingModel(self.size, 1, self.depot_idx)
         search_parameters = pywrapcp.RoutingModel.DefaultSearchParameters()
         search_parameters.local_search_metaheuristic = (
             routing_enums_pb2.LocalSearchMetaheuristic.GUIDED_LOCAL_SEARCH)
-        search_parameters.time_limit_ms = 30
+        search_parameters.time_limit_ms = 1000
         matrix = gen_matrix(self.size, self.data)
         dist_callback = matrix.Distance
         routing.SetArcCostEvaluatorOfAllVehicles(dist_callback)

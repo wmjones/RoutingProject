@@ -1,6 +1,9 @@
 import tensorflow as tf
 import time
 from MaskWrapper import MaskWrapper
+from MaskWrapper import MaskWrapperAttnState
+from MaskWrapper import MaskWrapperState
+import numpy as np
 
 from Config import Config
 
@@ -29,7 +32,7 @@ class NetworkVP:
                         '_EncEmb' + str(Config.ENC_EMB) + '_DecEmb' + str(Config.DEC_EMB) + \
                         '_Drop' + str(Config.DROPOUT) + '_MaxGrad_' + str(Config.MAX_GRAD) + \
                         '_BnF_GPU_' + str(Config.GPU) + '_LogitPen_' + str(Config.LOGIT_PENALTY) + \
-                        '_NormTrainF' + \
+                        '_NewTrainHelper' + \
                         time.strftime("_%Y_%m_%d__%H_%M_%s")
             print("Running Model ", self.name)
             if Config.TRAIN:
@@ -149,12 +152,15 @@ class NetworkVP:
         self.training_inputs = tf.reshape(tf.gather_nd(self.state, self.gather_ids), [self.batch_size, tf.shape(self.state)[1], 2])
         self.training_inputs = tf.concat([tf.zeros([self.batch_size, 1, 2]), self.training_inputs], axis=1)
         self.training_inputs = self.training_inputs[:, :-1, :]
-        if Config.DEC_EMB:
-            pred_helper = tf.contrib.seq2seq.GreedyEmbeddingHelper(
-                lambda sample_ids: tf.reshape(tf.nn.conv1d(
+
+        def embed_fn(sample_ids):
+            return(tf.reshape(tf.nn.conv1d(
                     tf.reshape(tf.gather_nd(self.state, tf.concat([tf.reshape(tf.range(self.batch_size), [-1, 1]),
                                                                    tf.reshape(sample_ids, [-1, 1])], -1)), [self.batch_size, 1, 2]),
-                    W_embed, 1, "VALID", name="embedded_input"), [self.batch_size, Config.RNN_HIDDEN_DIM]),
+                    W_embed, 1, "VALID", name="embedded_input"), [self.batch_size, Config.RNN_HIDDEN_DIM]))
+        if Config.DEC_EMB:
+            pred_helper = tf.contrib.seq2seq.GreedyEmbeddingHelper(
+                lambda sample_ids: embed_fn(sample_ids),
                 self.start_tokens,
                 self.end_token)
             self.training_inputs = tf.nn.conv1d(self.training_inputs, W_embed, 1, "VALID", name="embedded_input")
@@ -166,8 +172,46 @@ class NetworkVP:
                 ),
                 self.start_tokens,
                 self.end_token)
-        train_helper = tf.contrib.seq2seq.TrainingHelper(self.training_inputs,
-                                                         tf.fill([self.batch_size], Config.NUM_OF_CUSTOMERS+1))
+        # train_helper = tf.contrib.seq2seq.TrainingHelper(self.training_inputs,
+        #                                                  tf.fill([self.batch_size], Config.NUM_OF_CUSTOMERS+1))
+
+        def initialize_fn():
+            if Config.DEC_EMB:
+                return(tf.tile([False], [self.batch_size]), embed_fn(self.start_tokens))
+            else:
+                return(tf.tile([False], [self.batch_size]), tf.zeros([self.batch_size, 2]))
+
+        def sample_fn(time, outputs, state):
+            sample_ids = tf.argmax(tf.nn.softmax(outputs), axis=-1, output_type=tf.int32)
+            return sample_ids
+
+        def next_inputs_fn(time, outputs, state, sample_ids):
+            finished = tf.tile([tf.equal(time, Config.NUM_OF_CUSTOMERS+1)], [self.batch_size])
+            next_inputs = tf.gather_nd(
+                self.training_inputs, tf.concat([tf.reshape(tf.range(0, self.batch_size), [-1, 1]),
+                                                 tf.fill([self.batch_size, 1], time)], 1)
+            )
+            mask = tf.reduce_sum(tf.one_hot(self.or_action[:, :time+1], depth=Config.NUM_OF_CUSTOMERS+1), axis=1)
+            if isinstance(state, MaskWrapperAttnState):
+                next_state = MaskWrapperAttnState(cell_state=state.cell_state,
+                                                  time=state.time,
+                                                  attention=state.attention,
+                                                  alignments=state.alignments,
+                                                  alignment_history=state.alignment_history,
+                                                  mask=mask)
+            elif isinstance(state, MaskWrapperState):
+                next_state = MaskWrapperState(cell_state=state.cell_state,
+                                              time=state.time,
+                                              mask=mask)
+            else:
+                next_state = state
+            return (finished, next_inputs, next_state)
+
+        train_helper = tf.contrib.seq2seq.CustomHelper(
+            initialize_fn=initialize_fn,
+            sample_fn=sample_fn,
+            next_inputs_fn=next_inputs_fn
+        )
         # self.training_inputs = tf.expand_dims(tf.gather_nd(self.state, tf.concat([tf.reshape(tf.range(0, self.batch_size), [-1, 1]),
         #                                                                          tf.reshape(self.or_action[:, 0], [-1, 1])], 1)), 1)
         # for i in range(1, Config.NUM_OF_CUSTOMERS+1):
@@ -301,8 +345,8 @@ class NetworkVP:
                                                           use_peepholes=True,
                                                           output_is_tuple=False,
                                                           state_is_tuple=False)
-            # self.cell = tf.contrib.rnn.OutputProjectionWrapper(cell, Config.NUM_OF_CUSTOMERS+1)
-            # self.cell = MaskWrapper(self.cell, cell_is_attention=False)
+            self.cell = tf.contrib.rnn.OutputProjectionWrapper(self.cell, Config.NUM_OF_CUSTOMERS+1)
+            self.cell = MaskWrapper(self.cell, cell_is_attention=False)
             self.initial_state = self.cell.zero_state(dtype=tf.float32, batch_size=self.batch_size)
             train_decoder = tf.contrib.seq2seq.BasicDecoder(self.cell, train_helper, self.initial_state,
                                                             output_layer=tf.layers.Dense(Config.NUM_OF_CUSTOMERS+1))
@@ -336,7 +380,7 @@ class NetworkVP:
         # else:
         #     self.logits = self.pred_final_output.rnn_output
 
-        self.logits = self.pred_final_output.rnn_output
+        self.logits = self.train_final_output.rnn_output
         if Config.LOGIT_CLIP_SCALAR != 0:
             self.logits = Config.LOGIT_CLIP_SCALAR*tf.nn.tanh(self.logits)
 
@@ -392,6 +436,8 @@ class NetworkVP:
         feed_dict = {self.state: state, self.current_location: current_location, self.is_training: False,
                      self.keep_prob: 1.0, self.start_tokens: depot_idx}
         prediction = self.sess.run([self.pred_final_action, self.base_line_est], feed_dict=feed_dict)
+        # prediction = [np.zeros([state.shape[0], Config.NUM_OF_CUSTOMERS+1], dtype=np.int32),
+        #               np.zeros([state.shape[0], 1], dtype=np.float32)]
         return prediction
 
     def train(self, state, current_location, action, or_action, sampled_cost, or_cost, depot_idx, trainer_id):
@@ -399,7 +445,7 @@ class NetworkVP:
         feed_dict = {self.state: state, self.current_location: current_location, self.or_action: or_action,
                      self.sampled_cost: sampled_cost, self.or_cost: or_cost, self.start_tokens: depot_idx, self.keep_prob: .8}
         # print("step", step)
-        # print("or_Action")
+        # print("or_action")
         # print(self.sess.run([self.or_action], feed_dict=feed_dict))
         # print("train_output")
         # print(self.sess.run([self.train_final_output.sample_id], feed_dict=feed_dict))

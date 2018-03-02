@@ -172,46 +172,9 @@ class NetworkVP:
                 ),
                 self.start_tokens,
                 self.end_token)
-        # train_helper = tf.contrib.seq2seq.TrainingHelper(self.training_inputs,
-        #                                                  tf.fill([self.batch_size], Config.NUM_OF_CUSTOMERS+1))
+        train_helper = tf.contrib.seq2seq.TrainingHelper(self.training_inputs,
+                                                         tf.fill([self.batch_size], Config.NUM_OF_CUSTOMERS+1))
 
-        def initialize_fn():
-            if Config.DEC_EMB:
-                return(tf.tile([False], [self.batch_size]), embed_fn(self.start_tokens))
-            else:
-                return(tf.tile([False], [self.batch_size]), tf.zeros([self.batch_size, 2]))
-
-        def sample_fn(time, outputs, state):
-            sample_ids = tf.argmax(tf.nn.softmax(outputs), axis=-1, output_type=tf.int32)
-            return sample_ids
-
-        def next_inputs_fn(time, outputs, state, sample_ids):
-            finished = tf.tile([tf.equal(time, Config.NUM_OF_CUSTOMERS+1)], [self.batch_size])
-            next_inputs = tf.gather_nd(
-                self.training_inputs, tf.concat([tf.reshape(tf.range(0, self.batch_size), [-1, 1]),
-                                                 tf.fill([self.batch_size, 1], time)], 1)
-            )
-            mask = tf.reduce_sum(tf.one_hot(self.or_action[:, :time+1], depth=Config.NUM_OF_CUSTOMERS+1), axis=1)
-            if isinstance(state, MaskWrapperAttnState):
-                next_state = MaskWrapperAttnState(cell_state=state.cell_state,
-                                                  time=state.time,
-                                                  attention=state.attention,
-                                                  alignments=state.alignments,
-                                                  alignment_history=state.alignment_history,
-                                                  mask=mask)
-            elif isinstance(state, MaskWrapperState):
-                next_state = MaskWrapperState(cell_state=state.cell_state,
-                                              time=state.time,
-                                              mask=mask)
-            else:
-                next_state = state
-            return (finished, next_inputs, next_state)
-
-        train_helper = tf.contrib.seq2seq.CustomHelper(
-            initialize_fn=initialize_fn,
-            sample_fn=sample_fn,
-            next_inputs_fn=next_inputs_fn
-        )
         # self.training_inputs = tf.expand_dims(tf.gather_nd(self.state, tf.concat([tf.reshape(tf.range(0, self.batch_size), [-1, 1]),
         #                                                                          tf.reshape(self.or_action[:, 0], [-1, 1])], 1)), 1)
         # for i in range(1, Config.NUM_OF_CUSTOMERS+1):

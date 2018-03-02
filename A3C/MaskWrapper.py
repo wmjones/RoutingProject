@@ -19,7 +19,8 @@ class MaskWrapper(rnn_cell_impl.RNNCell):
                                                                        attention=state.attention,
                                                                        time=state.time,
                                                                        alignments=state.alignments,
-                                                                       alignment_history=state.alignment_history)
+                                                                       alignment_history=state.alignment_history,
+                                                                       attention_state=state.attention_state)
             cell_output, main_cell_state = self._cell(inputs, attention_state)
             cell_output = cell_output - state.mask*Config.LOGIT_PENALTY
             sample_ids = tf.argmax(tf.nn.softmax(cell_output), axis=1, output_type=tf.int32)
@@ -30,6 +31,7 @@ class MaskWrapper(rnn_cell_impl.RNNCell):
                 attention=attention_state.attention,
                 alignments=attention_state.alignments,
                 alignment_history=attention_state.alignment_history,
+                attention_state=attention_state.attention_state,
                 mask=next_mask)
             return cell_output, next_cell_state
         else:
@@ -53,6 +55,7 @@ class MaskWrapper(rnn_cell_impl.RNNCell):
                 attention=attention_state_zero.attention,
                 alignments=attention_state_zero.alignments,
                 alignment_history=attention_state_zero.alignment_history,
+                attention_state=attention_state_zero.attention_state,
                 mask=tf.zeros([batch_size, Config.NUM_OF_CUSTOMERS+1]))
         else:
             return MaskWrapperState(
@@ -75,6 +78,7 @@ class MaskWrapper(rnn_cell_impl.RNNCell):
                 attention=attention_state_size.attention,
                 alignments=attention_state_size.alignments,
                 alignment_history=attention_state_size.alignment_history,
+                attention_state=attention_state_size.attention_state,
                 mask=attention_state_size.alignments)
         else:
             return MaskWrapperState(
@@ -85,7 +89,7 @@ class MaskWrapper(rnn_cell_impl.RNNCell):
 
 class MaskWrapperAttnState(collections.namedtuple("MaskWrapperAttnState",
                                                   ("cell_state", "attention", "time", "alignments",
-                                                   "alignment_history", "mask"))):
+                                                   "alignment_history", "mask", "attention_state"))):
 
     def clone(self, **kwargs):
         return super(MaskWrapperAttnState, self)._replace(**kwargs)

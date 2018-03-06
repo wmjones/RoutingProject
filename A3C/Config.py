@@ -10,7 +10,7 @@ class Config:
     TRAINING_MIN_BATCH_SIZE = 20
     NUM_OF_CUSTOMERS = 15
     LAYERS_STACKED_COUNT = 2
-    RNN_HIDDEN_DIM = 128
+    RNN_HIDDEN_DIM = 256
     DNN_HIDDEN_DIM = 15
     OR_TOOLS = True
     RUN_TIME = 10
@@ -21,7 +21,8 @@ class Config:
     CELL_TYPE = 0
     TRAIN = False
     GPU = False
-    MODEL_TO_RESTORE = ''
+    MODEL_NAME = ''
+    RESTORE = False
     DROPOUT = False
     LOGIT_CLIP_SCALAR = 1
     LOGIT_PENALTY = 1e6

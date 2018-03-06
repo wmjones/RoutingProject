@@ -1,9 +1,9 @@
 import tensorflow as tf
-import time
+# import time
 from MaskWrapper import MaskWrapper
-from MaskWrapper import MaskWrapperAttnState
-from MaskWrapper import MaskWrapperState
-import numpy as np
+# from MaskWrapper import MaskWrapperAttnState
+# from MaskWrapper import MaskWrapperState
+# import numpy as np
 
 from Config import Config
 
@@ -28,18 +28,19 @@ class NetworkVP:
             )
             self.saver = tf.train.Saver()
             self.sess.run(tf.global_variables_initializer())
-            self.name = 'TSP_' + str(Config.NUM_OF_CUSTOMERS) + '_dir_' + str(Config.DIRECTION) + \
-                        '_EncEmb' + str(Config.ENC_EMB) + '_DecEmb' + str(Config.DEC_EMB) + \
-                        '_Drop' + str(Config.DROPOUT) + '_MaxGrad_' + str(Config.MAX_GRAD) + \
-                        '_BnF_GPU_' + str(Config.GPU) + '_LogitPen_' + str(Config.LOGIT_PENALTY) + \
-                        '_NewTrainHelper' + \
-                        time.strftime("_%Y_%m_%d__%H_%M_%s")
+            self.name = Config.MODEL_NAME
+            # self.name = 'TSP_' + str(Config.NUM_OF_CUSTOMERS) + '_dir_' + str(Config.DIRECTION) + \
+            #             '_EncEmb' + str(Config.ENC_EMB) + '_DecEmb' + str(Config.DEC_EMB) + \
+            #             '_Drop' + str(Config.DROPOUT) + '_MaxGrad_' + str(Config.MAX_GRAD) + \
+            #             '_BnF_GPU_' + str(Config.GPU) + '_LogitPen_' + str(Config.LOGIT_PENALTY) + \
+            #             '_NewTrainHelper' + \
+            #             time.strftime("_%Y_%m_%d__%H_%M_%s")
             print("Running Model ", self.name)
             if Config.TRAIN:
                 self._create_tensor_board()
-            if Config.MODEL_TO_RESTORE:
+            if Config.RESTORE:
                 print("Restoring Parameters from latest checkpoint:")
-                latest_checkpoint = tf.train.latest_checkpoint(str(Config.PATH) + 'checkpoint/' + Config.MODEL_TO_RESTORE + '/')
+                latest_checkpoint = tf.train.latest_checkpoint(str(Config.PATH) + 'checkpoint/' + Config.MODEL_NAME + '/')
                 print(latest_checkpoint)
                 self.saver.restore(self.sess, latest_checkpoint)
 
@@ -72,6 +73,13 @@ class NetworkVP:
             tf.summary.scalar("RUN_TIME", Config.RUN_TIME)
             tf.summary.scalar("LOGIT_CLIP_SCALAR", Config.LOGIT_CLIP_SCALAR)
             tf.summary.scalar("MAX_GRAD", Config.MAX_GRAD)
+            tf.summary.scalar("NUM_OF_CUSTOMERS", Config.NUM_OF_CUSTOMERS)
+            tf.summary.scalar("EncEmb", tf.cast(Config.ENC_EMB, tf.int32))
+            tf.summary.scalar("DecEmb", tf.cast(Config.DEC_EMB, tf.int32))
+            tf.summary.scalar("Droput", tf.cast(Config.DROPOUT, tf.int32))
+            tf.summary.scalar("MaxGrad", Config.MAX_GRAD)
+            tf.summary.scalar("LogitPen", Config.LOGIT_PENALTY)
+            tf.summary.scalar("LogitClipScalar", Config.LOGIT_CLIP_SCALAR)
         tf.summary.scalar("difference_in_length", self.difference_in_length)
         tf.summary.scalar("relative_length", self.relative_length)
 
@@ -191,13 +199,23 @@ class NetworkVP:
                     self.cell = _build_rnn_cell()
                     self.out_cells.append(self.cell)
             self.out_cell = tf.nn.rnn_cell.MultiRNNCell(self.out_cells)
-            self.out_cell = tf.contrib.rnn.OutputProjectionWrapper(self.out_cell, Config.NUM_OF_CUSTOMERS+1)
             self.out_cell = _build_attention(self.out_cell, self.encoder_outputs)
+            self.out_cell = tf.contrib.rnn.OutputProjectionWrapper(self.out_cell, Config.NUM_OF_CUSTOMERS+1)
             self.out_cell = MaskWrapper(self.out_cell)
+
+            self.critic_out_cells = [_build_rnn_cell()]
+            self.critic_out_cell = tf.nn.rnn_cell.MultiRNNCell(self.critic_out_cells)
+            self.critic_out_cell = _build_attention(self.critic_out_cell, self.encoder_outputs)
+            self.critic_out_cell = tf.contrib.rnn.OutputProjectionWrapper(self.critic_out_cell, Config.NUM_OF_CUSTOMERS+1)
+            self.critic_out_cell = MaskWrapper(self.critic_out_cell)
+            self.critic_initial_state = self.critic_out_cell.zero_state(dtype=tf.float32, batch_size=self.batch_size)
+            self.critic_initial_state = self.critic_initial_state.clone(cell_state=self.encoder_state)
+
             self.initial_state = self.out_cell.zero_state(dtype=tf.float32, batch_size=self.batch_size)
             self.initial_state = self.initial_state.clone(cell_state=self.encoder_state)
             train_decoder = tf.contrib.seq2seq.BasicDecoder(self.out_cell, train_helper, self.initial_state)
             pred_decoder = tf.contrib.seq2seq.BasicDecoder(self.out_cell, pred_helper, self.initial_state)
+            critic_decoder = tf.contrib.seq2seq.BasicDecoder(self.critic_out_cell, pred_helper, self.critic_initial_state)
         if Config.DIRECTION == 2:
             self.out_cell = tf.contrib.rnn.BasicLSTMCell(2*Config.RNN_HIDDEN_DIM)
             self.out_cell = _build_attention(self.out_cell, self.encoder_outputs)
@@ -205,8 +223,18 @@ class NetworkVP:
             self.out_cell = MaskWrapper(self.out_cell)
             self.initial_state = self.out_cell.zero_state(dtype=tf.float32, batch_size=self.batch_size)
             self.initial_state = self.initial_state.clone(cell_state=self.encoder_state)
+
+            self.critic_out_cell = tf.contrib.rnn.BasicLSTMCell(2*Config.RNN_HIDDEN_DIM)
+            # self.critic_out_cell = tf.nn.rnn_cell.MultiRNNCell(self.critic_out_cells)
+            self.critic_out_cell = _build_attention(self.critic_out_cell, self.encoder_outputs)
+            self.critic_out_cell = tf.contrib.rnn.OutputProjectionWrapper(self.critic_out_cell, Config.NUM_OF_CUSTOMERS+1)
+            self.critic_out_cell = MaskWrapper(self.critic_out_cell)
+            self.critic_initial_state = self.critic_out_cell.zero_state(dtype=tf.float32, batch_size=self.batch_size)
+            self.critic_initial_state = self.critic_initial_state.clone(cell_state=self.encoder_state)
+
             train_decoder = tf.contrib.seq2seq.BasicDecoder(self.out_cell, train_helper, self.initial_state)
             pred_decoder = tf.contrib.seq2seq.BasicDecoder(self.out_cell, pred_helper, self.initial_state)
+            critic_decoder = tf.contrib.seq2seq.BasicDecoder(self.critic_out_cell, pred_helper, self.critic_initial_state)
         if Config.DIRECTION == 3:
             self.out_cells = []
             for i in range(Config.LAYERS_STACKED_COUNT):
@@ -219,8 +247,18 @@ class NetworkVP:
             self.out_cell = MaskWrapper(self.out_cell)
             self.initial_state = self.out_cell.zero_state(dtype=tf.float32, batch_size=self.batch_size)
             self.initial_state = self.initial_state.clone(cell_state=self.encoder_state)
+
+            self.critic_out_cells = [tf.contrib.rnn.BasicLSTMCell(2*Config.RNN_HIDDEN_DIM)]
+            self.critic_out_cell = tf.nn.rnn_cell.MultiRNNCell(self.critic_out_cells)
+            self.critic_out_cell = _build_attention(self.critic_out_cell, self.encoder_outputs)
+            self.critic_out_cell = tf.contrib.rnn.OutputProjectionWrapper(self.critic_out_cell, Config.NUM_OF_CUSTOMERS+1)
+            self.critic_out_cell = MaskWrapper(self.critic_out_cell)
+            self.critic_initial_state = self.critic_out_cell.zero_state(dtype=tf.float32, batch_size=self.batch_size)
+            self.critic_initial_state = self.critic_initial_state.clone(cell_state=self.encoder_state)
+
             train_decoder = tf.contrib.seq2seq.BasicDecoder(self.out_cell, train_helper, self.initial_state)
             pred_decoder = tf.contrib.seq2seq.BasicDecoder(self.out_cell, pred_helper, self.initial_state)
+            critic_decoder = tf.contrib.seq2seq.BasicDecoder(self.critic_out_cell, pred_helper, self.critic_initial_state)
         if Config.DIRECTION == 4:
             self.out_cells = []
             for i in range(Config.LAYERS_STACKED_COUNT):
@@ -387,8 +425,18 @@ class NetworkVP:
             #                                                              colocate_gradients_with_ops=True)
         # for gradient clipping https://github.com/tensorflow/nmt/blob/master/nmt/model.py
 
-        with tf.name_scope("base_line"):
-            self.base_line_est = tf.zeros(shape=[self.batch_size, 1])
+        self.critic_final_output, self.critic_final_state, critic_final_sequence_lengths = tf.contrib.seq2seq.dynamic_decode(
+                    critic_decoder, impute_finished=False, maximum_iterations=tf.shape(self.state)[1])
+        if Config.DIRECTION != 2:
+            self.base_line_est = tf.layers.dense(self.critic_final_state.cell_state[0].c, Config.RNN_HIDDEN_DIM)
+        else:
+            self.base_line_est = tf.layers.dense(self.critic_final_state.cell_state.c, Config.RNN_HIDDEN_DIM)
+        self.base_line_est = tf.layers.dense(self.base_line_est, 1)
+        self.critic_loss = tf.losses.mean_squared_error(self.sampled_cost, self.base_line_est)
+        tf.summary.scalar("critic_loss", self.critic_loss)
+        self.critic_train_op = tf.train.AdamOptimizer(self.lr).minimize(self.critic_loss, global_step=self.global_step)
+        # with tf.name_scope("base_line"):
+        # self.base_line_est = tf.zeros(shape=[self.batch_size, 1])
         # tf.summary.scalar("base_line_est", tf.reduce_mean(self.base_line_est))
 
     def get_global_step(self):
@@ -409,7 +457,7 @@ class NetworkVP:
                      self.sampled_cost: sampled_cost, self.or_cost: or_cost, self.start_tokens: depot_idx, self.keep_prob: .8}
         # print("step", step)
         # print("or_action")
-        # print(self.sess.run([self.or_action], feed_dict=feed_dict))
+        # print(self.sess.run([self.critic_final_state.cell_state[0].c], feed_dict=feed_dict))
         # print("train_output")
         # print(self.sess.run([self.train_final_output.sample_id], feed_dict=feed_dict))
         # print("pred_output")
@@ -421,15 +469,16 @@ class NetworkVP:
         # print(self.sess.run([self.tmp], feed_dict=feed_dict))
         if step % 100 == 0:
             if Config.TRAIN:
-                _, summary, loss, diff = self.sess.run([self.train_op, self.merged, self.loss, self.relative_length],
-                                                       feed_dict=feed_dict)
+                _, _, summary, loss, diff = self.sess.run([self.train_op, self.critic_train_op,
+                                                           self.merged, self.loss, self.relative_length], feed_dict=feed_dict)
                 self.log_writer.add_summary(summary, step)
             else:
-                _, loss, diff = self.sess.run([self.train_op, self.loss, self.relative_length], feed_dict=feed_dict)
+                _, _, loss, diff = self.sess.run([self.train_op, self.critic_train_op,
+                                                  self.loss, self.relative_length], feed_dict=feed_dict)
             print(loss, diff)
         else:
             self.sess.run(self.train_op, feed_dict=feed_dict)
-        if step % 1000 == 0 and step > 0 and Config.TRAIN:
+        if step % 1000 == 0 and Config.TRAIN:
             self._model_save()
             print(self.sess.run([self.pred_final_action], feed_dict=feed_dict))
             print(self.sess.run([self.or_action], feed_dict=feed_dict))

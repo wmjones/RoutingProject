@@ -15,7 +15,7 @@ class NetworkVP:
         self.graph = tf.Graph()
         with self.graph.as_default():
             self._create_graph()
-            if Config.GPU:
+            if Config.GPU == 1:
                 config = tf.ConfigProto()
                 config.gpu_options.per_process_gpu_memory_fraction = .95
                 config.gpu_options.allow_growth = True
@@ -36,9 +36,9 @@ class NetworkVP:
             #             '_NewTrainHelper' + \
             #             time.strftime("_%Y_%m_%d__%H_%M_%s")
             print("Running Model ", self.name)
-            if Config.TRAIN:
+            if Config.TRAIN == 1:
                 self._create_tensor_board()
-            if Config.RESTORE:
+            if Config.RESTORE == 1:
                 print("Restoring Parameters from latest checkpoint:")
                 latest_checkpoint = tf.train.latest_checkpoint(str(Config.PATH) + 'checkpoint/' + Config.MODEL_NAME + '/')
                 print(latest_checkpoint)
@@ -83,7 +83,7 @@ class NetworkVP:
         tf.summary.scalar("difference_in_length", self.difference_in_length)
         tf.summary.scalar("relative_length", self.relative_length)
 
-        if Config.ENC_EMB:
+        if Config.ENC_EMB == 1:
             W_embed = tf.get_variable("weights", [1, 2, Config.RNN_HIDDEN_DIM], initializer=tf.contrib.layers.xavier_initializer())
             self.enc_inputs = tf.nn.conv1d(self.state, W_embed, 1, "VALID", name="embedded_input")
             # self.enc_inputs = tf.layers.batch_normalization(self.enc_inputs, axis=2, training=self.is_training, reuse=None)
@@ -93,7 +93,7 @@ class NetworkVP:
         def _build_rnn_cell():
             # tf.contrib.cudnn_rnn.CudnnCompatibleLSTMCell
             cell = tf.nn.rnn_cell.LSTMCell(Config.RNN_HIDDEN_DIM)
-            if Config.DROPOUT:
+            if Config.DROPOUT == 1:
                 cell = tf.contrib.rnn.DropoutWrapper(cell,
                                                      input_keep_prob=self.keep_prob,
                                                      output_keep_prob=self.keep_prob,
@@ -166,7 +166,7 @@ class NetworkVP:
                     tf.reshape(tf.gather_nd(self.state, tf.concat([tf.reshape(tf.range(self.batch_size), [-1, 1]),
                                                                    tf.reshape(sample_ids, [-1, 1])], -1)), [self.batch_size, 1, 2]),
                     W_embed, 1, "VALID", name="embedded_input"), [self.batch_size, Config.RNN_HIDDEN_DIM]))
-        if Config.DEC_EMB:
+        if Config.DEC_EMB == 1:
             pred_helper = tf.contrib.seq2seq.GreedyEmbeddingHelper(
                 lambda sample_ids: embed_fn(sample_ids),
                 self.start_tokens,
@@ -288,7 +288,7 @@ class NetworkVP:
                     dtype=tf.float32, batch_size=self.batch_size * beam_width)
                 self.pred_initial_state = self.pred_initial_state.clone(
                     cell_state=tiled_encoder_final_state)
-                if Config.DEC_EMB:
+                if Config.DEC_EMB == 1:
                     def beam_embed(x):
                         return(
                             tf.reshape(tf.nn.conv1d(tf.reshape(tf.gather_nd(self.state, tf.concat(
@@ -468,7 +468,7 @@ class NetworkVP:
         # print(self.sess.run([self.state], feed_dict=feed_dict))
         # print(self.sess.run([self.tmp], feed_dict=feed_dict))
         if step % 100 == 0:
-            if Config.TRAIN:
+            if Config.TRAIN == 1:
                 _, _, summary, loss, diff = self.sess.run([self.train_op, self.critic_train_op,
                                                            self.merged, self.loss, self.relative_length], feed_dict=feed_dict)
                 self.log_writer.add_summary(summary, step)
@@ -479,6 +479,7 @@ class NetworkVP:
         else:
             self.sess.run(self.train_op, feed_dict=feed_dict)
         if step % 1000 == 0 and Config.TRAIN:
+            print("Saving Model...")
             self._model_save()
             print(self.sess.run([self.pred_final_action], feed_dict=feed_dict))
             print(self.sess.run([self.or_action], feed_dict=feed_dict))
@@ -493,6 +494,6 @@ class NetworkVP:
         self.merged = tf.summary.merge_all()
 
     def finish(self):
-        if Config.TRAIN:
+        if Config.TRAIN == 1:
             self._model_save()
         self.log_writer.close()

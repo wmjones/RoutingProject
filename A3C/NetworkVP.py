@@ -80,8 +80,7 @@ class NetworkVP:
             tf.summary.scalar("MaxGrad", Config.MAX_GRAD)
             tf.summary.scalar("LogitPen", Config.LOGIT_PENALTY)
             tf.summary.scalar("LogitClipScalar", Config.LOGIT_CLIP_SCALAR)
-        tf.summary.scalar("difference_in_length", self.difference_in_length)
-        tf.summary.scalar("relative_length", self.relative_length)
+            tf.summary.scalar("GPU", Config.GPU)
 
         if Config.ENC_EMB == 1:
             W_embed = tf.get_variable("weights", [1, 2, Config.RNN_HIDDEN_DIM], initializer=tf.contrib.layers.xavier_initializer())
@@ -153,7 +152,7 @@ class NetworkVP:
                                                                          self.enc_inputs,
                                                                          dtype=tf.float32)
 
-        ########## Helpers ##########
+        ########## HELPERS ##########
         self.gather_ids = tf.concat([tf.expand_dims(
             tf.reshape(tf.tile(tf.reshape(tf.range(self.batch_size), [-1, 1]), [1, tf.shape(self.state)[1]]), [-1]), -1),
                                      tf.reshape(self.or_action, [-1, 1])], -1)
@@ -260,6 +259,14 @@ class NetworkVP:
             pred_decoder = tf.contrib.seq2seq.BasicDecoder(self.out_cell, pred_helper, self.initial_state)
             critic_decoder = tf.contrib.seq2seq.BasicDecoder(self.critic_out_cell, pred_helper, self.critic_initial_state)
         if Config.DIRECTION == 4:
+            self.critic_out_cells = [_build_rnn_cell()]
+            self.critic_out_cell = tf.nn.rnn_cell.MultiRNNCell(self.critic_out_cells)
+            self.critic_out_cell = _build_attention(self.critic_out_cell, self.encoder_outputs)
+            self.critic_out_cell = tf.contrib.rnn.OutputProjectionWrapper(self.critic_out_cell, Config.NUM_OF_CUSTOMERS+1)
+            self.critic_out_cell = MaskWrapper(self.critic_out_cell)
+            self.critic_initial_state = self.critic_out_cell.zero_state(dtype=tf.float32, batch_size=self.batch_size)
+            self.critic_initial_state = self.critic_initial_state.clone(cell_state=self.encoder_state)
+            critic_decoder = tf.contrib.seq2seq.BasicDecoder(self.critic_out_cell, pred_helper, self.critic_initial_state)
             self.out_cells = []
             for i in range(Config.LAYERS_STACKED_COUNT):
                 with tf.variable_scope('RNN_{}'.format(i)):
@@ -390,26 +397,21 @@ class NetworkVP:
             targets=self.or_action,
             weights=self.weights
         )
-        tf.summary.scalar("loss", self.loss)
 
         with tf.name_scope("train"):
+            if Config.GPU == 1:
+                colocate = True
+            else:
+                colocate = False
             self.lr = tf.train.exponential_decay(
                 Config.LEARNING_RATE, self.global_step, 10000,
                 .9, staircase=True, name="learning_rate")
-            # self.train_op = tf.train.AdamOptimizer(self.lr).minimize(self.loss,
-            #                                                          global_step=self.global_step,
-            #                                                          colocate_gradients_with_ops=False)
-            # if Config.GPU:
-            #     self.train_op = tf.train.AdadeltaOptimizer(Config.LEARNING_RATE).minimize(self.loss,
-            #                                                                               global_step=self.global_step,
-            #                                                                               colocate_gradients_with_ops=False)
-            # else:
-            #     self.train_op = tf.train.AdadeltaOptimizer(Config.LEARNING_RATE).minimize(self.loss,
-            #                                                                               global_step=self.global_step,
-            #                                                                               colocate_gradients_with_ops=True)
+            # self.train_op = tf.train.AdadeltaOptimizer(Config.LEARNING_RATE).minimize(self.loss,
+            #                                                                           global_step=self.global_step,
+            #                                                                           colocate_gradients_with_ops=True)
             if Config.MAX_GRAD != 0:
                 params = tf.trainable_variables()
-                self.gradients = tf.gradients(self.loss, params, colocate_gradients_with_ops=False)
+                self.gradients = tf.gradients(self.loss, params, colocate_gradients_with_ops=colocate)
                 clipped_gradients, gradient_norm = tf.clip_by_global_norm(self.gradients, Config.MAX_GRAD)
                 opt = tf.train.AdamOptimizer(self.lr)
                 self.train_op = opt.apply_gradients(zip(clipped_gradients, params), global_step=self.global_step)
@@ -418,26 +420,27 @@ class NetworkVP:
             else:
                 self.train_op = tf.train.AdamOptimizer(self.lr).minimize(self.loss,
                                                                          global_step=self.global_step,
-                                                                         colocate_gradients_with_ops=False)
-            # else:
-            #     self.train_op = tf.train.AdamOptimizer(self.lr).minimize(self.loss,
-            #                                                              global_step=self.global_step,
-            #                                                              colocate_gradients_with_ops=True)
+                                                                         colocate_gradients_with_ops=colocate)
         # for gradient clipping https://github.com/tensorflow/nmt/blob/master/nmt/model.py
 
         self.critic_final_output, self.critic_final_state, critic_final_sequence_lengths = tf.contrib.seq2seq.dynamic_decode(
                     critic_decoder, impute_finished=False, maximum_iterations=tf.shape(self.state)[1])
         if Config.DIRECTION != 2:
-            self.base_line_est = tf.layers.dense(self.critic_final_state.cell_state[0].c, Config.RNN_HIDDEN_DIM)
+            self.base_line_est = tf.layers.dense(self.critic_final_state.cell_state[0].h, Config.RNN_HIDDEN_DIM)
         else:
-            self.base_line_est = tf.layers.dense(self.critic_final_state.cell_state.c, Config.RNN_HIDDEN_DIM)
+            self.base_line_est = tf.layers.dense(self.critic_final_state.cell_state.c, Config.RNN_HIDDEN_DIM, activation=tf.nn.relu)
         self.base_line_est = tf.layers.dense(self.base_line_est, 1)
         self.critic_loss = tf.losses.mean_squared_error(self.sampled_cost, self.base_line_est)
-        tf.summary.scalar("critic_loss", self.critic_loss)
         self.critic_train_op = tf.train.AdamOptimizer(self.lr).minimize(self.critic_loss, global_step=self.global_step)
-        # with tf.name_scope("base_line"):
+
+        with tf.name_scope("loss"):
+            tf.summary.scalar("loss", self.loss)
+            tf.summary.scalar("critic_loss", self.critic_loss)
+        with tf.name_scope("Performace"):
+            tf.summary.scalar("Relative Critic Loss", tf.reduce_mean(self.base_line_est/self.or_cost))
+            tf.summary.scalar("difference_in_length", self.difference_in_length)
+            tf.summary.scalar("relative_length", self.relative_length)
         # self.base_line_est = tf.zeros(shape=[self.batch_size, 1])
-        # tf.summary.scalar("base_line_est", tf.reduce_mean(self.base_line_est))
 
     def get_global_step(self):
         step = self.sess.run(self.global_step)

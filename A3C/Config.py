@@ -27,5 +27,4 @@ class Config:
     LOGIT_CLIP_SCALAR = 1
     LOGIT_PENALTY = 1e6
     MAX_GRAD = 1
-    PATH = "/Users/wyatt/Documents/Github_Repositories/RoutingProject/A3C/"
-    # PATH = "./"
+    PATH = "./"

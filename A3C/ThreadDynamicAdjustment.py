@@ -10,14 +10,11 @@ class ThreadDynamicAdjustment(Thread):
     def __init__(self, server):
         super(ThreadDynamicAdjustment, self).__init__()
         self.setDaemon(True)
-
         self.server = server
         self.enabled = Config.DYNAMIC_SETTINGS
-
         self.trainer_count = Config.TRAINERS
         self.predictor_count = Config.PREDICTORS
         self.agent_count = Config.AGENTS
-
         self.temporal_training_count = 0
         self.exit_flag = False
 

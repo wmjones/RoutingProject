@@ -6,7 +6,7 @@ class Config:
     DEVICE = 'cpu:0'
 
     PREDICTION_BATCH_SIZE = 20
-    LEARNING_RATE = 1e-3
+    LEARNING_RATE = 1e-4
     TRAINING_MIN_BATCH_SIZE = 20
     NUM_OF_CUSTOMERS = 15
     LAYERS_STACKED_COUNT = 2
@@ -28,3 +28,4 @@ class Config:
     LOGIT_PENALTY = 1e6
     MAX_GRAD = 1
     PATH = "./"
+    REINFORCE = 1

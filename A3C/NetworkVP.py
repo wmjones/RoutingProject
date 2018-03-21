@@ -371,6 +371,16 @@ class NetworkVP:
             self.pred_final_action = tf.transpose(self.pred_final_output.predicted_ids, [2, 0, 1])[0]
         else:
             self.pred_final_action = self.pred_final_output.sample_id
+
+        self.critic_final_output, self.critic_final_state, critic_final_sequence_lengths = tf.contrib.seq2seq.dynamic_decode(
+            critic_decoder, impute_finished=False, maximum_iterations=tf.shape(self.state)[1])
+        if Config.DIRECTION != 2:
+            self.base_line_est = tf.layers.dense(self.critic_final_state.cell_state[0].h, Config.RNN_HIDDEN_DIM)
+        else:
+            self.base_line_est = tf.layers.dense(self.critic_final_state.cell_state.c, Config.RNN_HIDDEN_DIM, activation=tf.nn.relu)
+        self.base_line_est = tf.layers.dense(self.base_line_est, 1)
+        self.critic_loss = tf.losses.mean_squared_error(self.or_cost, self.base_line_est)
+
         tf.summary.histogram("LocationStartDist", tf.transpose(self.pred_final_action, [1, 0])[0])
         tf.summary.histogram("LocationEndDist", tf.transpose(self.pred_final_action, [1, 0])[-1])
 
@@ -392,11 +402,15 @@ class NetworkVP:
         if Config.LOGIT_CLIP_SCALAR != 0:
             self.logits = Config.LOGIT_CLIP_SCALAR*tf.nn.tanh(self.logits)
 
-        self.loss = tf.contrib.seq2seq.sequence_loss(
-            logits=self.logits,
-            targets=self.or_action,
-            weights=self.weights
-        )
+        if Config.REINFORCE == 0:
+            self.loss = tf.contrib.seq2seq.sequence_loss(
+                logits=self.logits,
+                targets=self.or_action,
+                weights=self.weights
+            )
+        else:
+            self.neg_log_prob = tf.nn.sparse_softmax_cross_entropy_with_logits(logits=self.logits, labels=self.train_final_action)
+            self.loss = tf.reduce_mean(tf.multiply(tf.reduce_sum(self.neg_log_prob, axis=1), self.sampled_cost-self.base_line_est))
 
         with tf.name_scope("train"):
             if Config.GPU == 1:
@@ -406,6 +420,7 @@ class NetworkVP:
             self.lr = tf.train.exponential_decay(
                 Config.LEARNING_RATE, self.global_step, 10000,
                 .9, staircase=True, name="learning_rate")
+            self.critic_train_op = tf.train.AdamOptimizer(self.lr).minimize(self.critic_loss, global_step=self.global_step)
             # self.train_op = tf.train.AdadeltaOptimizer(Config.LEARNING_RATE).minimize(self.loss,
             #                                                                           global_step=self.global_step,
             #                                                                           colocate_gradients_with_ops=True)
@@ -422,16 +437,6 @@ class NetworkVP:
                                                                          global_step=self.global_step,
                                                                          colocate_gradients_with_ops=colocate)
         # for gradient clipping https://github.com/tensorflow/nmt/blob/master/nmt/model.py
-
-        self.critic_final_output, self.critic_final_state, critic_final_sequence_lengths = tf.contrib.seq2seq.dynamic_decode(
-                    critic_decoder, impute_finished=False, maximum_iterations=tf.shape(self.state)[1])
-        if Config.DIRECTION != 2:
-            self.base_line_est = tf.layers.dense(self.critic_final_state.cell_state[0].h, Config.RNN_HIDDEN_DIM)
-        else:
-            self.base_line_est = tf.layers.dense(self.critic_final_state.cell_state.c, Config.RNN_HIDDEN_DIM, activation=tf.nn.relu)
-        self.base_line_est = tf.layers.dense(self.base_line_est, 1)
-        self.critic_loss = tf.losses.mean_squared_error(self.sampled_cost, self.base_line_est)
-        self.critic_train_op = tf.train.AdamOptimizer(self.lr).minimize(self.critic_loss, global_step=self.global_step)
 
         with tf.name_scope("loss"):
             tf.summary.scalar("loss", self.loss)
@@ -459,8 +464,17 @@ class NetworkVP:
         feed_dict = {self.state: state, self.current_location: current_location, self.or_action: or_action,
                      self.sampled_cost: sampled_cost, self.or_cost: or_cost, self.start_tokens: depot_idx, self.keep_prob: .8}
         # print("step", step)
-        # print("or_action")
-        # print(self.sess.run([self.critic_final_state.cell_state[0].c], feed_dict=feed_dict))
+        print("or_action")
+        print(self.sess.run([self.or_action], feed_dict=feed_dict))
+        print("train_action")
+        print(self.sess.run([self.pred_final_action], feed_dict=feed_dict))
+        print("or_cost")
+        print(self.sess.run([self.or_cost], feed_dict=feed_dict))
+        print("sampled_cost")
+        print(self.sess.run([self.sampled_cost], feed_dict=feed_dict))
+        # print(self.sess.run([tf.nn.softmax(self.logits)], feed_dict=feed_dict))
+        # print(self.sess.run([self.train_final_action], feed_dict=feed_dict))
+        # print(self.sess.run([], feed_dict=feed_dict))
         # print("train_output")
         # print(self.sess.run([self.train_final_output.sample_id], feed_dict=feed_dict))
         # print("pred_output")
@@ -484,8 +498,8 @@ class NetworkVP:
         if step % 1000 == 0 and Config.TRAIN:
             print("Saving Model...")
             self._model_save()
-            print(self.sess.run([self.pred_final_action], feed_dict=feed_dict))
-            print(self.sess.run([self.or_action], feed_dict=feed_dict))
+            # print(self.sess.run([self.pred_final_action], feed_dict=feed_dict))
+            # print(self.sess.run([self.or_action], feed_dict=feed_dict))
 
     def _create_tensor_board(self):
         # for added metadata https://www.tensorflow.org/programmers_guide/graph_viz

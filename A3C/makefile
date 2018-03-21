@@ -38,3 +38,4 @@ gpu6 :
 clean :
 	rm -rf ./logs/*
 	rm -rf ./checkpoint/*
+	rm -rf ./ini_files/*

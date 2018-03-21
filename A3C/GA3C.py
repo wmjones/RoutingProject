@@ -10,20 +10,22 @@ for i in range(1, len(sys.argv)):
 ConfigParse = configparser.ConfigParser()
 ConfigParse.optionxform = str
 variables = [attr for attr in dir(Config) if not callable(getattr(Config, attr)) and not attr.startswith("__")]
-if Config.RESTORE:
+if Config.RESTORE == 1:
     print()
     print("RESTORING...")
     ConfigParse.read(Config.PATH + "ini_files/" + Config.MODEL_NAME + ".ini")
+    print(ConfigParse.sections())
     for var in variables:
-        print(var, type(getattr(Config, var))(ConfigParse.get("RESTORE", var)))
-        setattr(Config, var, type(getattr(Config, var))(ConfigParse.get("RESTORE", var)))
+        print(var, type(getattr(Config, var))(ConfigParse.get("VARIABLES", var)))
+        setattr(Config, var, type(getattr(Config, var))(ConfigParse.get("VARIABLES", var)))
+    setattr(Config, "RESTORE", 1)
 else:
     cfgfile = open(Config.PATH + "ini_files/" + Config.MODEL_NAME + ".ini", 'w')
-    ConfigParse.add_section('RESTORE')
+    ConfigParse.add_section('VARIABLES')
     print()
     for var in variables:
         print(var, str(getattr(Config, var)))
-        ConfigParse.set('RESTORE', var, str(getattr(Config, var)))
+        ConfigParse.set('VARIABLES', var, str(getattr(Config, var)))
     ConfigParse.write(cfgfile)
     cfgfile.close()
 

@@ -29,3 +29,4 @@ class Config:
     MAX_GRAD = 1.0
     PATH = "./"
     REINFORCE = 1
+    SOFTMAX_TEMP = 1

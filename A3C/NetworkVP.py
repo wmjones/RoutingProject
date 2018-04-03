@@ -1,11 +1,12 @@
 import tensorflow as tf
 # import time
 from MaskWrapper import MaskWrapper
-# from MaskWrapper import MaskWrapperAttnState
+from MaskWrapper import MaskWrapperAttnState
 # from MaskWrapper import MaskWrapperState
 # import numpy as np
 
 from Config import Config
+from tensorflow.python.ops.distributions import categorical
 
 
 class NetworkVP:
@@ -167,32 +168,62 @@ class NetworkVP:
                                                                    tf.reshape(sample_ids, [-1, 1])], -1)), [self.batch_size, 1, 2]),
                     W_embed, 1, "VALID", name="embedded_input"), [self.batch_size, Config.RNN_HIDDEN_DIM]))
         if Config.REINFORCE == 1:
-            if Config.DEC_EMB == 1:
-                pred_helper = tf.contrib.seq2seq.GreedyEmbeddingHelper(
-                    lambda sample_ids: embed_fn(sample_ids),
-                    self.start_tokens,
-                    self.end_token)
-                train_helper = tf.contrib.seq2seq.SampleEmbeddingHelper(
-                    lambda sample_ids: embed_fn(sample_ids),
-                    self.start_tokens,
-                    self.end_token)
-            else:
-                pred_helper = tf.contrib.seq2seq.GreedyEmbeddingHelper(
-                    lambda sample_ids: tf.gather_nd(
-                        self.state, tf.concat([tf.reshape(tf.range(0, self.batch_size), [-1, 1]),
-                                               tf.reshape(sample_ids, [-1, 1])], 1)
-                    ),
-                    self.start_tokens,
-                    self.end_token)
-                train_helper = tf.contrib.seq2seq.SampleEmbeddingHelper(
-                    lambda sample_ids: tf.gather_nd(
-                        self.state, tf.concat([tf.reshape(tf.range(0, self.batch_size), [-1, 1]),
-                                               tf.reshape(sample_ids, [-1, 1])], 1)
-                    ),
-                    self.start_tokens,
-                    self.end_token)
-                # maybe use train_helper = pred_helper so that policy is the same for parameter update as is for reward sampling
-                # pred_helper = train_helper
+            def initialize_fn():
+                return (tf.tile([False], [self.batch_size]), tf.zeros([self.batch_size, 2]))
+
+            def sample_fn(time, outputs, state):
+                logits = outputs / Config.SOFTMAX_TEMP
+                sample_id_sampler = categorical.Categorical(logits=logits)
+                sample_ids = sample_id_sampler.sample()
+                return sample_ids
+
+            def next_inputs_fn(time, outputs, state, sample_ids):
+                finished = tf.tile([tf.equal(time, Config.NUM_OF_CUSTOMERS+1)], [self.batch_size])
+                next_inputs = tf.gather_nd(
+                    self.state, tf.concat([tf.reshape(tf.range(0, self.batch_size), [-1, 1]),
+                                           tf.reshape(sample_ids, [-1, 1])], 1)
+                )
+                next_state = MaskWrapperAttnState(
+                    cell_state=state.cell_state,
+                    time=state.time,
+                    attention=state.attention,
+                    alignments=state.alignments,
+                    alignment_history=state.alignment_history,
+                    attention_state=state.attention_state,
+                    mask=state.mask + tf.one_hot(sample_ids, depth=Config.NUM_OF_CUSTOMERS+1, dtype=tf.float32))
+                return (finished, next_inputs, next_state)
+            train_helper = tf.contrib.seq2seq.CustomHelper(
+                initialize_fn=initialize_fn,
+                sample_fn=sample_fn,
+                next_inputs_fn=next_inputs_fn
+            )
+            pred_helper = train_helper
+            # if Config.DEC_EMB == 1:
+            #     pred_helper = tf.contrib.seq2seq.GreedyEmbeddingHelper(
+            #         lambda sample_ids: embed_fn(sample_ids),
+            #         self.start_tokens,
+            #         self.end_token)
+            #     train_helper = tf.contrib.seq2seq.SampleEmbeddingHelper(
+            #         lambda sample_ids: embed_fn(sample_ids),
+            #         self.start_tokens,
+            #         self.end_token)
+            # else:
+            #     pred_helper = tf.contrib.seq2seq.GreedyEmbeddingHelper(
+            #         lambda sample_ids: tf.gather_nd(
+            #             self.state, tf.concat([tf.reshape(tf.range(0, self.batch_size), [-1, 1]),
+            #                                    tf.reshape(sample_ids, [-1, 1])], 1)
+            #         ),
+            #         self.start_tokens,
+            #         self.end_token)
+            #     train_helper = tf.contrib.seq2seq.SampleEmbeddingHelper(
+            #         lambda sample_ids: tf.gather_nd(
+            #             self.state, tf.concat([tf.reshape(tf.range(0, self.batch_size), [-1, 1]),
+            #                                    tf.reshape(sample_ids, [-1, 1])], 1)
+            #         ),
+            #         self.start_tokens,
+            #         self.end_token)
+            # maybe use train_helper = pred_helper so that policy is the same for parameter update as is for reward sampling
+            # pred_helper = train_helper
         else:
             if Config.DEC_EMB == 1:
                 pred_helper = tf.contrib.seq2seq.GreedyEmbeddingHelper(
@@ -523,8 +554,8 @@ class NetworkVP:
         # print(self.sess.run([self.or_cost], feed_dict=feed_dict))
         # print("sampled_cost")
         # print(self.sess.run([self.sampled_cost], feed_dict=feed_dict))
-        # print("log softmax logits")
-        # print(self.sess.run([tf.log(tf.nn.softmax(self.logits))], feed_dict=feed_dict))
+        # print("softmax logits")
+        # print(self.sess.run([tf.nn.softmax(self.logits)], feed_dict=feed_dict))
         # print("neg_log_prob")
         # print(self.sess.run([self.neg_log_prob], feed_dict=feed_dict))
         # print("sum")

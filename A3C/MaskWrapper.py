@@ -24,7 +24,8 @@ class MaskWrapper(rnn_cell_impl.RNNCell):
             cell_output, main_cell_state = self._cell(inputs, attention_state)
             cell_output = cell_output - state.mask*Config.LOGIT_PENALTY
             sample_ids = tf.argmax(tf.nn.softmax(cell_output), axis=1, output_type=tf.int32)
-            next_mask = state.mask + tf.one_hot(sample_ids, depth=Config.NUM_OF_CUSTOMERS+1, dtype=tf.float32)
+            # next_mask = state.mask + tf.one_hot(sample_ids, depth=Config.NUM_OF_CUSTOMERS+1, dtype=tf.float32)
+            next_mask = state.mask
             next_cell_state = MaskWrapperAttnState(
                 cell_state=attention_state.cell_state,
                 time=attention_state.time,
@@ -33,6 +34,7 @@ class MaskWrapper(rnn_cell_impl.RNNCell):
                 alignment_history=attention_state.alignment_history,
                 attention_state=attention_state.attention_state,
                 mask=next_mask)
+            # cell_output = tf.Print(cell_output, [tf.nn.softmax(cell_output)], summarize=10000)
             return cell_output, next_cell_state
         else:
             cell_output, main_cell_state = self._cell(inputs, state.cell_state)

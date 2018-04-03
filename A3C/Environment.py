@@ -16,10 +16,11 @@ class Environment:
         return self.distance_matrix[from_node][to_node]
 
     def reset(self):
-        self.current_state = np.vstack((np.array([0, 0]), np.random.rand(Config.NUM_OF_CUSTOMERS, 2)*10))
+        self.current_state = np.vstack((np.array([.5, .5]), np.random.rand(Config.NUM_OF_CUSTOMERS, 2)))
+        # self.current_state = np.vstack((np.array([0, 0]), np.random.rand(Config.NUM_OF_CUSTOMERS, 2)))
         # self.customer_locations = np.random.rand(Config.NUM_OF_CUSTOMERS, 2)*10
         np.random.shuffle(self.current_state)
-        self.depot_idx = np.where(self.current_state[:, 0] == 0)[0][0]
+        self.depot_idx = np.where(self.current_state[:, 0] == .5)[0][0]
         # print(self.current_state, self.depot_idx)
         self.distance_matrix = [[np.linalg.norm(self.current_state[i]-self.current_state[j])
                                  for i in range(Config.NUM_OF_CUSTOMERS+1)]
@@ -30,11 +31,13 @@ class Environment:
         for i in range(0, len(route)-1):
             dist += self.Distance(route[i], route[i+1])
         # dist += self.Distance(route[len(route)], 0)  # return to depot
-        dist = dist + 6*(len(route) - len(np.unique(route)))
+        # dist = dist + 6*(len(route) - len(np.unique(route)))  # can probably take out since it shouldnt happen anymore
+        if len(route) - len(np.unique(route)) > 0:
+            print("Error same location chosen twice")
         return(dist)
 
     def get_current_location(self):
-        return np.array([0.0, 0.0], dtype=np.float32)
+        return np.array([0.5, 0.5], dtype=np.float32)
 
     def get_depot_idx(self):
         return(self.depot_idx)

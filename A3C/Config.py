@@ -7,10 +7,10 @@ class Config:
 
     PREDICTION_BATCH_SIZE = 20
     LEARNING_RATE = 1e-4
-    TRAINING_MIN_BATCH_SIZE = 20
+    TRAINING_MIN_BATCH_SIZE = 10
     NUM_OF_CUSTOMERS = 15
     LAYERS_STACKED_COUNT = 2
-    RNN_HIDDEN_DIM = 256
+    RNN_HIDDEN_DIM = 128
     DNN_HIDDEN_DIM = 15
     OR_TOOLS = 1
     RUN_TIME = 10
@@ -20,12 +20,12 @@ class Config:
     DEC_EMB = 0
     CELL_TYPE = 0
     TRAIN = 0
-    GPU = 0
+    GPU = 1
     MODEL_NAME = ''
     RESTORE = 0
     DROPOUT = 0
-    LOGIT_CLIP_SCALAR = 1
+    LOGIT_CLIP_SCALAR = 5.0
     LOGIT_PENALTY = 1e6
-    MAX_GRAD = 1
+    MAX_GRAD = 1.0
     PATH = "./"
     REINFORCE = 1

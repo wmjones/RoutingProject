@@ -5,7 +5,7 @@ from ortools.constraint_solver import routing_enums_pb2
 
 class gen_matrix(object):
     def __init__(self, size, data):
-        self.matrix = [[np.linalg.norm(data[i]-data[j]) for i in range(size)]
+        self.matrix = [[int(np.linalg.norm(data[i]-data[j])*10000) for i in range(size)]
                        for j in range(size)]
 
     def Distance(self, from_node, to_node):

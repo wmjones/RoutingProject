@@ -81,6 +81,7 @@ class NetworkVP:
             tf.summary.scalar("LogitPen", Config.LOGIT_PENALTY)
             tf.summary.scalar("LogitClipScalar", Config.LOGIT_CLIP_SCALAR)
             tf.summary.scalar("GPU", Config.GPU)
+            tf.summary.scalar("REINFORCE", Config.REINFORCE)
 
         if Config.ENC_EMB == 1:
             W_embed = tf.get_variable("weights", [1, 2, Config.RNN_HIDDEN_DIM], initializer=tf.contrib.layers.xavier_initializer())
@@ -165,30 +166,52 @@ class NetworkVP:
                     tf.reshape(tf.gather_nd(self.state, tf.concat([tf.reshape(tf.range(self.batch_size), [-1, 1]),
                                                                    tf.reshape(sample_ids, [-1, 1])], -1)), [self.batch_size, 1, 2]),
                     W_embed, 1, "VALID", name="embedded_input"), [self.batch_size, Config.RNN_HIDDEN_DIM]))
-        if Config.DEC_EMB == 1:
-            pred_helper = tf.contrib.seq2seq.GreedyEmbeddingHelper(
-                lambda sample_ids: embed_fn(sample_ids),
-                self.start_tokens,
-                self.end_token)
-            self.training_inputs = tf.nn.conv1d(self.training_inputs, W_embed, 1, "VALID", name="embedded_input")
+        if Config.REINFORCE == 1:
+            if Config.DEC_EMB == 1:
+                pred_helper = tf.contrib.seq2seq.GreedyEmbeddingHelper(
+                    lambda sample_ids: embed_fn(sample_ids),
+                    self.start_tokens,
+                    self.end_token)
+                train_helper = tf.contrib.seq2seq.SampleEmbeddingHelper(
+                    lambda sample_ids: embed_fn(sample_ids),
+                    self.start_tokens,
+                    self.end_token)
+            else:
+                pred_helper = tf.contrib.seq2seq.GreedyEmbeddingHelper(
+                    lambda sample_ids: tf.gather_nd(
+                        self.state, tf.concat([tf.reshape(tf.range(0, self.batch_size), [-1, 1]),
+                                               tf.reshape(sample_ids, [-1, 1])], 1)
+                    ),
+                    self.start_tokens,
+                    self.end_token)
+                train_helper = tf.contrib.seq2seq.SampleEmbeddingHelper(
+                    lambda sample_ids: tf.gather_nd(
+                        self.state, tf.concat([tf.reshape(tf.range(0, self.batch_size), [-1, 1]),
+                                               tf.reshape(sample_ids, [-1, 1])], 1)
+                    ),
+                    self.start_tokens,
+                    self.end_token)
+                # maybe use train_helper = pred_helper so that policy is the same for parameter update as is for reward sampling
+                # pred_helper = train_helper
         else:
-            pred_helper = tf.contrib.seq2seq.GreedyEmbeddingHelper(
-                lambda sample_ids: tf.gather_nd(
-                    self.state, tf.concat([tf.reshape(tf.range(0, self.batch_size), [-1, 1]),
-                                           tf.reshape(sample_ids, [-1, 1])], 1)
-                ),
-                self.start_tokens,
-                self.end_token)
-        train_helper = tf.contrib.seq2seq.TrainingHelper(self.training_inputs,
-                                                         tf.fill([self.batch_size], Config.NUM_OF_CUSTOMERS+1))
-
-        # self.training_inputs = tf.expand_dims(tf.gather_nd(self.state, tf.concat([tf.reshape(tf.range(0, self.batch_size), [-1, 1]),
-        #                                                                          tf.reshape(self.or_action[:, 0], [-1, 1])], 1)), 1)
-        # for i in range(1, Config.NUM_OF_CUSTOMERS+1):
-        #     self.training_inputs = tf.concat(
-        #         [self.training_inputs, tf.expand_dims(
-        #             tf.gather_nd(self.state, tf.concat([tf.reshape(tf.range(0, self.batch_size), [-1, 1]),
-        #                                                 tf.reshape(self.or_action[:, i], [-1, 1])], 1)), 1)], 1)
+            if Config.DEC_EMB == 1:
+                pred_helper = tf.contrib.seq2seq.GreedyEmbeddingHelper(
+                    lambda sample_ids: embed_fn(sample_ids),
+                    self.start_tokens,
+                    self.end_token)
+                self.training_inputs = tf.nn.conv1d(self.training_inputs, W_embed, 1, "VALID", name="embedded_input")
+                train_helper = tf.contrib.seq2seq.TrainingHelper(self.training_inputs,
+                                                                 tf.fill([self.batch_size], Config.NUM_OF_CUSTOMERS+1))
+            else:
+                pred_helper = tf.contrib.seq2seq.GreedyEmbeddingHelper(
+                    lambda sample_ids: tf.gather_nd(
+                        self.state, tf.concat([tf.reshape(tf.range(0, self.batch_size), [-1, 1]),
+                                               tf.reshape(sample_ids, [-1, 1])], 1)
+                    ),
+                    self.start_tokens,
+                    self.end_token)
+                train_helper = tf.contrib.seq2seq.TrainingHelper(self.training_inputs,
+                                                                 tf.fill([self.batch_size], Config.NUM_OF_CUSTOMERS+1))
 
         ########## DECODER ##########
         if Config.DIRECTION == 1:
@@ -224,7 +247,6 @@ class NetworkVP:
             self.initial_state = self.initial_state.clone(cell_state=self.encoder_state)
 
             self.critic_out_cell = tf.contrib.rnn.BasicLSTMCell(2*Config.RNN_HIDDEN_DIM)
-            # self.critic_out_cell = tf.nn.rnn_cell.MultiRNNCell(self.critic_out_cells)
             self.critic_out_cell = _build_attention(self.critic_out_cell, self.encoder_outputs)
             self.critic_out_cell = tf.contrib.rnn.OutputProjectionWrapper(self.critic_out_cell, Config.NUM_OF_CUSTOMERS+1)
             self.critic_out_cell = MaskWrapper(self.critic_out_cell)
@@ -360,6 +382,31 @@ class NetworkVP:
                                                             output_layer=tf.layers.Dense(Config.NUM_OF_CUSTOMERS+1))
             pred_decoder = tf.contrib.seq2seq.BasicDecoder(self.cell, pred_helper, self.initial_state,
                                                            output_layer=tf.layers.Dense(Config.NUM_OF_CUSTOMERS+1))
+        if Config.DIRECTION == 8:
+            W_embed = tf.get_variable("weights", [1, 2, Config.RNN_HIDDEN_DIM], initializer=tf.contrib.layers.xavier_initializer())
+            self.encoder_outputs = tf.nn.conv1d(self.state, W_embed, 1, "VALID", name="embedded_input")
+
+            self.out_cells = []
+            for i in range(Config.LAYERS_STACKED_COUNT):
+                with tf.variable_scope('RNN_{}'.format(i)):
+                    self.cell = _build_rnn_cell()
+                    self.out_cells.append(self.cell)
+            self.out_cell = tf.nn.rnn_cell.MultiRNNCell(self.out_cells)
+            self.out_cell = _build_attention(self.out_cell, self.encoder_outputs)
+            self.out_cell = tf.contrib.rnn.OutputProjectionWrapper(self.out_cell, Config.NUM_OF_CUSTOMERS+1)
+            self.out_cell = MaskWrapper(self.out_cell)
+            self.initial_state = self.out_cell.zero_state(dtype=tf.float32, batch_size=self.batch_size)
+
+            self.critic_out_cells = [_build_rnn_cell()]
+            self.critic_out_cell = tf.nn.rnn_cell.MultiRNNCell(self.critic_out_cells)
+            self.critic_out_cell = _build_attention(self.critic_out_cell, self.encoder_outputs)
+            self.critic_out_cell = tf.contrib.rnn.OutputProjectionWrapper(self.critic_out_cell, Config.NUM_OF_CUSTOMERS+1)
+            self.critic_out_cell = MaskWrapper(self.critic_out_cell)
+            self.critic_initial_state = self.critic_out_cell.zero_state(dtype=tf.float32, batch_size=self.batch_size)
+
+            train_decoder = tf.contrib.seq2seq.BasicDecoder(self.out_cell, train_helper, self.initial_state)
+            pred_decoder = tf.contrib.seq2seq.BasicDecoder(self.out_cell, pred_helper, self.initial_state)
+            critic_decoder = tf.contrib.seq2seq.BasicDecoder(self.critic_out_cell, pred_helper, self.critic_initial_state)
 
         self.train_final_output, self.train_final_state, train_final_sequence_lengths = tf.contrib.seq2seq.dynamic_decode(
             train_decoder, impute_finished=False, maximum_iterations=tf.shape(self.state)[1])
@@ -379,7 +426,7 @@ class NetworkVP:
         else:
             self.base_line_est = tf.layers.dense(self.critic_final_state.cell_state.c, Config.RNN_HIDDEN_DIM, activation=tf.nn.relu)
         self.base_line_est = tf.layers.dense(self.base_line_est, 1)
-        self.critic_loss = tf.losses.mean_squared_error(self.or_cost, self.base_line_est)
+        self.critic_loss = tf.losses.mean_squared_error(self.sampled_cost, self.base_line_est)
 
         tf.summary.histogram("LocationStartDist", tf.transpose(self.pred_final_action, [1, 0])[0])
         tf.summary.histogram("LocationEndDist", tf.transpose(self.pred_final_action, [1, 0])[-1])
@@ -409,8 +456,10 @@ class NetworkVP:
                 weights=self.weights
             )
         else:
-            self.neg_log_prob = tf.nn.sparse_softmax_cross_entropy_with_logits(logits=self.logits, labels=self.train_final_action)
-            self.loss = tf.reduce_mean(tf.multiply(tf.reduce_sum(self.neg_log_prob, axis=1), self.sampled_cost-self.base_line_est))
+            self.neg_log_prob = tf.nn.sparse_softmax_cross_entropy_with_logits(logits=self.train_final_output.rnn_output,
+                                                                               labels=self.train_final_action)
+            self.loss = tf.reduce_mean(tf.multiply(tf.reduce_sum(self.neg_log_prob, axis=1),
+                                                   self.sampled_cost-self.base_line_est))
 
         with tf.name_scope("train"):
             if Config.GPU == 1:
@@ -420,7 +469,7 @@ class NetworkVP:
             self.lr = tf.train.exponential_decay(
                 Config.LEARNING_RATE, self.global_step, 10000,
                 .9, staircase=True, name="learning_rate")
-            self.critic_train_op = tf.train.AdamOptimizer(self.lr).minimize(self.critic_loss, global_step=self.global_step)
+            self.critic_train_op = tf.train.AdamOptimizer(self.lr).minimize(self.critic_loss)
             # self.train_op = tf.train.AdadeltaOptimizer(Config.LEARNING_RATE).minimize(self.loss,
             #                                                                           global_step=self.global_step,
             #                                                                           colocate_gradients_with_ops=True)
@@ -445,6 +494,8 @@ class NetworkVP:
             tf.summary.scalar("Relative Critic Loss", tf.reduce_mean(self.base_line_est/self.or_cost))
             tf.summary.scalar("difference_in_length", self.difference_in_length)
             tf.summary.scalar("relative_length", self.relative_length)
+            tf.summary.scalar("Avg_or_cost", tf.reduce_mean(self.or_cost))
+            tf.summary.scalar("Avg_sampled_cost", tf.reduce_mean(self.sampled_cost))
         # self.base_line_est = tf.zeros(shape=[self.batch_size, 1])
 
     def get_global_step(self):
@@ -464,15 +515,20 @@ class NetworkVP:
         feed_dict = {self.state: state, self.current_location: current_location, self.or_action: or_action,
                      self.sampled_cost: sampled_cost, self.or_cost: or_cost, self.start_tokens: depot_idx, self.keep_prob: .8}
         # print("step", step)
-        print("or_action")
-        print(self.sess.run([self.or_action], feed_dict=feed_dict))
-        print("train_action")
-        print(self.sess.run([self.pred_final_action], feed_dict=feed_dict))
-        print("or_cost")
-        print(self.sess.run([self.or_cost], feed_dict=feed_dict))
-        print("sampled_cost")
-        print(self.sess.run([self.sampled_cost], feed_dict=feed_dict))
-        # print(self.sess.run([tf.nn.softmax(self.logits)], feed_dict=feed_dict))
+        # print("or_action")
+        # print(self.sess.run([self.or_action], feed_dict=feed_dict))
+        # print("train_action")
+        # print(self.sess.run([self.train_final_action], feed_dict=feed_dict))
+        # print("or_cost")
+        # print(self.sess.run([self.or_cost], feed_dict=feed_dict))
+        # print("sampled_cost")
+        # print(self.sess.run([self.sampled_cost], feed_dict=feed_dict))
+        # print("log softmax logits")
+        # print(self.sess.run([tf.log(tf.nn.softmax(self.logits))], feed_dict=feed_dict))
+        # print("neg_log_prob")
+        # print(self.sess.run([self.neg_log_prob], feed_dict=feed_dict))
+        # print("sum")
+        # print(self.sess.run([tf.reduce_sum(self.neg_log_prob, axis=1)], feed_dict=feed_dict))
         # print(self.sess.run([self.train_final_action], feed_dict=feed_dict))
         # print(self.sess.run([], feed_dict=feed_dict))
         # print("train_output")
@@ -494,12 +550,12 @@ class NetworkVP:
                                                   self.loss, self.relative_length], feed_dict=feed_dict)
             print(loss, diff)
         else:
-            self.sess.run(self.train_op, feed_dict=feed_dict)
+            self.sess.run([self.train_op, self.critic_train_op], feed_dict=feed_dict)
         if step % 1000 == 0 and Config.TRAIN:
             print("Saving Model...")
             self._model_save()
-            # print(self.sess.run([self.pred_final_action], feed_dict=feed_dict))
-            # print(self.sess.run([self.or_action], feed_dict=feed_dict))
+            print(self.sess.run([self.pred_final_action], feed_dict=feed_dict))
+            print(self.sess.run([self.or_action], feed_dict=feed_dict))
 
     def _create_tensor_board(self):
         # for added metadata https://www.tensorflow.org/programmers_guide/graph_viz

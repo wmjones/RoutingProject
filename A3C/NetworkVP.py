@@ -3,7 +3,7 @@ import tensorflow as tf
 from MaskWrapper import MaskWrapper
 from MaskWrapper import MaskWrapperAttnState
 # from MaskWrapper import MaskWrapperState
-# import numpy as np
+import numpy as np
 
 from Config import Config
 from tensorflow.python.ops.distributions import categorical
@@ -168,36 +168,48 @@ class NetworkVP:
                                                                    tf.reshape(sample_ids, [-1, 1])], -1)), [self.batch_size, 1, 2]),
                     W_embed, 1, "VALID", name="embedded_input"), [self.batch_size, Config.RNN_HIDDEN_DIM]))
         if Config.REINFORCE == 1:
-            def initialize_fn():
-                return (tf.tile([False], [self.batch_size]), tf.zeros([self.batch_size, 2]))
+            if Config.GREEDY == 0:
+                def initialize_fn():
+                    return (tf.tile([False], [self.batch_size]), tf.zeros([self.batch_size, 2]))
 
-            def sample_fn(time, outputs, state):
-                logits = outputs / Config.SOFTMAX_TEMP
-                sample_id_sampler = categorical.Categorical(logits=logits)
-                sample_ids = sample_id_sampler.sample()
-                return sample_ids
+                def sample_fn(time, outputs, state):
+                    logits = outputs / Config.SOFTMAX_TEMP
+                    sample_id_sampler = categorical.Categorical(logits=logits)
+                    sample_ids = sample_id_sampler.sample()
+                    return sample_ids
 
-            def next_inputs_fn(time, outputs, state, sample_ids):
-                finished = tf.tile([tf.equal(time, Config.NUM_OF_CUSTOMERS+1)], [self.batch_size])
-                next_inputs = tf.gather_nd(
-                    self.state, tf.concat([tf.reshape(tf.range(0, self.batch_size), [-1, 1]),
-                                           tf.reshape(sample_ids, [-1, 1])], 1)
+                def next_inputs_fn(time, outputs, state, sample_ids):
+                    finished = tf.tile([tf.equal(time, Config.NUM_OF_CUSTOMERS+1)], [self.batch_size])
+                    next_inputs = tf.gather_nd(
+                        self.state, tf.concat([tf.reshape(tf.range(0, self.batch_size), [-1, 1]),
+                                               tf.reshape(sample_ids, [-1, 1])], 1)
+                    )
+                    next_state = MaskWrapperAttnState(
+                        cell_state=state.cell_state,
+                        time=state.time,
+                        attention=state.attention,
+                        alignments=state.alignments,
+                        alignment_history=state.alignment_history,
+                        attention_state=state.attention_state,
+                        mask=state.mask + tf.one_hot(sample_ids, depth=Config.NUM_OF_CUSTOMERS+1, dtype=tf.float32))
+                    # finished = tf.Print(finished, [next_state.mask], summarize=1000)
+                    return (finished, next_inputs, next_state)
+                train_helper = tf.contrib.seq2seq.CustomHelper(
+                    initialize_fn=initialize_fn,
+                    sample_fn=sample_fn,
+                    next_inputs_fn=next_inputs_fn
                 )
-                next_state = MaskWrapperAttnState(
-                    cell_state=state.cell_state,
-                    time=state.time,
-                    attention=state.attention,
-                    alignments=state.alignments,
-                    alignment_history=state.alignment_history,
-                    attention_state=state.attention_state,
-                    mask=state.mask + tf.one_hot(sample_ids, depth=Config.NUM_OF_CUSTOMERS+1, dtype=tf.float32))
-                return (finished, next_inputs, next_state)
-            train_helper = tf.contrib.seq2seq.CustomHelper(
-                initialize_fn=initialize_fn,
-                sample_fn=sample_fn,
-                next_inputs_fn=next_inputs_fn
-            )
-            pred_helper = train_helper
+                pred_helper = train_helper
+            else:
+                pred_helper = tf.contrib.seq2seq.GreedyEmbeddingHelper(
+                        lambda sample_ids: tf.gather_nd(
+                            self.state, tf.concat([tf.reshape(tf.range(0, self.batch_size), [-1, 1]),
+                                                   tf.reshape(sample_ids, [-1, 1])], 1)
+                        ),
+                        self.start_tokens,
+                        self.end_token)
+                train_helper = pred_helper
+
             # if Config.DEC_EMB == 1:
             #     pred_helper = tf.contrib.seq2seq.GreedyEmbeddingHelper(
             #         lambda sample_ids: embed_fn(sample_ids),
@@ -486,11 +498,14 @@ class NetworkVP:
                 targets=self.or_action,
                 weights=self.weights
             )
-        else:
-            self.neg_log_prob = tf.nn.sparse_softmax_cross_entropy_with_logits(logits=self.train_final_output.rnn_output,
+            self.neg_log_prob = tf.nn.sparse_softmax_cross_entropy_with_logits(logits=self.logits,
                                                                                labels=self.train_final_action)
-            self.loss = tf.reduce_mean(tf.multiply(tf.reduce_sum(self.neg_log_prob, axis=1),
-                                                   self.sampled_cost-self.base_line_est))
+        else:
+            self.neg_log_prob = -1*tf.nn.sparse_softmax_cross_entropy_with_logits(logits=self.logits,
+                                                                                  labels=self.train_final_action)
+            R = tf.stop_gradient(self.sampled_cost)
+            V = tf.stop_gradient(self.base_line_est)
+            self.loss = tf.reduce_mean(tf.multiply(tf.reduce_sum(self.neg_log_prob, axis=1), R-V))
 
         with tf.name_scope("train"):
             if Config.GPU == 1:
@@ -505,11 +520,11 @@ class NetworkVP:
             #                                                                           global_step=self.global_step,
             #                                                                           colocate_gradients_with_ops=True)
             if Config.MAX_GRAD != 0:
-                params = tf.trainable_variables()
-                self.gradients = tf.gradients(self.loss, params, colocate_gradients_with_ops=colocate)
-                clipped_gradients, gradient_norm = tf.clip_by_global_norm(self.gradients, Config.MAX_GRAD)
+                self.params = tf.trainable_variables()
+                self.gradients = tf.gradients(self.loss, self.params, colocate_gradients_with_ops=colocate)
+                self.clipped_gradients, gradient_norm = tf.clip_by_global_norm(self.gradients, Config.MAX_GRAD)
                 opt = tf.train.AdamOptimizer(self.lr)
-                self.train_op = opt.apply_gradients(zip(clipped_gradients, params), global_step=self.global_step)
+                self.train_op = opt.apply_gradients(zip(self.clipped_gradients, self.params), global_step=self.global_step)
                 tf.summary.scalar("grad_norm", gradient_norm)
                 tf.summary.scalar("LearningRate", self.lr)
             else:
@@ -545,32 +560,20 @@ class NetworkVP:
         step = self.get_global_step()
         feed_dict = {self.state: state, self.current_location: current_location, self.or_action: or_action,
                      self.sampled_cost: sampled_cost, self.or_cost: or_cost, self.start_tokens: depot_idx, self.keep_prob: .8}
-        # print("step", step)
-        # print("or_action")
-        # print(self.sess.run([self.or_action], feed_dict=feed_dict))
+        # train_act, softmax_log, neg_log_prob, total_sum, train_logits = self.sess.run(
+        #     [self.train_final_action, tf.nn.softmax(self.logits), self.neg_log_prob,
+        #      tf.reduce_sum(self.neg_log_prob, 1), self.train_final_output.rnn_output],
+        #     feed_dict=feed_dict)
         # print("train_action")
-        # print(self.sess.run([self.train_final_action], feed_dict=feed_dict))
-        # print("or_cost")
-        # print(self.sess.run([self.or_cost], feed_dict=feed_dict))
-        # print("sampled_cost")
-        # print(self.sess.run([self.sampled_cost], feed_dict=feed_dict))
+        # print(train_act)
         # print("softmax logits")
-        # print(self.sess.run([tf.nn.softmax(self.logits)], feed_dict=feed_dict))
+        # print(softmax_log)
         # print("neg_log_prob")
-        # print(self.sess.run([self.neg_log_prob], feed_dict=feed_dict))
+        # print(neg_log_prob)
         # print("sum")
-        # print(self.sess.run([tf.reduce_sum(self.neg_log_prob, axis=1)], feed_dict=feed_dict))
-        # print(self.sess.run([self.train_final_action], feed_dict=feed_dict))
-        # print(self.sess.run([], feed_dict=feed_dict))
-        # print("train_output")
-        # print(self.sess.run([self.train_final_output.sample_id], feed_dict=feed_dict))
-        # print("pred_output")
-        # print(self.sess.run([self.pred_final_action], feed_dict=feed_dict))
-        # print("loss")
-        # print(self.sess.run([self.loss], feed_dict=feed_dict))
-        # print()
-        # print(self.sess.run([self.state], feed_dict=feed_dict))
-        # print(self.sess.run([self.tmp], feed_dict=feed_dict))
+        # print(total_sum)
+        # print("rnn_output")
+        # print(train_logits)
         if step % 100 == 0:
             if Config.TRAIN == 1:
                 _, _, summary, loss, diff = self.sess.run([self.train_op, self.critic_train_op,

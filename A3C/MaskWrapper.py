@@ -24,8 +24,10 @@ class MaskWrapper(rnn_cell_impl.RNNCell):
             cell_output, main_cell_state = self._cell(inputs, attention_state)
             cell_output = cell_output - state.mask*Config.LOGIT_PENALTY
             sample_ids = tf.argmax(tf.nn.softmax(cell_output), axis=1, output_type=tf.int32)
-            # next_mask = state.mask + tf.one_hot(sample_ids, depth=Config.NUM_OF_CUSTOMERS+1, dtype=tf.float32)
-            next_mask = state.mask
+            if Config.REINFORCE == 0 or Config.GREEDY == 1:
+                next_mask = state.mask + tf.one_hot(sample_ids, depth=Config.NUM_OF_CUSTOMERS+1, dtype=tf.float32)
+            else:
+                next_mask = state.mask
             next_cell_state = MaskWrapperAttnState(
                 cell_state=attention_state.cell_state,
                 time=attention_state.time,
@@ -40,7 +42,10 @@ class MaskWrapper(rnn_cell_impl.RNNCell):
             cell_output, main_cell_state = self._cell(inputs, state.cell_state)
             cell_output = cell_output - state.mask*Config.LOGIT_PENALTY
             sample_ids = tf.argmax(tf.nn.softmax(cell_output), axis=1, output_type=tf.int32)
-            next_mask = state.mask + tf.one_hot(sample_ids, depth=Config.NUM_OF_CUSTOMERS+1, dtype=tf.float32)
+            if Config.REINFORCE == 0 or Config.GREEDY == 1:
+                next_mask = state.mask + tf.one_hot(sample_ids, depth=Config.NUM_OF_CUSTOMERS+1, dtype=tf.float32)
+            else:
+                next_mask = state.mask
             next_cell_state = MaskWrapperState(
                 cell_state=main_cell_state,
                 time=state.time + 1,
@@ -50,7 +55,6 @@ class MaskWrapper(rnn_cell_impl.RNNCell):
     def zero_state(self, batch_size, dtype):
         if self.cell_is_attention:
             attention_state_zero = self._cell.zero_state(batch_size, dtype)
-            # return self._cell.zero_state(batch_size, dtype), tf.zeros([batch_size, Config.NUM_OF_CUSTOMERS+1]))
             return MaskWrapperAttnState(
                 cell_state=attention_state_zero.cell_state,
                 time=attention_state_zero.time,

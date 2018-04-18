@@ -2,11 +2,11 @@ import tensorflow as tf
 # import time
 from MaskWrapper import MaskWrapper
 from MaskWrapper import MaskWrapperAttnState
+from Model import Encoder, Helper, Decoder, Reza_Model
 # from MaskWrapper import MaskWrapperState
 import numpy as np
 
 from Config import Config
-from tensorflow.python.ops.distributions import categorical
 
 
 class NetworkVP:
@@ -84,411 +84,62 @@ class NetworkVP:
             tf.summary.scalar("GPU", Config.GPU)
             tf.summary.scalar("REINFORCE", Config.REINFORCE)
 
-        if Config.ENC_EMB == 1:
-            W_embed = tf.get_variable("weights", [1, 2, Config.RNN_HIDDEN_DIM], initializer=tf.contrib.layers.xavier_initializer())
-            self.enc_inputs = tf.nn.conv1d(self.state, W_embed, 1, "VALID", name="embedded_input")
-            # self.enc_inputs = tf.layers.batch_normalization(self.enc_inputs, axis=2, training=self.is_training, reuse=None)
-        else:
-            self.enc_inputs = self.state
+        if Config.DIRECTION == 8:
+            self.state = tf.layers.conv1d(self.state, Config.RNN_HIDDEN_DIM, 1)
+        self.enc_inputs = self.state
 
-        def _build_rnn_cell():
-            # tf.contrib.cudnn_rnn.CudnnCompatibleLSTMCell
-            cell = tf.nn.rnn_cell.LSTMCell(Config.RNN_HIDDEN_DIM)
-            if Config.DROPOUT == 1:
-                cell = tf.contrib.rnn.DropoutWrapper(cell,
-                                                     input_keep_prob=self.keep_prob,
-                                                     output_keep_prob=self.keep_prob,
-                                                     state_keep_prob=self.keep_prob)
-            return cell
+        # ENCODER
+        if Config.DIRECTION != 9:
+            self.encoder_outputs, self.encoder_state = Encoder(self.enc_inputs)
+        if Config.DIRECTION == 8:
+            self.encoder_outputs = self.state
 
-        def _build_attention(cell, memory):
-            attention_mechanism = tf.contrib.seq2seq.BahdanauAttention(num_units=Config.RNN_HIDDEN_DIM, memory=memory)
-            attn_cell = tf.contrib.seq2seq.AttentionWrapper(cell, attention_mechanism, output_attention=False)
-            return attn_cell
-
-        ########## ENCODER ##########
-        if Config.DIRECTION == 1:
-            self.in_cells = []
-            for i in range(Config.LAYERS_STACKED_COUNT):
-                with tf.variable_scope('RNN_{}'.format(i)):
-                    self.cell = _build_rnn_cell()
-                    self.in_cells.append(self.cell)
-            self.in_cell = tf.nn.rnn_cell.MultiRNNCell(self.in_cells)
-            self.encoder_outputs, self.encoder_state = tf.nn.dynamic_rnn(self.in_cell,
-                                                                         self.enc_inputs,
-                                                                         dtype=tf.float32)
-        if Config.DIRECTION == 2:
-            self.in_cell = tf.contrib.rnn.BasicLSTMCell(Config.RNN_HIDDEN_DIM)
-            (bi_outputs, (encoder_fw_state, encoder_bw_state)) = tf.nn.bidirectional_dynamic_rnn(
-                             cell_fw=self.in_cell, cell_bw=self.in_cell, inputs=self.enc_inputs, dtype=tf.float32)
-            encoder_state_c = tf.concat(
-                (encoder_fw_state.c, encoder_bw_state.c), 1, name='bidirectional_concat_c')
-            encoder_state_h = tf.concat(
-                (encoder_fw_state.h, encoder_bw_state.h), 1, name='bidirectional_concat_h')
-            self.encoder_state = tf.contrib.rnn.LSTMStateTuple(c=encoder_state_c, h=encoder_state_h)
-            self.encoder_outputs = tf.concat(bi_outputs, -1)
-        if Config.DIRECTION == 3:
-            self.in_cells = []
-            for i in range(Config.LAYERS_STACKED_COUNT):
-                with tf.variable_scope('RNN_{}'.format(i)):
-                    self.cell = _build_rnn_cell()
-                    self.in_cells.append(self.cell)
-            (self.encoder_outputs, self.encoder_fw_state, self.encoder_bw_state) = tf.contrib.rnn.stack_bidirectional_dynamic_rnn(
-                             cells_fw=self.in_cells, cells_bw=self.in_cells, inputs=self.enc_inputs, dtype=tf.float32)
-            self.encoder_state = []
-            for i in range(Config.LAYERS_STACKED_COUNT):
-                encoder_state_c = tf.concat(
-                    (self.encoder_fw_state[i].c, self.encoder_bw_state[i].c), 1, name='bidirectional_concat_c')
-                encoder_state_h = tf.concat(
-                    (self.encoder_fw_state[i].h, self.encoder_bw_state[i].h), 1, name='bidirectional_concat_h')
-                self.encoder_state.append(tf.contrib.rnn.LSTMStateTuple(c=encoder_state_c, h=encoder_state_h))
-            self.encoder_state = tuple(self.encoder_state)
-        if Config.DIRECTION == 4:
-            self.in_cells = []
-            for i in range(Config.LAYERS_STACKED_COUNT):
-                with tf.variable_scope('RNN_{}'.format(i)):
-                    self.cell = _build_rnn_cell()
-                    self.in_cells.append(self.cell)
-            self.in_cell = tf.nn.rnn_cell.MultiRNNCell(self.in_cells)
-            self.encoder_outputs, self.encoder_state = tf.nn.dynamic_rnn(self.in_cell,
-                                                                         self.enc_inputs,
-                                                                         dtype=tf.float32)
-
-        ########## HELPERS ##########
+        # HELPERS
         self.gather_ids = tf.concat([tf.expand_dims(
             tf.reshape(tf.tile(tf.reshape(tf.range(self.batch_size), [-1, 1]), [1, tf.shape(self.state)[1]]), [-1]), -1),
                                      tf.reshape(self.or_action, [-1, 1])], -1)
         self.training_inputs = tf.reshape(tf.gather_nd(self.state, self.gather_ids), [self.batch_size, tf.shape(self.state)[1], 2])
         self.training_inputs = tf.concat([tf.zeros([self.batch_size, 1, 2]), self.training_inputs], axis=1)
         self.training_inputs = self.training_inputs[:, :-1, :]
+        train_helper, pred_helper = Helper(self.state, self.batch_size, self.training_inputs, self.start_tokens, self.end_token)
 
-        def embed_fn(sample_ids):
-            return(tf.reshape(tf.nn.conv1d(
-                    tf.reshape(tf.gather_nd(self.state, tf.concat([tf.reshape(tf.range(self.batch_size), [-1, 1]),
-                                                                   tf.reshape(sample_ids, [-1, 1])], -1)), [self.batch_size, 1, 2]),
-                    W_embed, 1, "VALID", name="embedded_input"), [self.batch_size, Config.RNN_HIDDEN_DIM]))
-        if Config.REINFORCE == 1:
-            if Config.GREEDY == 0:
-                def initialize_fn():
-                    return (tf.tile([False], [self.batch_size]), tf.zeros([self.batch_size, 2]))
+        # DECODER
+        if Config.DIRECTION != 9:
+            train_decoder, pred_decoder, critic_decoder = Decoder(self.batch_size, self.encoder_state, self.encoder_outputs,
+                                                                  train_helper, pred_helper, self.state, self.start_tokens,
+                                                                  self.end_token)
+            self.train_final_output, self.train_final_state, train_final_sequence_lengths = tf.contrib.seq2seq.dynamic_decode(
+                train_decoder, impute_finished=False, maximum_iterations=tf.shape(self.state)[1])
+            self.train_final_action = self.train_final_output.sample_id
 
-                def sample_fn(time, outputs, state):
-                    logits = outputs / Config.SOFTMAX_TEMP
-                    sample_id_sampler = categorical.Categorical(logits=logits)
-                    sample_ids = sample_id_sampler.sample()
-                    return sample_ids
-
-                def next_inputs_fn(time, outputs, state, sample_ids):
-                    finished = tf.tile([tf.equal(time, Config.NUM_OF_CUSTOMERS+1)], [self.batch_size])
-                    next_inputs = tf.gather_nd(
-                        self.state, tf.concat([tf.reshape(tf.range(0, self.batch_size), [-1, 1]),
-                                               tf.reshape(sample_ids, [-1, 1])], 1)
-                    )
-                    next_state = MaskWrapperAttnState(
-                        cell_state=state.cell_state,
-                        time=state.time,
-                        attention=state.attention,
-                        alignments=state.alignments,
-                        alignment_history=state.alignment_history,
-                        attention_state=state.attention_state,
-                        mask=state.mask + tf.one_hot(sample_ids, depth=Config.NUM_OF_CUSTOMERS+1, dtype=tf.float32))
-                    # finished = tf.Print(finished, [next_state.mask], summarize=1000)
-                    return (finished, next_inputs, next_state)
-                train_helper = tf.contrib.seq2seq.CustomHelper(
-                    initialize_fn=initialize_fn,
-                    sample_fn=sample_fn,
-                    next_inputs_fn=next_inputs_fn
-                )
-                pred_helper = train_helper
+            self.pred_final_output, self.pred_final_state, pred_final_sequence_lengths = tf.contrib.seq2seq.dynamic_decode(
+                pred_decoder, impute_finished=False, maximum_iterations=tf.shape(self.state)[1])
+            if Config.DIRECTION == 4:
+                self.pred_final_action = tf.transpose(self.pred_final_output.predicted_ids, [2, 0, 1])[0]
             else:
-                pred_helper = tf.contrib.seq2seq.GreedyEmbeddingHelper(
-                        lambda sample_ids: tf.gather_nd(
-                            self.state, tf.concat([tf.reshape(tf.range(0, self.batch_size), [-1, 1]),
-                                                   tf.reshape(sample_ids, [-1, 1])], 1)
-                        ),
-                        self.start_tokens,
-                        self.end_token)
-                train_helper = pred_helper
+                self.pred_final_action = self.pred_final_output.sample_id
 
-            # if Config.DEC_EMB == 1:
-            #     pred_helper = tf.contrib.seq2seq.GreedyEmbeddingHelper(
-            #         lambda sample_ids: embed_fn(sample_ids),
-            #         self.start_tokens,
-            #         self.end_token)
-            #     train_helper = tf.contrib.seq2seq.SampleEmbeddingHelper(
-            #         lambda sample_ids: embed_fn(sample_ids),
-            #         self.start_tokens,
-            #         self.end_token)
-            # else:
-            #     pred_helper = tf.contrib.seq2seq.GreedyEmbeddingHelper(
-            #         lambda sample_ids: tf.gather_nd(
-            #             self.state, tf.concat([tf.reshape(tf.range(0, self.batch_size), [-1, 1]),
-            #                                    tf.reshape(sample_ids, [-1, 1])], 1)
-            #         ),
-            #         self.start_tokens,
-            #         self.end_token)
-            #     train_helper = tf.contrib.seq2seq.SampleEmbeddingHelper(
-            #         lambda sample_ids: tf.gather_nd(
-            #             self.state, tf.concat([tf.reshape(tf.range(0, self.batch_size), [-1, 1]),
-            #                                    tf.reshape(sample_ids, [-1, 1])], 1)
-            #         ),
-            #         self.start_tokens,
-            #         self.end_token)
-            # maybe use train_helper = pred_helper so that policy is the same for parameter update as is for reward sampling
-            # pred_helper = train_helper
-        else:
-            if Config.DEC_EMB == 1:
-                pred_helper = tf.contrib.seq2seq.GreedyEmbeddingHelper(
-                    lambda sample_ids: embed_fn(sample_ids),
-                    self.start_tokens,
-                    self.end_token)
-                self.training_inputs = tf.nn.conv1d(self.training_inputs, W_embed, 1, "VALID", name="embedded_input")
-                train_helper = tf.contrib.seq2seq.TrainingHelper(self.training_inputs,
-                                                                 tf.fill([self.batch_size], Config.NUM_OF_CUSTOMERS+1))
+            self.critic_final_output, self.critic_final_state, critic_final_sequence_lengths = tf.contrib.seq2seq.dynamic_decode(
+                critic_decoder, impute_finished=False, maximum_iterations=tf.shape(self.state)[1])
+            if Config.DIRECTION != 2:
+                self.base_line_est = tf.layers.dense(self.critic_final_state.cell_state[0].h, Config.RNN_HIDDEN_DIM)
             else:
-                pred_helper = tf.contrib.seq2seq.GreedyEmbeddingHelper(
-                    lambda sample_ids: tf.gather_nd(
-                        self.state, tf.concat([tf.reshape(tf.range(0, self.batch_size), [-1, 1]),
-                                               tf.reshape(sample_ids, [-1, 1])], 1)
-                    ),
-                    self.start_tokens,
-                    self.end_token)
-                train_helper = tf.contrib.seq2seq.TrainingHelper(self.training_inputs,
-                                                                 tf.fill([self.batch_size], Config.NUM_OF_CUSTOMERS+1))
-
-        ########## DECODER ##########
-        if Config.DIRECTION == 1:
-            self.out_cells = []
-            for i in range(Config.LAYERS_STACKED_COUNT):
-                with tf.variable_scope('RNN_{}'.format(i)):
-                    self.cell = _build_rnn_cell()
-                    self.out_cells.append(self.cell)
-            self.out_cell = tf.nn.rnn_cell.MultiRNNCell(self.out_cells)
-            self.out_cell = _build_attention(self.out_cell, self.encoder_outputs)
-            self.out_cell = tf.contrib.rnn.OutputProjectionWrapper(self.out_cell, Config.NUM_OF_CUSTOMERS+1)
-            self.out_cell = MaskWrapper(self.out_cell)
-
-            self.critic_out_cells = [_build_rnn_cell()]
-            self.critic_out_cell = tf.nn.rnn_cell.MultiRNNCell(self.critic_out_cells)
-            self.critic_out_cell = _build_attention(self.critic_out_cell, self.encoder_outputs)
-            self.critic_out_cell = tf.contrib.rnn.OutputProjectionWrapper(self.critic_out_cell, Config.NUM_OF_CUSTOMERS+1)
-            self.critic_out_cell = MaskWrapper(self.critic_out_cell)
-            self.critic_initial_state = self.critic_out_cell.zero_state(dtype=tf.float32, batch_size=self.batch_size)
-            self.critic_initial_state = self.critic_initial_state.clone(cell_state=self.encoder_state)
-
-            self.initial_state = self.out_cell.zero_state(dtype=tf.float32, batch_size=self.batch_size)
-            self.initial_state = self.initial_state.clone(cell_state=self.encoder_state)
-            train_decoder = tf.contrib.seq2seq.BasicDecoder(self.out_cell, train_helper, self.initial_state)
-            pred_decoder = tf.contrib.seq2seq.BasicDecoder(self.out_cell, pred_helper, self.initial_state)
-            critic_decoder = tf.contrib.seq2seq.BasicDecoder(self.critic_out_cell, pred_helper, self.critic_initial_state)
-        if Config.DIRECTION == 2:
-            self.out_cell = tf.contrib.rnn.BasicLSTMCell(2*Config.RNN_HIDDEN_DIM)
-            self.out_cell = _build_attention(self.out_cell, self.encoder_outputs)
-            self.out_cell = tf.contrib.rnn.OutputProjectionWrapper(self.out_cell, Config.NUM_OF_CUSTOMERS+1)
-            self.out_cell = MaskWrapper(self.out_cell)
-            self.initial_state = self.out_cell.zero_state(dtype=tf.float32, batch_size=self.batch_size)
-            self.initial_state = self.initial_state.clone(cell_state=self.encoder_state)
-
-            self.critic_out_cell = tf.contrib.rnn.BasicLSTMCell(2*Config.RNN_HIDDEN_DIM)
-            self.critic_out_cell = _build_attention(self.critic_out_cell, self.encoder_outputs)
-            self.critic_out_cell = tf.contrib.rnn.OutputProjectionWrapper(self.critic_out_cell, Config.NUM_OF_CUSTOMERS+1)
-            self.critic_out_cell = MaskWrapper(self.critic_out_cell)
-            self.critic_initial_state = self.critic_out_cell.zero_state(dtype=tf.float32, batch_size=self.batch_size)
-            self.critic_initial_state = self.critic_initial_state.clone(cell_state=self.encoder_state)
-
-            train_decoder = tf.contrib.seq2seq.BasicDecoder(self.out_cell, train_helper, self.initial_state)
-            pred_decoder = tf.contrib.seq2seq.BasicDecoder(self.out_cell, pred_helper, self.initial_state)
-            critic_decoder = tf.contrib.seq2seq.BasicDecoder(self.critic_out_cell, pred_helper, self.critic_initial_state)
-        if Config.DIRECTION == 3:
-            self.out_cells = []
-            for i in range(Config.LAYERS_STACKED_COUNT):
-                with tf.variable_scope('RNN_{}'.format(i)):
-                    self.cell = tf.contrib.rnn.BasicLSTMCell(2*Config.RNN_HIDDEN_DIM)
-                    self.out_cells.append(self.cell)
-            self.out_cell = tf.nn.rnn_cell.MultiRNNCell(self.out_cells)
-            self.out_cell = _build_attention(self.out_cell, self.encoder_outputs)
-            self.out_cell = tf.contrib.rnn.OutputProjectionWrapper(self.out_cell, Config.NUM_OF_CUSTOMERS+1)
-            self.out_cell = MaskWrapper(self.out_cell)
-            self.initial_state = self.out_cell.zero_state(dtype=tf.float32, batch_size=self.batch_size)
-            self.initial_state = self.initial_state.clone(cell_state=self.encoder_state)
-
-            self.critic_out_cells = [tf.contrib.rnn.BasicLSTMCell(2*Config.RNN_HIDDEN_DIM)]
-            self.critic_out_cell = tf.nn.rnn_cell.MultiRNNCell(self.critic_out_cells)
-            self.critic_out_cell = _build_attention(self.critic_out_cell, self.encoder_outputs)
-            self.critic_out_cell = tf.contrib.rnn.OutputProjectionWrapper(self.critic_out_cell, Config.NUM_OF_CUSTOMERS+1)
-            self.critic_out_cell = MaskWrapper(self.critic_out_cell)
-            self.critic_initial_state = self.critic_out_cell.zero_state(dtype=tf.float32, batch_size=self.batch_size)
-            self.critic_initial_state = self.critic_initial_state.clone(cell_state=self.encoder_state)
-
-            train_decoder = tf.contrib.seq2seq.BasicDecoder(self.out_cell, train_helper, self.initial_state)
-            pred_decoder = tf.contrib.seq2seq.BasicDecoder(self.out_cell, pred_helper, self.initial_state)
-            critic_decoder = tf.contrib.seq2seq.BasicDecoder(self.critic_out_cell, pred_helper, self.critic_initial_state)
-        if Config.DIRECTION == 4:
-            self.critic_out_cells = [_build_rnn_cell()]
-            self.critic_out_cell = tf.nn.rnn_cell.MultiRNNCell(self.critic_out_cells)
-            self.critic_out_cell = _build_attention(self.critic_out_cell, self.encoder_outputs)
-            self.critic_out_cell = tf.contrib.rnn.OutputProjectionWrapper(self.critic_out_cell, Config.NUM_OF_CUSTOMERS+1)
-            self.critic_out_cell = MaskWrapper(self.critic_out_cell)
-            self.critic_initial_state = self.critic_out_cell.zero_state(dtype=tf.float32, batch_size=self.batch_size)
-            self.critic_initial_state = self.critic_initial_state.clone(cell_state=self.encoder_state)
-            critic_decoder = tf.contrib.seq2seq.BasicDecoder(self.critic_out_cell, pred_helper, self.critic_initial_state)
-            self.out_cells = []
-            for i in range(Config.LAYERS_STACKED_COUNT):
-                with tf.variable_scope('RNN_{}'.format(i)):
-                    self.cell = _build_rnn_cell()
-                    self.out_cells.append(self.cell)
-            self.out_cell = tf.nn.rnn_cell.MultiRNNCell(self.out_cells)
-            with tf.variable_scope("beam"):
-                self.train_out_cell = _build_attention(self.out_cell, self.encoder_outputs)
-                self.train_out_cell = tf.contrib.rnn.OutputProjectionWrapper(self.train_out_cell, Config.NUM_OF_CUSTOMERS+1)
-                self.train_out_cell = MaskWrapper(self.train_out_cell)
-                self.initial_state = self.train_out_cell.zero_state(dtype=tf.float32, batch_size=self.batch_size)
-                self.initial_state = self.initial_state.clone(cell_state=self.encoder_state)
-                train_decoder = tf.contrib.seq2seq.BasicDecoder(self.train_out_cell, train_helper, self.initial_state)
-            with tf.variable_scope("beam", reuse=True):
-                beam_width = 10
-                tiled_encoder_outputs = tf.contrib.seq2seq.tile_batch(
-                    self.encoder_outputs, multiplier=beam_width)
-                tiled_encoder_final_state = tf.contrib.seq2seq.tile_batch(
-                    self.encoder_state, multiplier=beam_width)
-                # tiled_sequence_length = tf.contrib.seq2seq.tile_batch(
-                #     tf.tile([tf.shape(self.state)[1]], [self.batch_size]), multiplier=beam_width)
-                self.pred_out_cell = _build_attention(self.out_cell, tiled_encoder_outputs)
-                self.pred_out_cell = tf.contrib.rnn.OutputProjectionWrapper(self.pred_out_cell, Config.NUM_OF_CUSTOMERS+1)
-                self.pred_out_cell = MaskWrapper(self.pred_out_cell)
-                self.pred_initial_state = self.pred_out_cell.zero_state(
-                    dtype=tf.float32, batch_size=self.batch_size * beam_width)
-                self.pred_initial_state = self.pred_initial_state.clone(
-                    cell_state=tiled_encoder_final_state)
-                if Config.DEC_EMB == 1:
-                    def beam_embed(x):
-                        return(
-                            tf.reshape(tf.nn.conv1d(tf.reshape(tf.gather_nd(self.state, tf.concat(
-                                [tf.reshape(tf.range(self.batch_size), [-1, 1]),
-                                 tf.reshape(x, [-1, 1])], -1)), [self.batch_size, 1, 2]), W_embed, 1, "VALID"),
-                                       [self.batch_size, Config.RNN_HIDDEN_DIM])
-                        )
-                    # even with logit pen it is outputing infeas routes
-                    pred_decoder = tf.contrib.seq2seq.BeamSearchDecoder(
-                        self.pred_out_cell,
-                        embedding=lambda ids: tf.transpose(
-                            tf.map_fn(beam_embed, tf.transpose(ids, [1, 0]), dtype=tf.float32),
-                            [1, 0, 2]),
-                        start_tokens=self.start_tokens,
-                        end_token=self.end_token,
-                        initial_state=self.pred_initial_state,
-                        beam_width=beam_width)
-                else:
-                    pred_decoder = tf.contrib.seq2seq.BeamSearchDecoder(
-                        self.pred_out_cell,
-                        embedding=lambda sample_ids: tf.transpose(
-                            tf.reshape(tf.gather_nd(
-                                self.state,
-                                tf.concat([tf.tile(tf.reshape(tf.range(0, self.batch_size), [-1, 1]), [beam_width, 1]),
-                                           tf.reshape(sample_ids, [-1, 1])], 1)), [beam_width, self.batch_size, 2]), [1, 0, 2]),
-                        start_tokens=self.start_tokens,
-                        end_token=self.end_token,
-                        initial_state=self.pred_initial_state,
-                        beam_width=beam_width)
-                # pred_decoder = tf.contrib.seq2seq.BasicDecoder(self.train_out_cell, pred_helper, self.initial_state)
-        if Config.DIRECTION == 5:
-            cell = tf.contrib.grid_rnn.Grid2LSTMCell(Config.RNN_HIDDEN_DIM,
-                                                     use_peepholes=True,
-                                                     output_is_tuple=False,
-                                                     state_is_tuple=False)
-            self.cell = tf.nn.rnn_cell.MultiRNNCell([cell] * Config.LAYERS_STACKED_COUNT, state_is_tuple=False)
-            self.cell = tf.contrib.rnn.OutputProjectionWrapper(self.cell, Config.NUM_OF_CUSTOMERS+1)
-            self.cell = MaskWrapper(self.cell, cell_is_attention=False)
-            self.initial_state = self.cell.zero_state(dtype=tf.float32, batch_size=self.batch_size)
-            train_decoder = tf.contrib.seq2seq.BasicDecoder(self.cell, train_helper, self.initial_state)
-            pred_decoder = tf.contrib.seq2seq.BasicDecoder(self.cell, pred_helper, self.initial_state)
-        if Config.DIRECTION == 6:
-            cell = tf.contrib.grid_rnn.Grid3LSTMCell(Config.RNN_HIDDEN_DIM,
-                                                     use_peepholes=True,
-                                                     output_is_tuple=False,
-                                                     state_is_tuple=False)
-            self.cell = tf.nn.rnn_cell.MultiRNNCell([cell] * Config.LAYERS_STACKED_COUNT, state_is_tuple=False)
-            self.cell = tf.contrib.rnn.OutputProjectionWrapper(self.cell, Config.NUM_OF_CUSTOMERS+1)
-            self.cell = MaskWrapper(self.cell, cell_is_attention=False)
-            self.initial_state = self.cell.zero_state(dtype=tf.float32, batch_size=self.batch_size)
-            train_decoder = tf.contrib.seq2seq.BasicDecoder(self.cell, train_helper, self.initial_state)
-            pred_decoder = tf.contrib.seq2seq.BasicDecoder(self.cell, pred_helper, self.initial_state)
-        if Config.DIRECTION == 7:
-            self.cell = tf.contrib.grid_rnn.Grid3LSTMCell(Config.RNN_HIDDEN_DIM,
-                                                          use_peepholes=True,
-                                                          output_is_tuple=False,
-                                                          state_is_tuple=False)
-            self.cell = tf.contrib.rnn.OutputProjectionWrapper(self.cell, Config.NUM_OF_CUSTOMERS+1)
-            self.cell = MaskWrapper(self.cell, cell_is_attention=False)
-            self.initial_state = self.cell.zero_state(dtype=tf.float32, batch_size=self.batch_size)
-            train_decoder = tf.contrib.seq2seq.BasicDecoder(self.cell, train_helper, self.initial_state,
-                                                            output_layer=tf.layers.Dense(Config.NUM_OF_CUSTOMERS+1))
-            pred_decoder = tf.contrib.seq2seq.BasicDecoder(self.cell, pred_helper, self.initial_state,
-                                                           output_layer=tf.layers.Dense(Config.NUM_OF_CUSTOMERS+1))
-        if Config.DIRECTION == 8:
-            W_embed = tf.get_variable("weights", [1, 2, Config.RNN_HIDDEN_DIM], initializer=tf.contrib.layers.xavier_initializer())
-            self.encoder_outputs = tf.nn.conv1d(self.state, W_embed, 1, "VALID", name="embedded_input")
-
-            self.out_cells = []
-            for i in range(Config.LAYERS_STACKED_COUNT):
-                with tf.variable_scope('RNN_{}'.format(i)):
-                    self.cell = _build_rnn_cell()
-                    self.out_cells.append(self.cell)
-            self.out_cell = tf.nn.rnn_cell.MultiRNNCell(self.out_cells)
-            self.out_cell = _build_attention(self.out_cell, self.encoder_outputs)
-            self.out_cell = tf.contrib.rnn.OutputProjectionWrapper(self.out_cell, Config.NUM_OF_CUSTOMERS+1)
-            self.out_cell = MaskWrapper(self.out_cell)
-            self.initial_state = self.out_cell.zero_state(dtype=tf.float32, batch_size=self.batch_size)
-
-            self.critic_out_cells = [_build_rnn_cell()]
-            self.critic_out_cell = tf.nn.rnn_cell.MultiRNNCell(self.critic_out_cells)
-            self.critic_out_cell = _build_attention(self.critic_out_cell, self.encoder_outputs)
-            self.critic_out_cell = tf.contrib.rnn.OutputProjectionWrapper(self.critic_out_cell, Config.NUM_OF_CUSTOMERS+1)
-            self.critic_out_cell = MaskWrapper(self.critic_out_cell)
-            self.critic_initial_state = self.critic_out_cell.zero_state(dtype=tf.float32, batch_size=self.batch_size)
-
-            train_decoder = tf.contrib.seq2seq.BasicDecoder(self.out_cell, train_helper, self.initial_state)
-            pred_decoder = tf.contrib.seq2seq.BasicDecoder(self.out_cell, pred_helper, self.initial_state)
-            critic_decoder = tf.contrib.seq2seq.BasicDecoder(self.critic_out_cell, pred_helper, self.critic_initial_state)
-
-        self.train_final_output, self.train_final_state, train_final_sequence_lengths = tf.contrib.seq2seq.dynamic_decode(
-            train_decoder, impute_finished=False, maximum_iterations=tf.shape(self.state)[1])
-        self.train_final_action = self.train_final_output.sample_id
-
-        self.pred_final_output, self.pred_final_state, pred_final_sequence_lengths = tf.contrib.seq2seq.dynamic_decode(
-            pred_decoder, impute_finished=False, maximum_iterations=tf.shape(self.state)[1])
-        if Config.DIRECTION == 4:
-            self.pred_final_action = tf.transpose(self.pred_final_output.predicted_ids, [2, 0, 1])[0]
+                self.base_line_est = tf.layers.dense(self.critic_final_state.cell_state.c,
+                                                     Config.RNN_HIDDEN_DIM, activation=tf.nn.relu)
+            self.base_line_est = tf.layers.dense(self.base_line_est, 1)
         else:
-            self.pred_final_action = self.pred_final_output.sample_id
+            self.train_final_action, self.pred_final_action, self.base_line_est, self.logits = Reza_Model(self.batch_size, self.state)
 
-        self.critic_final_output, self.critic_final_state, critic_final_sequence_lengths = tf.contrib.seq2seq.dynamic_decode(
-            critic_decoder, impute_finished=False, maximum_iterations=tf.shape(self.state)[1])
-        if Config.DIRECTION != 2:
-            self.base_line_est = tf.layers.dense(self.critic_final_state.cell_state[0].h, Config.RNN_HIDDEN_DIM)
-        else:
-            self.base_line_est = tf.layers.dense(self.critic_final_state.cell_state.c, Config.RNN_HIDDEN_DIM, activation=tf.nn.relu)
-        self.base_line_est = tf.layers.dense(self.base_line_est, 1)
         self.critic_loss = tf.losses.mean_squared_error(self.sampled_cost, self.base_line_est)
 
         tf.summary.histogram("LocationStartDist", tf.transpose(self.pred_final_action, [1, 0])[0])
         tf.summary.histogram("LocationEndDist", tf.transpose(self.pred_final_action, [1, 0])[-1])
 
-        # self.pred_final_action = tf.concat([self.pred_final_action,
-        #                                     tf.zeros([self.batch_size,
-        #                                               Config.NUM_OF_CUSTOMERS + 1 - tf.shape(self.pred_final_action)[1]],
-        #                                              dtype=tf.int32)],
-        #                                    1)
-
-        # self.weights = tf.sequence_mask(train_final_sequence_lengths, maxlen=Config.NUM_OF_CUSTOMERS+1, dtype=tf.float32)
-
         self.weights = tf.ones([self.batch_size, tf.shape(self.state)[1]])
-        # if Config.DIRECTION == 4:
-        #     self.logits = self.train_final_output.rnn_output
-        # else:
-        #     self.logits = self.pred_final_output.rnn_output
 
-        self.logits = self.train_final_output.rnn_output
+        if Config.DIRECTION != 9:
+            self.logits = self.train_final_output.rnn_output
+
         if Config.LOGIT_CLIP_SCALAR != 0:
             self.logits = Config.LOGIT_CLIP_SCALAR*tf.nn.tanh(self.logits)
 
@@ -498,13 +149,12 @@ class NetworkVP:
                 targets=self.or_action,
                 weights=self.weights
             )
-            self.neg_log_prob = tf.nn.sparse_softmax_cross_entropy_with_logits(logits=self.logits,
-                                                                               labels=self.train_final_action)
         else:
             self.neg_log_prob = -1*tf.nn.sparse_softmax_cross_entropy_with_logits(logits=self.logits,
                                                                                   labels=self.train_final_action)
             R = tf.stop_gradient(self.sampled_cost)
             V = tf.stop_gradient(self.base_line_est)
+            # V = tf.constant(4.0)
             self.loss = tf.reduce_mean(tf.multiply(tf.reduce_sum(self.neg_log_prob, axis=1), R-V))
 
         with tf.name_scope("train"):
@@ -516,9 +166,6 @@ class NetworkVP:
                 Config.LEARNING_RATE, self.global_step, 10000,
                 .9, staircase=True, name="learning_rate")
             self.critic_train_op = tf.train.AdamOptimizer(self.lr).minimize(self.critic_loss)
-            # self.train_op = tf.train.AdadeltaOptimizer(Config.LEARNING_RATE).minimize(self.loss,
-            #                                                                           global_step=self.global_step,
-            #                                                                           colocate_gradients_with_ops=True)
             if Config.MAX_GRAD != 0:
                 self.params = tf.trainable_variables()
                 self.gradients = tf.gradients(self.loss, self.params, colocate_gradients_with_ops=colocate)
@@ -542,7 +189,7 @@ class NetworkVP:
             tf.summary.scalar("relative_length", self.relative_length)
             tf.summary.scalar("Avg_or_cost", tf.reduce_mean(self.or_cost))
             tf.summary.scalar("Avg_sampled_cost", tf.reduce_mean(self.sampled_cost))
-        # self.base_line_est = tf.zeros(shape=[self.batch_size, 1])
+        self.base_line_est = tf.zeros(shape=[self.batch_size, 1])
 
     def get_global_step(self):
         step = self.sess.run(self.global_step)
@@ -560,10 +207,13 @@ class NetworkVP:
         step = self.get_global_step()
         feed_dict = {self.state: state, self.current_location: current_location, self.or_action: or_action,
                      self.sampled_cost: sampled_cost, self.or_cost: or_cost, self.start_tokens: depot_idx, self.keep_prob: .8}
-        # train_act, softmax_log, neg_log_prob, total_sum, train_logits = self.sess.run(
-        #     [self.train_final_action, tf.nn.softmax(self.logits), self.neg_log_prob,
-        #      tf.reduce_sum(self.neg_log_prob, 1), self.train_final_output.rnn_output],
+        # pred_act, logits = self.sess.run(
+        #     [self.pred_final_action, self.logits],
         #     feed_dict=feed_dict)
+        # print("actions")
+        # print(pred_act)
+        # print("logits")
+        # print(logits)
         # print("train_action")
         # print(train_act)
         # print("softmax logits")
@@ -596,8 +246,6 @@ class NetworkVP:
         log_name = str(Config.PATH) + "logs/" + self.name
         self.log_writer = tf.summary.FileWriter(log_name)
         self.log_writer.add_graph(self.sess.graph)
-        # for var in tf.trainable_variables():
-        #     tf.summary.histogram("weights_%s" % var.name, var)
         self.merged = tf.summary.merge_all()
 
     def finish(self):

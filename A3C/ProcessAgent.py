@@ -96,9 +96,12 @@ class ProcessAgent(Process):
         idx = int(self.env.get_depot_idx())
         action, base_line = self.predict(self.env.current_state, current_location, idx)
         sampled_value = self.env.G(action, current_location)
-        if Config.OR_TOOLS:
+        if Config.REINFORCE == 0:
             or_model = OR_Tool(self.env.current_state, current_location, idx)
             or_route, or_cost = or_model.solve()
+        else:
+            or_route = np.zeros([Config.NUM_OF_CUSTOMERS+1], dtype=np.int32)
+            or_cost = 1.0
         return action, base_line, sampled_value, or_route, or_cost, idx
 
     def run(self):

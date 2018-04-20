@@ -21,6 +21,7 @@ class OR_Tool:
         self.size = self.data.shape[0]
         self.depot_idx = depot_idx
         # print("self.size", self.size)
+        # print("self.data", self.data)
 
     def objective(self, route):
         out = 0

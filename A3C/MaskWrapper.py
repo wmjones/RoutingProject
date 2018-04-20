@@ -25,7 +25,7 @@ class MaskWrapper(rnn_cell_impl.RNNCell):
             cell_output = cell_output - state.mask*Config.LOGIT_PENALTY
             sample_ids = tf.argmax(tf.nn.softmax(cell_output), axis=1, output_type=tf.int32)
             if Config.REINFORCE == 0 or Config.GREEDY == 1:
-                next_mask = state.mask + tf.one_hot(sample_ids, depth=Config.NUM_OF_CUSTOMERS+1, dtype=tf.float32)
+                next_mask = state.mask + tf.one_hot(sample_ids, depth=Config.NUM_OF_CUSTOMERS, dtype=tf.float32)
             else:
                 next_mask = state.mask
             next_cell_state = MaskWrapperAttnState(
@@ -43,7 +43,7 @@ class MaskWrapper(rnn_cell_impl.RNNCell):
             cell_output = cell_output - state.mask*Config.LOGIT_PENALTY
             sample_ids = tf.argmax(tf.nn.softmax(cell_output), axis=1, output_type=tf.int32)
             if Config.REINFORCE == 0 or Config.GREEDY == 1:
-                next_mask = state.mask + tf.one_hot(sample_ids, depth=Config.NUM_OF_CUSTOMERS+1, dtype=tf.float32)
+                next_mask = state.mask + tf.one_hot(sample_ids, depth=Config.NUM_OF_CUSTOMERS, dtype=tf.float32)
             else:
                 next_mask = state.mask
             next_cell_state = MaskWrapperState(
@@ -62,12 +62,12 @@ class MaskWrapper(rnn_cell_impl.RNNCell):
                 alignments=attention_state_zero.alignments,
                 alignment_history=attention_state_zero.alignment_history,
                 attention_state=attention_state_zero.attention_state,
-                mask=tf.zeros([batch_size, Config.NUM_OF_CUSTOMERS+1]))
+                mask=tf.zeros([batch_size, Config.NUM_OF_CUSTOMERS]))
         else:
             return MaskWrapperState(
                 cell_state=self._cell.zero_state(batch_size, dtype),
                 time=array_ops.zeros([], dtype=dtypes.int32),
-                mask=tf.zeros([batch_size, Config.NUM_OF_CUSTOMERS+1]))
+                mask=tf.zeros([batch_size, Config.NUM_OF_CUSTOMERS]))
 
     @property
     def output_size(self):

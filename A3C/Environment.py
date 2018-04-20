@@ -16,23 +16,21 @@ class Environment:
         return self.distance_matrix[from_node][to_node]
 
     def reset(self):
-        # self.current_state = np.vstack((np.array([.5, .5]), np.random.rand(Config.NUM_OF_CUSTOMERS, 2)))
+        self.current_state = np.vstack((np.random.rand(Config.NUM_OF_CUSTOMERS, 2), np.array([.5, .5])))
         # self.current_state = np.vstack((np.array([0, 0]), np.random.rand(Config.NUM_OF_CUSTOMERS, 2)))
-        self.current_state = np.vstack((np.random.rand(Config.NUM_OF_CUSTOMERS+1, 2)))
+        # self.current_state = np.vstack((np.random.rand(Config.NUM_OF_CUSTOMERS+1, 2)))
         # self.current_state = np.vstack((np.array([0, 0]), np.random.rand(Config.NUM_OF_CUSTOMERS, 2)*10))
-        np.random.shuffle(self.current_state)
-        # self.depot_idx = np.where(self.current_state[:, 0] == .5)[0][0]
-        self.depot_idx = 0
+        # np.random.shuffle(self.current_state)
+        self.depot_idx = np.where(self.current_state[:, 0] == .5)[0][0]
+        # self.depot_idx = 0
         # self.depot_idx = np.where(self.current_state[:, 0] == 0)[0][0]
-        self.distance_matrix = [[np.linalg.norm(self.current_state[i]-self.current_state[j])
-                                 for i in range(Config.NUM_OF_CUSTOMERS+1)]
-                                for j in range(Config.NUM_OF_CUSTOMERS+1)]
+        self.distance_matrix = self.get_distance_matrix()
 
     def G(self, route, current_location):
         dist = np.linalg.norm(current_location - self.current_state[route[0]])  # current_location to first customer
         for i in range(0, len(route)-1):
             dist += self.Distance(route[i], route[i+1])
-        # dist += self.Distance(route[len(route)], 0)  # return to depot
+        dist += self.Distance(route[-1], self.depot_idx)  # return to depot
         # dist = dist + 6*(len(route) - len(np.unique(route)))  # can probably take out since it shouldnt happen anymore
         if len(route) - len(np.unique(route)) > 0:
             print("Error same location chosen twice")
@@ -43,6 +41,12 @@ class Environment:
 
     def get_depot_idx(self):
         return(self.depot_idx)
+
+    def get_distance_matrix(self):
+        dist_mat = [[np.linalg.norm(self.current_state[i]-self.current_state[j])
+                     for i in range(Config.NUM_OF_CUSTOMERS+1)]
+                    for j in range(Config.NUM_OF_CUSTOMERS+1)]
+        return(dist_mat)
 
     # def step(self, action):
     #     customer_location = self.customers[action]

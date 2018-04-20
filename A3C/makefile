@@ -5,7 +5,7 @@ path="/Users/wyatt/Documents/Github_Repositories/RoutingProject/A3C/"
 train=0
 
 test :
-	python3 GA3C.py PATH=$(path) DIRECTION=$(dir) AGENTS=8 NUM_OF_CUSTOMERS=19 MODEL_NAME=$(MODEL_NAME) TRAIN=$(train)
+	python3 GA3C.py PATH=$(path) DIRECTION=$(dir) AGENTS=8 NUM_OF_CUSTOMERS=4 MODEL_NAME=$(MODEL_NAME) TRAIN=$(train)
 res :
 	python3 GA3C.py MODEL_NAME=$(MODEL_NAME) RESTORE=1
 cpu1 :

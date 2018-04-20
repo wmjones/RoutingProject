@@ -18,306 +18,313 @@ def _build_attention(cell, memory):
 
 
 def Encoder(enc_inputs):
-    if Config.DIRECTION == 1:
-        in_cells = []
-        for i in range(Config.LAYERS_STACKED_COUNT):
-            with tf.variable_scope('RNN_{}'.format(i)):
-                cell = tf.nn.rnn_cell.LSTMCell(Config.RNN_HIDDEN_DIM)
-                in_cells.append(cell)
-        in_cell = tf.nn.rnn_cell.MultiRNNCell(in_cells)
-        encoder_outputs, encoder_state = tf.nn.dynamic_rnn(in_cell,
-                                                           enc_inputs,
-                                                           dtype=tf.float32)
-    if Config.DIRECTION == 2:
-        in_cell = tf.contrib.rnn.BasicLSTMCell(Config.RNN_HIDDEN_DIM)
-        (bi_outputs, (encoder_fw_state, encoder_bw_state)) = tf.nn.bidirectional_dynamic_rnn(
-                         cell_fw=in_cell, cell_bw=in_cell, inputs=enc_inputs, dtype=tf.float32)
-        encoder_state_c = tf.concat(
-            (encoder_fw_state.c, encoder_bw_state.c), 1, name='bidirectional_concat_c')
-        encoder_state_h = tf.concat(
-            (encoder_fw_state.h, encoder_bw_state.h), 1, name='bidirectional_concat_h')
-        encoder_state = tf.contrib.rnn.LSTMStateTuple(c=encoder_state_c, h=encoder_state_h)
-        encoder_outputs = tf.concat(bi_outputs, -1)
-    if Config.DIRECTION == 3:
-        in_cells = []
-        for i in range(Config.LAYERS_STACKED_COUNT):
-            with tf.variable_scope('RNN_{}'.format(i)):
-                cell = tf.nn.rnn_cell.LSTMCell(Config.RNN_HIDDEN_DIM)
-                in_cells.append(cell)
-        (encoder_outputs, encoder_fw_state, encoder_bw_state) = tf.contrib.rnn.stack_bidirectional_dynamic_rnn(
-                         cells_fw=in_cells, cells_bw=in_cells, inputs=enc_inputs, dtype=tf.float32)
-        encoder_state = []
-        for i in range(Config.LAYERS_STACKED_COUNT):
+    with tf.variable_scope("Encoder"):
+        if Config.DIRECTION == 1:
+            in_cells = []
+            for i in range(Config.LAYERS_STACKED_COUNT):
+                with tf.variable_scope('RNN_{}'.format(i)):
+                    enc_cell = tf.nn.rnn_cell.LSTMCell(Config.RNN_HIDDEN_DIM)
+                    in_cells.append(enc_cell)
+            in_cell = tf.nn.rnn_cell.MultiRNNCell(in_cells)
+            encoder_outputs, encoder_state = tf.nn.dynamic_rnn(in_cell,
+                                                               enc_inputs,
+                                                               dtype=tf.float32)
+        if Config.DIRECTION == 2:
+            in_cell = tf.contrib.rnn.BasicLSTMCell(Config.RNN_HIDDEN_DIM)
+            (bi_outputs, (encoder_fw_state, encoder_bw_state)) = tf.nn.bidirectional_dynamic_rnn(
+                             cell_fw=in_cell, cell_bw=in_cell, inputs=enc_inputs, dtype=tf.float32)
             encoder_state_c = tf.concat(
-                (encoder_fw_state[i].c, encoder_bw_state[i].c), 1, name='bidirectional_concat_c')
+                (encoder_fw_state.c, encoder_bw_state.c), 1, name='bidirectional_concat_c')
             encoder_state_h = tf.concat(
-                (encoder_fw_state[i].h, encoder_bw_state[i].h), 1, name='bidirectional_concat_h')
-            encoder_state.append(tf.contrib.rnn.LSTMStateTuple(c=encoder_state_c, h=encoder_state_h))
-        encoder_state = tuple(encoder_state)
-    if Config.DIRECTION == 4:
-        in_cells = []
-        for i in range(Config.LAYERS_STACKED_COUNT):
-            with tf.variable_scope('RNN_{}'.format(i)):
-                cell = tf.nn.rnn_cell.LSTMCell(Config.RNN_HIDDEN_DIM)
-                in_cells.append(cell)
-        in_cell = tf.nn.rnn_cell.MultiRNNCell(in_cells)
-        encoder_outputs, encoder_state = tf.nn.dynamic_rnn(in_cell,
-                                                           enc_inputs,
-                                                           dtype=tf.float32)
-    else:
-        encoder_outputs = []
-        encoder_state = []
-    return encoder_outputs, encoder_state
+                (encoder_fw_state.h, encoder_bw_state.h), 1, name='bidirectional_concat_h')
+            encoder_state = tf.contrib.rnn.LSTMStateTuple(c=encoder_state_c, h=encoder_state_h)
+            encoder_outputs = tf.concat(bi_outputs, -1)
+        if Config.DIRECTION == 3:
+            in_cells = []
+            for i in range(Config.LAYERS_STACKED_COUNT):
+                with tf.variable_scope('RNN_{}'.format(i)):
+                    cell = tf.nn.rnn_cell.LSTMCell(Config.RNN_HIDDEN_DIM)
+                    in_cells.append(cell)
+            (encoder_outputs, encoder_fw_state, encoder_bw_state) = tf.contrib.rnn.stack_bidirectional_dynamic_rnn(
+                             cells_fw=in_cells, cells_bw=in_cells, inputs=enc_inputs, dtype=tf.float32)
+            encoder_state = []
+            for i in range(Config.LAYERS_STACKED_COUNT):
+                encoder_state_c = tf.concat(
+                    (encoder_fw_state[i].c, encoder_bw_state[i].c), 1, name='bidirectional_concat_c')
+                encoder_state_h = tf.concat(
+                    (encoder_fw_state[i].h, encoder_bw_state[i].h), 1, name='bidirectional_concat_h')
+                encoder_state.append(tf.contrib.rnn.LSTMStateTuple(c=encoder_state_c, h=encoder_state_h))
+            encoder_state = tuple(encoder_state)
+        if Config.DIRECTION == 4:
+            in_cells = []
+            for i in range(Config.LAYERS_STACKED_COUNT):
+                with tf.variable_scope('RNN_{}'.format(i)):
+                    cell = tf.nn.rnn_cell.LSTMCell(Config.RNN_HIDDEN_DIM)
+                    in_cells.append(cell)
+            in_cell = tf.nn.rnn_cell.MultiRNNCell(in_cells)
+            encoder_outputs, encoder_state = tf.nn.dynamic_rnn(in_cell,
+                                                               enc_inputs,
+                                                               dtype=tf.float32)
+        return encoder_outputs, encoder_state
 
 
 def Helper(problem_state, batch_size, training_inputs, start_tokens, end_token):
-    if Config.REINFORCE == 1:
-        if Config.GREEDY == 0:
-            def initialize_fn():
-                return (tf.tile([False], [batch_size]), tf.zeros([batch_size, 2]))
+    with tf.variable_scope("Helper"):
+        if Config.REINFORCE == 1:
+            if Config.GREEDY == 0:
+                def initialize_fn():
+                    if Config.STATE_EMBED == 0:
+                        return (tf.tile([False], [batch_size]), tf.zeros([batch_size, 2]))
+                    else:
+                        return (tf.tile([False], [batch_size]), tf.zeros([batch_size, Config.RNN_HIDDEN_DIM]))
 
-            def sample_fn(time, outputs, state):
-                logits = outputs / Config.SOFTMAX_TEMP
-                sample_id_sampler = categorical.Categorical(logits=logits)
-                sample_ids = sample_id_sampler.sample()
-                return sample_ids
+                def sample_fn(time, outputs, state):
+                    logits = outputs / Config.SOFTMAX_TEMP
+                    sample_id_sampler = categorical.Categorical(logits=logits)
+                    sample_ids = sample_id_sampler.sample()
+                    return sample_ids
 
-            def next_inputs_fn(time, outputs, state, sample_ids):
-                finished = tf.tile([tf.equal(time, Config.NUM_OF_CUSTOMERS+1)], [batch_size])
-                next_inputs = tf.gather_nd(
-                    problem_state, tf.concat([tf.reshape(tf.range(0, batch_size), [-1, 1]),
-                                              tf.reshape(sample_ids, [-1, 1])], 1)
-                )
-                next_state = MaskWrapperAttnState(
-                    cell_state=state.cell_state,
-                    time=state.time,
-                    attention=state.attention,
-                    alignments=state.alignments,
-                    alignment_history=state.alignment_history,
-                    attention_state=state.attention_state,
-                    mask=state.mask + tf.one_hot(sample_ids, depth=Config.NUM_OF_CUSTOMERS+1, dtype=tf.float32))
-                # finished = tf.Print(finished, [next_state.mask], summarize=1000)
-                return (finished, next_inputs, next_state)
-            train_helper = tf.contrib.seq2seq.CustomHelper(
-                initialize_fn=initialize_fn,
-                sample_fn=sample_fn,
-                next_inputs_fn=next_inputs_fn
-            )
-            pred_helper = train_helper
-        else:
-            pred_helper = tf.contrib.seq2seq.GreedyEmbeddingHelper(
-                    lambda sample_ids: tf.gather_nd(
+                def next_inputs_fn(time, outputs, state, sample_ids):
+                    finished = tf.tile([tf.equal(time, Config.NUM_OF_CUSTOMERS+1)], [batch_size])
+                    next_inputs = tf.gather_nd(
                         problem_state, tf.concat([tf.reshape(tf.range(0, batch_size), [-1, 1]),
                                                   tf.reshape(sample_ids, [-1, 1])], 1)
-                    ),
-                    start_tokens,
-                    end_token)
-            train_helper = pred_helper
-    else:
-        pred_helper = tf.contrib.seq2seq.GreedyEmbeddingHelper(
-            lambda sample_ids: tf.gather_nd(
-                problem_state, tf.concat([tf.reshape(tf.range(0, batch_size), [-1, 1]),
-                                          tf.reshape(sample_ids, [-1, 1])], 1)
-            ),
-            start_tokens,
-            end_token)
-        train_helper = tf.contrib.seq2seq.TrainingHelper(training_inputs,
-                                                         tf.fill([batch_size], Config.NUM_OF_CUSTOMERS+1))
-    return train_helper, pred_helper
+                    )
+                    next_state = MaskWrapperAttnState(
+                        cell_state=state.cell_state,
+                        time=state.time,
+                        attention=state.attention,
+                        alignments=state.alignments,
+                        alignment_history=state.alignment_history,
+                        attention_state=state.attention_state,
+                        mask=state.mask + tf.one_hot(sample_ids, depth=Config.NUM_OF_CUSTOMERS+1, dtype=tf.float32))
+                    # finished = tf.Print(finished, [next_state.mask], summarize=1000)
+                    return (finished, next_inputs, next_state)
+                train_helper = tf.contrib.seq2seq.CustomHelper(
+                    initialize_fn=initialize_fn,
+                    sample_fn=sample_fn,
+                    next_inputs_fn=next_inputs_fn
+                )
+                pred_helper = train_helper
+            else:
+                pred_helper = tf.contrib.seq2seq.GreedyEmbeddingHelper(
+                        lambda sample_ids: tf.gather_nd(
+                            problem_state, tf.concat([tf.reshape(tf.range(0, batch_size), [-1, 1]),
+                                                      tf.reshape(sample_ids, [-1, 1])], 1)
+                        ),
+                        start_tokens,
+                        end_token)
+                train_helper = pred_helper
+        else:
+            pred_helper = tf.contrib.seq2seq.GreedyEmbeddingHelper(
+                lambda sample_ids: tf.gather_nd(
+                    problem_state, tf.concat([tf.reshape(tf.range(0, batch_size), [-1, 1]),
+                                              tf.reshape(sample_ids, [-1, 1])], 1)
+                ),
+                start_tokens,
+                end_token)
+            train_helper = tf.contrib.seq2seq.TrainingHelper(training_inputs,
+                                                             tf.fill([batch_size], Config.NUM_OF_CUSTOMERS+1))
+        return train_helper, pred_helper
 
 
 def Decoder(batch_size, encoder_state, encoder_outputs, train_helper, pred_helper, problem_state, start_tokens, end_token):
-    if Config.DIRECTION == 1:
-        out_cells = []
-        for i in range(Config.LAYERS_STACKED_COUNT):
-            with tf.variable_scope('RNN_{}'.format(i)):
-                cell = _build_rnn_cell()
-                out_cells.append(cell)
-        out_cell = tf.nn.rnn_cell.MultiRNNCell(out_cells)
-        out_cell = _build_attention(out_cell, encoder_outputs)
-        out_cell = tf.contrib.rnn.OutputProjectionWrapper(out_cell, Config.NUM_OF_CUSTOMERS+1)
-        out_cell = MaskWrapper(out_cell)
+    with tf.variable_scope("Decoder"):
+        if Config.DIRECTION == 1:
+            out_cells = []
+            for i in range(Config.LAYERS_STACKED_COUNT):
+                with tf.variable_scope('DEC_RNN_{}'.format(i)):
+                    cell = _build_rnn_cell()
+                    out_cells.append(cell)
+            out_cell = tf.nn.rnn_cell.MultiRNNCell(out_cells)
+            out_cell = _build_attention(out_cell, encoder_outputs)
+            out_cell = tf.contrib.rnn.OutputProjectionWrapper(out_cell, Config.NUM_OF_CUSTOMERS)
+            out_cell = MaskWrapper(out_cell)
 
-        critic_out_cells = [_build_rnn_cell()]
-        critic_out_cell = tf.nn.rnn_cell.MultiRNNCell(critic_out_cells)
-        critic_out_cell = _build_attention(critic_out_cell, encoder_outputs)
-        critic_out_cell = tf.contrib.rnn.OutputProjectionWrapper(critic_out_cell, Config.NUM_OF_CUSTOMERS+1)
-        critic_out_cell = MaskWrapper(critic_out_cell)
-        critic_initial_state = critic_out_cell.zero_state(dtype=tf.float32, batch_size=batch_size)
-        critic_initial_state = critic_initial_state.clone(cell_state=encoder_state)
+            critic_out_cells = []
+            for i in range(Config.LAYERS_STACKED_COUNT):
+                with tf.variable_scope('CRITIC_RNN_{}'.format(i)):
+                    cell = _build_rnn_cell()
+                    critic_out_cells.append(cell)
+            critic_out_cell = tf.nn.rnn_cell.MultiRNNCell(critic_out_cells)
+            critic_out_cell = _build_attention(critic_out_cell, encoder_outputs)
+            critic_out_cell = tf.contrib.rnn.OutputProjectionWrapper(critic_out_cell, Config.NUM_OF_CUSTOMERS)
+            critic_out_cell = MaskWrapper(critic_out_cell)
+            critic_initial_state = critic_out_cell.zero_state(dtype=tf.float32, batch_size=batch_size)
+            critic_initial_state = critic_initial_state.clone(cell_state=encoder_state)
 
-        initial_state = out_cell.zero_state(dtype=tf.float32, batch_size=batch_size)
-        initial_state = initial_state.clone(cell_state=encoder_state)
-        train_decoder = tf.contrib.seq2seq.BasicDecoder(out_cell, train_helper, initial_state)
-        pred_decoder = tf.contrib.seq2seq.BasicDecoder(out_cell, pred_helper, initial_state)
-        critic_decoder = tf.contrib.seq2seq.BasicDecoder(critic_out_cell, pred_helper, critic_initial_state)
-    if Config.DIRECTION == 2:
-        out_cell = tf.contrib.rnn.BasicLSTMCell(2*Config.RNN_HIDDEN_DIM)
-        out_cell = _build_attention(out_cell, encoder_outputs)
-        out_cell = tf.contrib.rnn.OutputProjectionWrapper(out_cell, Config.NUM_OF_CUSTOMERS+1)
-        out_cell = MaskWrapper(out_cell)
-        initial_state = out_cell.zero_state(dtype=tf.float32, batch_size=batch_size)
-        initial_state = initial_state.clone(cell_state=encoder_state)
-
-        critic_out_cell = tf.contrib.rnn.BasicLSTMCell(2*Config.RNN_HIDDEN_DIM)
-        critic_out_cell = _build_attention(critic_out_cell, encoder_outputs)
-        critic_out_cell = tf.contrib.rnn.OutputProjectionWrapper(critic_out_cell, Config.NUM_OF_CUSTOMERS+1)
-        critic_out_cell = MaskWrapper(critic_out_cell)
-        critic_initial_state = critic_out_cell.zero_state(dtype=tf.float32, batch_size=batch_size)
-        critic_initial_state = critic_initial_state.clone(cell_state=encoder_state)
-
-        train_decoder = tf.contrib.seq2seq.BasicDecoder(out_cell, train_helper, initial_state)
-        pred_decoder = tf.contrib.seq2seq.BasicDecoder(out_cell, pred_helper, initial_state)
-        critic_decoder = tf.contrib.seq2seq.BasicDecoder(critic_out_cell, pred_helper, critic_initial_state)
-    if Config.DIRECTION == 3:
-        out_cells = []
-        for i in range(Config.LAYERS_STACKED_COUNT):
-            with tf.variable_scope('RNN_{}'.format(i)):
-                cell = tf.contrib.rnn.BasicLSTMCell(2*Config.RNN_HIDDEN_DIM)
-                out_cells.append(cell)
-        out_cell = tf.nn.rnn_cell.MultiRNNCell(out_cells)
-        out_cell = _build_attention(out_cell, encoder_outputs)
-        out_cell = tf.contrib.rnn.OutputProjectionWrapper(out_cell, Config.NUM_OF_CUSTOMERS+1)
-        out_cell = MaskWrapper(out_cell)
-        initial_state = out_cell.zero_state(dtype=tf.float32, batch_size=batch_size)
-        initial_state = initial_state.clone(cell_state=encoder_state)
-
-        critic_out_cells = [tf.contrib.rnn.BasicLSTMCell(2*Config.RNN_HIDDEN_DIM)]
-        critic_out_cell = tf.nn.rnn_cell.MultiRNNCell(critic_out_cells)
-        critic_out_cell = _build_attention(critic_out_cell, encoder_outputs)
-        critic_out_cell = tf.contrib.rnn.OutputProjectionWrapper(critic_out_cell, Config.NUM_OF_CUSTOMERS+1)
-        critic_out_cell = MaskWrapper(critic_out_cell)
-        critic_initial_state = critic_out_cell.zero_state(dtype=tf.float32, batch_size=batch_size)
-        critic_initial_state = critic_initial_state.clone(cell_state=encoder_state)
-
-        train_decoder = tf.contrib.seq2seq.BasicDecoder(out_cell, train_helper, initial_state)
-        pred_decoder = tf.contrib.seq2seq.BasicDecoder(out_cell, pred_helper, initial_state)
-        critic_decoder = tf.contrib.seq2seq.BasicDecoder(critic_out_cell, pred_helper, critic_initial_state)
-    if Config.DIRECTION == 4:
-        critic_out_cells = [_build_rnn_cell()]
-        critic_out_cell = tf.nn.rnn_cell.MultiRNNCell(critic_out_cells)
-        critic_out_cell = _build_attention(critic_out_cell, encoder_outputs)
-        critic_out_cell = tf.contrib.rnn.OutputProjectionWrapper(critic_out_cell, Config.NUM_OF_CUSTOMERS+1)
-        critic_out_cell = MaskWrapper(critic_out_cell)
-        critic_initial_state = critic_out_cell.zero_state(dtype=tf.float32, batch_size=batch_size)
-        critic_initial_state = critic_initial_state.clone(cell_state=encoder_state)
-        critic_decoder = tf.contrib.seq2seq.BasicDecoder(critic_out_cell, pred_helper, critic_initial_state)
-        out_cells = []
-        for i in range(Config.LAYERS_STACKED_COUNT):
-            with tf.variable_scope('RNN_{}'.format(i)):
-                cell = _build_rnn_cell()
-                out_cells.append(cell)
-        out_cell = tf.nn.rnn_cell.MultiRNNCell(out_cells)
-        with tf.variable_scope("beam"):
-            train_out_cell = _build_attention(out_cell, encoder_outputs)
-            train_out_cell = tf.contrib.rnn.OutputProjectionWrapper(train_out_cell, Config.NUM_OF_CUSTOMERS+1)
-            train_out_cell = MaskWrapper(train_out_cell)
-            initial_state = train_out_cell.zero_state(dtype=tf.float32, batch_size=batch_size)
+            initial_state = out_cell.zero_state(dtype=tf.float32, batch_size=batch_size)
             initial_state = initial_state.clone(cell_state=encoder_state)
-            train_decoder = tf.contrib.seq2seq.BasicDecoder(train_out_cell, train_helper, initial_state)
-        with tf.variable_scope("beam", reuse=True):
-            beam_width = 10
-            tiled_encoder_outputs = tf.contrib.seq2seq.tile_batch(
-                encoder_outputs, multiplier=beam_width)
-            tiled_encoder_final_state = tf.contrib.seq2seq.tile_batch(
-                encoder_state, multiplier=beam_width)
-            # tiled_sequence_length = tf.contrib.seq2seq.tile_batch(
-            #     tf.tile([tf.shape(state)[1]], [batch_size]), multiplier=beam_width)
-            pred_out_cell = _build_attention(out_cell, tiled_encoder_outputs)
-            pred_out_cell = tf.contrib.rnn.OutputProjectionWrapper(pred_out_cell, Config.NUM_OF_CUSTOMERS+1)
-            pred_out_cell = MaskWrapper(pred_out_cell)
-            pred_initial_state = pred_out_cell.zero_state(
-                dtype=tf.float32, batch_size=batch_size * beam_width)
-            pred_initial_state = pred_initial_state.clone(
-                cell_state=tiled_encoder_final_state)
-            if Config.DEC_EMB == 1:
-                def beam_embed(x):
-                    return(
-                        tf.reshape(tf.nn.conv1d(tf.reshape(tf.gather_nd(problem_state, tf.concat(
-                            [tf.reshape(tf.range(batch_size), [-1, 1]),
-                             tf.reshape(x, [-1, 1])], -1)), [batch_size, 1, 2]), W_embed, 1, "VALID"),
-                                   [batch_size, Config.RNN_HIDDEN_DIM])
-                    )
-                # even with logit pen it is outputing infeas routes
-                pred_decoder = tf.contrib.seq2seq.BeamSearchDecoder(
-                    pred_out_cell,
-                    embedding=lambda ids: tf.transpose(
-                        tf.map_fn(beam_embed, tf.transpose(ids, [1, 0]), dtype=tf.float32),
-                        [1, 0, 2]),
-                    start_tokens=start_tokens,
-                    end_token=end_token,
-                    initial_state=pred_initial_state,
-                    beam_width=beam_width)
-            else:
-                pred_decoder = tf.contrib.seq2seq.BeamSearchDecoder(
-                    pred_out_cell,
-                    embedding=lambda sample_ids: tf.transpose(
-                        tf.reshape(tf.gather_nd(
-                            problem_state,
-                            tf.concat([tf.tile(tf.reshape(tf.range(0, batch_size), [-1, 1]), [beam_width, 1]),
-                                       tf.reshape(sample_ids, [-1, 1])], 1)), [beam_width, batch_size, 2]), [1, 0, 2]),
-                    start_tokens=start_tokens,
-                    end_token=end_token,
-                    initial_state=pred_initial_state,
-                    beam_width=beam_width)
-            # pred_decoder = tf.contrib.seq2seq.BasicDecoder(train_out_cell, pred_helper, initial_state)
-    if Config.DIRECTION == 5:
-        cell = tf.contrib.grid_rnn.Grid2LSTMCell(Config.RNN_HIDDEN_DIM,
-                                                 use_peepholes=True,
-                                                 output_is_tuple=False,
-                                                 state_is_tuple=False)
-        cell = tf.nn.rnn_cell.MultiRNNCell([cell] * Config.LAYERS_STACKED_COUNT, state_is_tuple=False)
-        cell = tf.contrib.rnn.OutputProjectionWrapper(cell, Config.NUM_OF_CUSTOMERS+1)
-        cell = MaskWrapper(cell, cell_is_attention=False)
-        initial_state = cell.zero_state(dtype=tf.float32, batch_size=batch_size)
-        train_decoder = tf.contrib.seq2seq.BasicDecoder(cell, train_helper, initial_state)
-        pred_decoder = tf.contrib.seq2seq.BasicDecoder(cell, pred_helper, initial_state)
-    if Config.DIRECTION == 6:
-        cell = tf.contrib.grid_rnn.Grid3LSTMCell(Config.RNN_HIDDEN_DIM,
-                                                 use_peepholes=True,
-                                                 output_is_tuple=False,
-                                                 state_is_tuple=False)
-        cell = tf.nn.rnn_cell.MultiRNNCell([cell] * Config.LAYERS_STACKED_COUNT, state_is_tuple=False)
-        cell = tf.contrib.rnn.OutputProjectionWrapper(cell, Config.NUM_OF_CUSTOMERS+1)
-        cell = MaskWrapper(cell, cell_is_attention=False)
-        initial_state = cell.zero_state(dtype=tf.float32, batch_size=batch_size)
-        train_decoder = tf.contrib.seq2seq.BasicDecoder(cell, train_helper, initial_state)
-        pred_decoder = tf.contrib.seq2seq.BasicDecoder(cell, pred_helper, initial_state)
-    if Config.DIRECTION == 7:
-        cell = tf.contrib.grid_rnn.Grid3LSTMCell(Config.RNN_HIDDEN_DIM,
-                                                 use_peepholes=True,
-                                                 output_is_tuple=False,
-                                                 state_is_tuple=False)
-        cell = tf.contrib.rnn.OutputProjectionWrapper(cell, Config.NUM_OF_CUSTOMERS+1)
-        cell = MaskWrapper(cell, cell_is_attention=False)
-        initial_state = cell.zero_state(dtype=tf.float32, batch_size=batch_size)
-        train_decoder = tf.contrib.seq2seq.BasicDecoder(cell, train_helper, initial_state,
-                                                        output_layer=tf.layers.Dense(Config.NUM_OF_CUSTOMERS+1))
-        pred_decoder = tf.contrib.seq2seq.BasicDecoder(cell, pred_helper, initial_state,
-                                                       output_layer=tf.layers.Dense(Config.NUM_OF_CUSTOMERS+1))
-    if Config.DIRECTION == 8:
-        out_cells = []
-        for i in range(Config.LAYERS_STACKED_COUNT):
-            with tf.variable_scope('RNN_{}'.format(i)):
-                cell = _build_rnn_cell()
-                out_cells.append(cell)
-        out_cell = tf.nn.rnn_cell.MultiRNNCell(out_cells)
-        out_cell = _build_attention(out_cell, encoder_outputs)
-        out_cell = tf.contrib.rnn.OutputProjectionWrapper(out_cell, Config.NUM_OF_CUSTOMERS+1)
-        out_cell = MaskWrapper(out_cell)
-        initial_state = out_cell.zero_state(dtype=tf.float32, batch_size=batch_size)
+            train_decoder = tf.contrib.seq2seq.BasicDecoder(out_cell, train_helper, initial_state)
+            pred_decoder = tf.contrib.seq2seq.BasicDecoder(out_cell, pred_helper, initial_state)
+            critic_decoder = tf.contrib.seq2seq.BasicDecoder(critic_out_cell, pred_helper, critic_initial_state)
+        if Config.DIRECTION == 2:
+            out_cell = tf.contrib.rnn.BasicLSTMCell(2*Config.RNN_HIDDEN_DIM)
+            out_cell = _build_attention(out_cell, encoder_outputs)
+            out_cell = tf.contrib.rnn.OutputProjectionWrapper(out_cell, Config.NUM_OF_CUSTOMERS)
+            out_cell = MaskWrapper(out_cell)
+            initial_state = out_cell.zero_state(dtype=tf.float32, batch_size=batch_size)
+            initial_state = initial_state.clone(cell_state=encoder_state)
 
-        critic_out_cells = [_build_rnn_cell()]
-        critic_out_cell = tf.nn.rnn_cell.MultiRNNCell(critic_out_cells)
-        critic_out_cell = _build_attention(critic_out_cell, encoder_outputs)
-        critic_out_cell = tf.contrib.rnn.OutputProjectionWrapper(critic_out_cell, Config.NUM_OF_CUSTOMERS+1)
-        critic_out_cell = MaskWrapper(critic_out_cell)
-        critic_initial_state = critic_out_cell.zero_state(dtype=tf.float32, batch_size=batch_size)
+            critic_out_cell = tf.contrib.rnn.BasicLSTMCell(2*Config.RNN_HIDDEN_DIM)
+            critic_out_cell = _build_attention(critic_out_cell, encoder_outputs)
+            critic_out_cell = tf.contrib.rnn.OutputProjectionWrapper(critic_out_cell, Config.NUM_OF_CUSTOMERS)
+            critic_out_cell = MaskWrapper(critic_out_cell)
+            critic_initial_state = critic_out_cell.zero_state(dtype=tf.float32, batch_size=batch_size)
+            critic_initial_state = critic_initial_state.clone(cell_state=encoder_state)
 
-        train_decoder = tf.contrib.seq2seq.BasicDecoder(out_cell, train_helper, initial_state)
-        pred_decoder = tf.contrib.seq2seq.BasicDecoder(out_cell, pred_helper, initial_state)
-        critic_decoder = tf.contrib.seq2seq.BasicDecoder(critic_out_cell, pred_helper, critic_initial_state)
-    return train_decoder, pred_decoder, critic_decoder
+            train_decoder = tf.contrib.seq2seq.BasicDecoder(out_cell, train_helper, initial_state)
+            pred_decoder = tf.contrib.seq2seq.BasicDecoder(out_cell, pred_helper, initial_state)
+            critic_decoder = tf.contrib.seq2seq.BasicDecoder(critic_out_cell, pred_helper, critic_initial_state)
+        if Config.DIRECTION == 3:
+            out_cells = []
+            for i in range(Config.LAYERS_STACKED_COUNT):
+                with tf.variable_scope('RNN_{}'.format(i)):
+                    cell = tf.contrib.rnn.BasicLSTMCell(2*Config.RNN_HIDDEN_DIM)
+                    out_cells.append(cell)
+            out_cell = tf.nn.rnn_cell.MultiRNNCell(out_cells)
+            out_cell = _build_attention(out_cell, encoder_outputs)
+            out_cell = tf.contrib.rnn.OutputProjectionWrapper(out_cell, Config.NUM_OF_CUSTOMERS)
+            out_cell = MaskWrapper(out_cell)
+            initial_state = out_cell.zero_state(dtype=tf.float32, batch_size=batch_size)
+            initial_state = initial_state.clone(cell_state=encoder_state)
+
+            critic_out_cells = [tf.contrib.rnn.BasicLSTMCell(2*Config.RNN_HIDDEN_DIM)]
+            critic_out_cell = tf.nn.rnn_cell.MultiRNNCell(critic_out_cells)
+            critic_out_cell = _build_attention(critic_out_cell, encoder_outputs)
+            critic_out_cell = tf.contrib.rnn.OutputProjectionWrapper(critic_out_cell, Config.NUM_OF_CUSTOMERS)
+            critic_out_cell = MaskWrapper(critic_out_cell)
+            critic_initial_state = critic_out_cell.zero_state(dtype=tf.float32, batch_size=batch_size)
+            critic_initial_state = critic_initial_state.clone(cell_state=encoder_state)
+
+            train_decoder = tf.contrib.seq2seq.BasicDecoder(out_cell, train_helper, initial_state)
+            pred_decoder = tf.contrib.seq2seq.BasicDecoder(out_cell, pred_helper, initial_state)
+            critic_decoder = tf.contrib.seq2seq.BasicDecoder(critic_out_cell, pred_helper, critic_initial_state)
+        if Config.DIRECTION == 4:
+            critic_out_cells = [_build_rnn_cell()]
+            critic_out_cell = tf.nn.rnn_cell.MultiRNNCell(critic_out_cells)
+            critic_out_cell = _build_attention(critic_out_cell, encoder_outputs)
+            critic_out_cell = tf.contrib.rnn.OutputProjectionWrapper(critic_out_cell, Config.NUM_OF_CUSTOMERS)
+            critic_out_cell = MaskWrapper(critic_out_cell)
+            critic_initial_state = critic_out_cell.zero_state(dtype=tf.float32, batch_size=batch_size)
+            critic_initial_state = critic_initial_state.clone(cell_state=encoder_state)
+            critic_decoder = tf.contrib.seq2seq.BasicDecoder(critic_out_cell, pred_helper, critic_initial_state)
+            out_cells = []
+            for i in range(Config.LAYERS_STACKED_COUNT):
+                with tf.variable_scope('RNN_{}'.format(i)):
+                    cell = _build_rnn_cell()
+                    out_cells.append(cell)
+            out_cell = tf.nn.rnn_cell.MultiRNNCell(out_cells)
+            with tf.variable_scope("beam"):
+                train_out_cell = _build_attention(out_cell, encoder_outputs)
+                train_out_cell = tf.contrib.rnn.OutputProjectionWrapper(train_out_cell, Config.NUM_OF_CUSTOMERS)
+                train_out_cell = MaskWrapper(train_out_cell)
+                initial_state = train_out_cell.zero_state(dtype=tf.float32, batch_size=batch_size)
+                initial_state = initial_state.clone(cell_state=encoder_state)
+                train_decoder = tf.contrib.seq2seq.BasicDecoder(train_out_cell, train_helper, initial_state)
+            with tf.variable_scope("beam", reuse=True):
+                beam_width = 10
+                tiled_encoder_outputs = tf.contrib.seq2seq.tile_batch(
+                    encoder_outputs, multiplier=beam_width)
+                tiled_encoder_final_state = tf.contrib.seq2seq.tile_batch(
+                    encoder_state, multiplier=beam_width)
+                # tiled_sequence_length = tf.contrib.seq2seq.tile_batch(
+                #     tf.tile([tf.shape(state)[1]], [batch_size]), multiplier=beam_width)
+                pred_out_cell = _build_attention(out_cell, tiled_encoder_outputs)
+                pred_out_cell = tf.contrib.rnn.OutputProjectionWrapper(pred_out_cell, Config.NUM_OF_CUSTOMERS)
+                pred_out_cell = MaskWrapper(pred_out_cell)
+                pred_initial_state = pred_out_cell.zero_state(
+                    dtype=tf.float32, batch_size=batch_size * beam_width)
+                pred_initial_state = pred_initial_state.clone(
+                    cell_state=tiled_encoder_final_state)
+                if Config.DEC_EMB == 1:
+                    def beam_embed(x):
+                        return(
+                            tf.reshape(tf.nn.conv1d(tf.reshape(tf.gather_nd(problem_state, tf.concat(
+                                [tf.reshape(tf.range(batch_size), [-1, 1]),
+                                 tf.reshape(x, [-1, 1])], -1)), [batch_size, 1, 2]), W_embed, 1, "VALID"),
+                                       [batch_size, Config.RNN_HIDDEN_DIM])
+                        )
+                    # even with logit pen it is outputing infeas routes
+                    pred_decoder = tf.contrib.seq2seq.BeamSearchDecoder(
+                        pred_out_cell,
+                        embedding=lambda ids: tf.transpose(
+                            tf.map_fn(beam_embed, tf.transpose(ids, [1, 0]), dtype=tf.float32),
+                            [1, 0, 2]),
+                        start_tokens=start_tokens,
+                        end_token=end_token,
+                        initial_state=pred_initial_state,
+                        beam_width=beam_width)
+                else:
+                    pred_decoder = tf.contrib.seq2seq.BeamSearchDecoder(
+                        pred_out_cell,
+                        embedding=lambda sample_ids: tf.transpose(
+                            tf.reshape(tf.gather_nd(
+                                problem_state,
+                                tf.concat([tf.tile(tf.reshape(tf.range(0, batch_size), [-1, 1]), [beam_width, 1]),
+                                           tf.reshape(sample_ids, [-1, 1])], 1)), [beam_width, batch_size, 2]), [1, 0, 2]),
+                        start_tokens=start_tokens,
+                        end_token=end_token,
+                        initial_state=pred_initial_state,
+                        beam_width=beam_width)
+                # pred_decoder = tf.contrib.seq2seq.BasicDecoder(train_out_cell, pred_helper, initial_state)
+        if Config.DIRECTION == 5:
+            cell = tf.contrib.grid_rnn.Grid2LSTMCell(Config.RNN_HIDDEN_DIM,
+                                                     use_peepholes=True,
+                                                     output_is_tuple=False,
+                                                     state_is_tuple=False)
+            cell = tf.nn.rnn_cell.MultiRNNCell([cell] * Config.LAYERS_STACKED_COUNT, state_is_tuple=False)
+            cell = tf.contrib.rnn.OutputProjectionWrapper(cell, Config.NUM_OF_CUSTOMERS)
+            cell = MaskWrapper(cell, cell_is_attention=False)
+            initial_state = cell.zero_state(dtype=tf.float32, batch_size=batch_size)
+            train_decoder = tf.contrib.seq2seq.BasicDecoder(cell, train_helper, initial_state)
+            pred_decoder = tf.contrib.seq2seq.BasicDecoder(cell, pred_helper, initial_state)
+        if Config.DIRECTION == 6:
+            cell = tf.contrib.grid_rnn.Grid3LSTMCell(Config.RNN_HIDDEN_DIM,
+                                                     use_peepholes=True,
+                                                     output_is_tuple=False,
+                                                     state_is_tuple=False)
+            cell = tf.nn.rnn_cell.MultiRNNCell([cell] * Config.LAYERS_STACKED_COUNT, state_is_tuple=False)
+            cell = tf.contrib.rnn.OutputProjectionWrapper(cell, Config.NUM_OF_CUSTOMERS)
+            cell = MaskWrapper(cell, cell_is_attention=False)
+            initial_state = cell.zero_state(dtype=tf.float32, batch_size=batch_size)
+            train_decoder = tf.contrib.seq2seq.BasicDecoder(cell, train_helper, initial_state)
+            pred_decoder = tf.contrib.seq2seq.BasicDecoder(cell, pred_helper, initial_state)
+        if Config.DIRECTION == 7:
+            cell = tf.contrib.grid_rnn.Grid3LSTMCell(Config.RNN_HIDDEN_DIM,
+                                                     use_peepholes=True,
+                                                     output_is_tuple=False,
+                                                     state_is_tuple=False)
+            cell = tf.contrib.rnn.OutputProjectionWrapper(cell, Config.NUM_OF_CUSTOMERS)
+            cell = MaskWrapper(cell, cell_is_attention=False)
+            initial_state = cell.zero_state(dtype=tf.float32, batch_size=batch_size)
+            train_decoder = tf.contrib.seq2seq.BasicDecoder(cell, train_helper, initial_state,
+                                                            output_layer=tf.layers.Dense(Config.NUM_OF_CUSTOMERS+1))
+            pred_decoder = tf.contrib.seq2seq.BasicDecoder(cell, pred_helper, initial_state,
+                                                           output_layer=tf.layers.Dense(Config.NUM_OF_CUSTOMERS+1))
+        if Config.DIRECTION == 8:
+            out_cells = []
+            for i in range(Config.LAYERS_STACKED_COUNT):
+                with tf.variable_scope('RNN_{}'.format(i)):
+                    cell = _build_rnn_cell()
+                    out_cells.append(cell)
+            out_cell = tf.nn.rnn_cell.MultiRNNCell(out_cells)
+            out_cell = _build_attention(out_cell, encoder_outputs)
+            out_cell = tf.contrib.rnn.OutputProjectionWrapper(out_cell, Config.NUM_OF_CUSTOMERS)
+            out_cell = MaskWrapper(out_cell)
+            initial_state = out_cell.zero_state(dtype=tf.float32, batch_size=batch_size)
+
+            critic_out_cells = [_build_rnn_cell()]
+            critic_out_cell = tf.nn.rnn_cell.MultiRNNCell(critic_out_cells)
+            critic_out_cell = _build_attention(critic_out_cell, encoder_outputs)
+            critic_out_cell = tf.contrib.rnn.OutputProjectionWrapper(critic_out_cell, Config.NUM_OF_CUSTOMERS)
+            critic_out_cell = MaskWrapper(critic_out_cell)
+            critic_initial_state = critic_out_cell.zero_state(dtype=tf.float32, batch_size=batch_size)
+
+            train_decoder = tf.contrib.seq2seq.BasicDecoder(out_cell, train_helper, initial_state)
+            pred_decoder = tf.contrib.seq2seq.BasicDecoder(out_cell, pred_helper, initial_state)
+            critic_decoder = tf.contrib.seq2seq.BasicDecoder(critic_out_cell, pred_helper, critic_initial_state)
+        return train_decoder, pred_decoder, critic_decoder
 
 
 def Reza_Model(batch_size, problem_state):
@@ -360,9 +367,9 @@ def Reza_Model(batch_size, problem_state):
         return prob, decoder_state, logit
 
     with tf.variable_scope("Embedding"):
-        dist = Dist_mat(problem_state)
-        emb_inp = tf.layers.conv1d(dist, Config.RNN_HIDDEN_DIM, 1)
-        # emb_inp = tf.layers.conv1d(problem_state, Config.RNN_HIDDEN_DIM, 1)
+        # dist = Dist_mat(problem_state)
+        # emb_inp = tf.layers.conv1d(dist, Config.RNN_HIDDEN_DIM, 1)
+        emb_inp = tf.layers.conv1d(problem_state, Config.RNN_HIDDEN_DIM, 1)
     with tf.variable_scope("Actor"):
         initial_state = tf.zeros([1, 2, batch_size, Config.RNN_HIDDEN_DIM])
         tmp = tf.unstack(initial_state, axis=0)
@@ -380,7 +387,7 @@ def Reza_Model(batch_size, problem_state):
         logprobs = []
         logits = []
         BatchSequence = tf.expand_dims(tf.cast(tf.range(batch_size), tf.int64), 1)
-        for i in range(Config.NUM_OF_CUSTOMERS+1):  # Maybe needs to be +1
+        for i in range(Config.NUM_OF_CUSTOMERS+1):
             prob, decoder_state, logit = Actor(emb_inp, decoder_input, decoder_state, mask, cell)
             probs.append(prob)
             tf.get_variable_scope().reuse_variables()

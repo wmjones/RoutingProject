@@ -1,11 +1,11 @@
 import tensorflow as tf
 # import time
-from MaskWrapper import MaskWrapper
-from MaskWrapper import MaskWrapperAttnState
+# from MaskWrapper import MaskWrapper
+# from MaskWrapper import MaskWrapperAttnState
 from Model import Encoder, Helper, Decoder, Reza_Model
 # from MaskWrapper import MaskWrapperState
-import numpy as np
-
+# import numpy as np
+from Environment import Environment
 from Config import Config
 
 
@@ -48,11 +48,21 @@ class NetworkVP:
     def _model_save(self):
         self.saver.save(self.sess, str(Config.PATH) + 'checkpoint/' + self.name + '/model.ckpt')
 
+    def _build_rnn_cell(self):
+        # tf.contrib.cudnn_rnn.CudnnCompatibleLSTMCell
+        cell = tf.nn.rnn_cell.LSTMCell(Config.RNN_HIDDEN_DIM)
+        return cell
+
+    def _build_attention(self, cell, memory):
+        attention_mechanism = tf.contrib.seq2seq.BahdanauAttention(num_units=Config.RNN_HIDDEN_DIM, memory=memory)
+        attn_cell = tf.contrib.seq2seq.AttentionWrapper(cell, attention_mechanism, output_attention=False)
+        return attn_cell
+
     def _create_graph(self):
-        self.state = tf.placeholder(tf.float32, shape=[None, Config.NUM_OF_CUSTOMERS+1, 2], name='State')
+        self.raw_state = tf.placeholder(tf.float32, shape=[None, Config.NUM_OF_CUSTOMERS+1, 2], name='State')
         self.current_location = tf.placeholder(tf.float32, shape=[None, 2], name='Current_Location')
         self.sampled_cost = tf.placeholder(tf.float32, [None, 1], name='Sampled_Cost')
-        self.batch_size = tf.shape(self.state)[0]
+        self.batch_size = tf.shape(self.raw_state)[0]
         self.keep_prob = tf.placeholder(tf.float32)
         self.global_step = tf.Variable(0, trainable=False, name='step')
         self.input_lengths = tf.convert_to_tensor([Config.NUM_OF_CUSTOMERS]*(self.batch_size))
@@ -66,6 +76,7 @@ class NetworkVP:
             tf.constant(True, dtype=tf.bool),
             shape=(), name='is_training'
         )
+        self.MA_baseline = tf.Variable(10.0, dtype=tf.float32, trainable=False)
         with tf.name_scope("Config"):
             tf.summary.scalar("DIRECTION", Config.DIRECTION)
             tf.summary.scalar("batch_size", self.batch_size)
@@ -84,23 +95,30 @@ class NetworkVP:
             tf.summary.scalar("GPU", Config.GPU)
             tf.summary.scalar("REINFORCE", Config.REINFORCE)
 
-        if Config.DIRECTION == 8:
-            self.state = tf.layers.conv1d(self.state, Config.RNN_HIDDEN_DIM, 1)
-        self.enc_inputs = self.state
+        if Config.STATE_EMBED == 1:
+            self.state = tf.layers.conv1d(self.raw_state, Config.RNN_HIDDEN_DIM, 1)
+        else:
+            self.state = self.raw_state
 
         # ENCODER
-        if Config.DIRECTION != 9:
-            self.encoder_outputs, self.encoder_state = Encoder(self.enc_inputs)
         if Config.DIRECTION == 8:
             self.encoder_outputs = self.state
+            self.encoder_state = None
+        if Config.DIRECTION != 9 and Config.DIRECTION != 8:
+            self.encoder_outputs, self.encoder_state = Encoder(self.state)
 
         # HELPERS
+        self.training_index = tf.concat([tf.expand_dims(self.start_tokens, -1), self.or_action], axis=1)
+        self.training_index = self.training_index[:, :-1]
         self.gather_ids = tf.concat([tf.expand_dims(
             tf.reshape(tf.tile(tf.reshape(tf.range(self.batch_size), [-1, 1]), [1, tf.shape(self.state)[1]]), [-1]), -1),
-                                     tf.reshape(self.or_action, [-1, 1])], -1)
-        self.training_inputs = tf.reshape(tf.gather_nd(self.state, self.gather_ids), [self.batch_size, tf.shape(self.state)[1], 2])
-        self.training_inputs = tf.concat([tf.zeros([self.batch_size, 1, 2]), self.training_inputs], axis=1)
-        self.training_inputs = self.training_inputs[:, :-1, :]
+                                     tf.reshape(self.training_index, [-1, 1])], -1)
+        if Config.STATE_EMBED == 0:
+            self.training_inputs = tf.reshape(tf.gather_nd(self.state, self.gather_ids),
+                                              [self.batch_size, tf.shape(self.state)[1], 2])
+        else:
+            self.training_inputs = tf.reshape(tf.gather_nd(self.state, self.gather_ids),
+                                              [self.batch_size, tf.shape(self.state)[1], Config.RNN_HIDDEN_DIM])
         train_helper, pred_helper = Helper(self.state, self.batch_size, self.training_inputs, self.start_tokens, self.end_token)
 
         # DECODER
@@ -108,34 +126,30 @@ class NetworkVP:
             train_decoder, pred_decoder, critic_decoder = Decoder(self.batch_size, self.encoder_state, self.encoder_outputs,
                                                                   train_helper, pred_helper, self.state, self.start_tokens,
                                                                   self.end_token)
+
             self.train_final_output, self.train_final_state, train_final_sequence_lengths = tf.contrib.seq2seq.dynamic_decode(
-                train_decoder, impute_finished=False, maximum_iterations=tf.shape(self.state)[1])
+                train_decoder, impute_finished=False, maximum_iterations=tf.shape(self.state)[1]-1)
             self.train_final_action = self.train_final_output.sample_id
 
             self.pred_final_output, self.pred_final_state, pred_final_sequence_lengths = tf.contrib.seq2seq.dynamic_decode(
-                pred_decoder, impute_finished=False, maximum_iterations=tf.shape(self.state)[1])
+                pred_decoder, impute_finished=False, maximum_iterations=tf.shape(self.state)[1]-1)
             if Config.DIRECTION == 4:
                 self.pred_final_action = tf.transpose(self.pred_final_output.predicted_ids, [2, 0, 1])[0]
             else:
                 self.pred_final_action = self.pred_final_output.sample_id
 
             self.critic_final_output, self.critic_final_state, critic_final_sequence_lengths = tf.contrib.seq2seq.dynamic_decode(
-                critic_decoder, impute_finished=False, maximum_iterations=tf.shape(self.state)[1])
+                critic_decoder, impute_finished=False, maximum_iterations=tf.shape(self.state)[1]-1)
             if Config.DIRECTION != 2:
                 self.base_line_est = tf.layers.dense(self.critic_final_state.cell_state[0].h, Config.RNN_HIDDEN_DIM)
             else:
-                self.base_line_est = tf.layers.dense(self.critic_final_state.cell_state.c,
+                self.base_line_est = tf.layers.dense(self.critic_final_state.cell_state.h,
                                                      Config.RNN_HIDDEN_DIM, activation=tf.nn.relu)
             self.base_line_est = tf.layers.dense(self.base_line_est, 1)
         else:
             self.train_final_action, self.pred_final_action, self.base_line_est, self.logits = Reza_Model(self.batch_size, self.state)
 
         self.critic_loss = tf.losses.mean_squared_error(self.sampled_cost, self.base_line_est)
-
-        tf.summary.histogram("LocationStartDist", tf.transpose(self.pred_final_action, [1, 0])[0])
-        tf.summary.histogram("LocationEndDist", tf.transpose(self.pred_final_action, [1, 0])[-1])
-
-        self.weights = tf.ones([self.batch_size, tf.shape(self.state)[1]])
 
         if Config.DIRECTION != 9:
             self.logits = self.train_final_output.rnn_output
@@ -146,16 +160,19 @@ class NetworkVP:
         if Config.REINFORCE == 0:
             self.loss = tf.contrib.seq2seq.sequence_loss(
                 logits=self.logits,
-                targets=self.or_action,
-                weights=self.weights
+                targets=self.or_action[:, :-1],
+                weights=tf.ones([self.batch_size, tf.shape(self.state)[1]-1])
             )
         else:
             self.neg_log_prob = -1*tf.nn.sparse_softmax_cross_entropy_with_logits(logits=self.logits,
                                                                                   labels=self.train_final_action)
-            R = tf.stop_gradient(self.sampled_cost)
-            V = tf.stop_gradient(self.base_line_est)
-            # V = tf.constant(4.0)
-            self.loss = tf.reduce_mean(tf.multiply(tf.reduce_sum(self.neg_log_prob, axis=1), R-V))
+            self.R = tf.stop_gradient(self.sampled_cost)
+            assign = tf.assign(self.MA_baseline, self.MA_baseline*.8 + tf.reduce_mean(self.R)*.2)
+            with tf.control_dependencies([assign]):
+                V = self.MA_baseline
+                self.loss = tf.reduce_mean(tf.multiply(tf.reduce_sum(self.neg_log_prob, axis=1), self.R-V))
+            # V = tf.stop_gradient(self.base_line_est)
+            # self.loss = tf.reduce_mean(tf.multiply(tf.reduce_sum(self.neg_log_prob, axis=1), self.R-V))
 
         with tf.name_scope("train"):
             if Config.GPU == 1:
@@ -189,14 +206,15 @@ class NetworkVP:
             tf.summary.scalar("relative_length", self.relative_length)
             tf.summary.scalar("Avg_or_cost", tf.reduce_mean(self.or_cost))
             tf.summary.scalar("Avg_sampled_cost", tf.reduce_mean(self.sampled_cost))
-        self.base_line_est = tf.zeros(shape=[self.batch_size, 1])
+            tf.summary.histogram("LocationStartDist", tf.transpose(self.pred_final_action, [1, 0])[0])
+            tf.summary.histogram("LocationEndDist", tf.transpose(self.pred_final_action, [1, 0])[-1])
 
     def get_global_step(self):
         step = self.sess.run(self.global_step)
         return step
 
     def predict(self, state, current_location, depot_idx):
-        feed_dict = {self.state: state, self.current_location: current_location, self.is_training: False,
+        feed_dict = {self.raw_state: state, self.current_location: current_location, self.is_training: False,
                      self.keep_prob: 1.0, self.start_tokens: depot_idx}
         prediction = self.sess.run([self.pred_final_action, self.base_line_est], feed_dict=feed_dict)
         # prediction = [np.zeros([state.shape[0], Config.NUM_OF_CUSTOMERS+1], dtype=np.int32),
@@ -205,25 +223,26 @@ class NetworkVP:
 
     def train(self, state, current_location, action, or_action, sampled_cost, or_cost, depot_idx, trainer_id):
         step = self.get_global_step()
-        feed_dict = {self.state: state, self.current_location: current_location, self.or_action: or_action,
+        feed_dict = {self.raw_state: state, self.current_location: current_location, self.or_action: or_action,
                      self.sampled_cost: sampled_cost, self.or_cost: or_cost, self.start_tokens: depot_idx, self.keep_prob: .8}
+        # for i in range(or_cost.shape[0]):
+        #     if(or_cost[i] > sampled_cost[i]):
+        #         env = Environment()
+        #         env.current_state = state[i]
+        #         env.depot_idx = depot_idx[i]
+        #         env.distance_matrix = env.get_distance_matrix()
+        #         print()
+        #         print(state[i])
+        #         print(or_action[i])
+        #         print(or_cost[i])
+        #         print(action[i])
+        #         print(env.G(or_action[i], env.get_current_location()))
+        #         print(sampled_cost[i])
+        #         print(env.G(action[i], env.get_current_location()))
         # pred_act, logits = self.sess.run(
         #     [self.pred_final_action, self.logits],
         #     feed_dict=feed_dict)
-        # print("actions")
-        # print(pred_act)
-        # print("logits")
-        # print(logits)
-        # print("train_action")
-        # print(train_act)
-        # print("softmax logits")
-        # print(softmax_log)
-        # print("neg_log_prob")
-        # print(neg_log_prob)
-        # print("sum")
-        # print(total_sum)
-        # print("rnn_output")
-        # print(train_logits)
+        # print(self.sess.run([self.or_action[:,:-1]], feed_dict=feed_dict))
         if step % 100 == 0:
             if Config.TRAIN == 1:
                 _, _, summary, loss, diff = self.sess.run([self.train_op, self.critic_train_op,

@@ -3,11 +3,14 @@ import numpy as np
 import time
 
 from Config import Config
-# from Environment import Environment
+from Environment import Environment
 from ProcessAgent import ProcessAgent
 from NetworkVP import NetworkVP
 from ThreadPredictor import ThreadPredictor
 from ThreadTrainer import ThreadTrainer
+
+from matplotlib import pyplot as plt
+from matplotlib.collections import LineCollection
 
 
 class Server:
@@ -28,7 +31,6 @@ class Server:
 
     def remove_agent(self):
         self.agents[-1].exit_flag.value = 1
-        # self.agents[-1].terminate()
         self.agents[-1].join()
         self.agents.pop()
 
@@ -57,6 +59,22 @@ class Server:
     def or_model(self, x__, trainer_id):
         return(self.or_model.solve(x__))
 
+    def plot(self):
+        env = Environment()
+        env.reset()
+        action, _ = self.model.predict([env.current_state], [env.get_current_location()], [env.depot_idx])
+        points = env.current_state
+        edges = np.array([[19, action[0][0]]], dtype=np.int32)
+        edges = np.append(edges, np.concatenate((action[0][:-1].reshape(-1, 1), action[0][1:].reshape(-1, 1)), axis=1), axis=0)
+        edges = np.append(edges, np.array([[action[0][-1], 19]], dtype=np.int32), axis=0)
+        lc = LineCollection(points[edges])
+        fig = plt.figure()
+        plt.gca().add_collection(lc)
+        plt.xlim(0, 1)
+        plt.ylim(0, 1)
+        plt.plot(points[:, 0], points[:, 1], 'ro')
+        fig.savefig('./figs/TSP_' + str((Config.NUM_OF_CUSTOMERS+1)) + '_' + 'MODEL_' + str(Config.MODEL_SETTING) + '.png')
+
     def main(self):
         self.trainer_count = Config.TRAINERS
         self.predictor_count = Config.PREDICTORS
@@ -69,17 +87,9 @@ class Server:
         for _ in np.arange(0, Config.AGENTS):
             self.add_agent()
 
-        # if Config.PLAY_MODE:
-        #     for trainer in self.trainers:
-        #         trainer.endabled = False
-
-        # while self.stats.episode_count.value < Config.EPISODES:
-        #     # step = min(self.stats.episode_count.value, Config.ANNEALING_EPISODE_COUNT - 1)  # not sure if i need this
-        #     self.model.learning_rate = Config.LEARNING_RATE
-        #     # self.model.beta = Config.BETA_START + beta_multiplier * step
-
         time.sleep(Config.RUN_TIME)
 
+        self.plot()
         if Config.TRAIN:
             self.model.finish()
 

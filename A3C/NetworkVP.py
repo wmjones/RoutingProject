@@ -5,7 +5,7 @@ import tensorflow as tf
 from Model import Encoder, Helper, Decoder, Reza_Model
 # from MaskWrapper import MaskWrapperState
 # import numpy as np
-from Environment import Environment
+# from Environment import Environment
 from Config import Config
 
 
@@ -30,12 +30,6 @@ class NetworkVP:
             self.saver = tf.train.Saver()
             self.sess.run(tf.global_variables_initializer())
             self.name = Config.MODEL_NAME
-            # self.name = 'TSP_' + str(Config.NUM_OF_CUSTOMERS) + '_dir_' + str(Config.DIRECTION) + \
-            #             '_EncEmb' + str(Config.ENC_EMB) + '_DecEmb' + str(Config.DEC_EMB) + \
-            #             '_Drop' + str(Config.DROPOUT) + '_MaxGrad_' + str(Config.MAX_GRAD) + \
-            #             '_BnF_GPU_' + str(Config.GPU) + '_LogitPen_' + str(Config.LOGIT_PENALTY) + \
-            #             '_NewTrainHelper' + \
-            #             time.strftime("_%Y_%m_%d__%H_%M_%s")
             print("Running Model ", self.name)
             if Config.TRAIN == 1:
                 self._create_tensor_board()
@@ -78,80 +72,91 @@ class NetworkVP:
         )
         self.MA_baseline = tf.Variable(10.0, dtype=tf.float32, trainable=False)
         with tf.name_scope("Config"):
+            tf.summary.scalar("REINFORCE", Config.REINFORCE)
             tf.summary.scalar("DIRECTION", Config.DIRECTION)
+            tf.summary.scalar("NUM_OF_CUSTOMERS", Config.NUM_OF_CUSTOMERS)
+            tf.summary.scalar("StateEmbed", tf.cast(Config.STATE_EMBED, tf.int32))
+            tf.summary.scalar("MAX_GRAD", Config.MAX_GRAD)
+            tf.summary.scalar("LogitPen", Config.LOGIT_PENALTY)
             tf.summary.scalar("batch_size", self.batch_size)
             tf.summary.scalar("Config.LAYERS_STACKED_COUNT", Config.LAYERS_STACKED_COUNT)
             tf.summary.scalar("RNN_HIDDEN_DIM", Config.RNN_HIDDEN_DIM)
             tf.summary.scalar("RUN_TIME", Config.RUN_TIME)
             tf.summary.scalar("LOGIT_CLIP_SCALAR", Config.LOGIT_CLIP_SCALAR)
-            tf.summary.scalar("MAX_GRAD", Config.MAX_GRAD)
-            tf.summary.scalar("NUM_OF_CUSTOMERS", Config.NUM_OF_CUSTOMERS)
             tf.summary.scalar("EncEmb", tf.cast(Config.ENC_EMB, tf.int32))
             tf.summary.scalar("DecEmb", tf.cast(Config.DEC_EMB, tf.int32))
             tf.summary.scalar("Droput", tf.cast(Config.DROPOUT, tf.int32))
-            tf.summary.scalar("MaxGrad", Config.MAX_GRAD)
-            tf.summary.scalar("LogitPen", Config.LOGIT_PENALTY)
-            tf.summary.scalar("LogitClipScalar", Config.LOGIT_CLIP_SCALAR)
             tf.summary.scalar("GPU", Config.GPU)
-            tf.summary.scalar("REINFORCE", Config.REINFORCE)
 
         if Config.STATE_EMBED == 1:
-            self.state = tf.layers.conv1d(self.raw_state, Config.RNN_HIDDEN_DIM, 1)
+            self.with_deopt_state = tf.layers.conv1d(self.raw_state, Config.RNN_HIDDEN_DIM, 1)
         else:
-            self.state = self.raw_state
+            self.with_depot_state = self.raw_state
+        self.state = self.with_depot_state[:, :-1, :]
 
         # ENCODER
         if Config.DIRECTION == 8:
             self.encoder_outputs = self.state
             self.encoder_state = None
         if Config.DIRECTION != 9 and Config.DIRECTION != 8:
-            self.encoder_outputs, self.encoder_state = Encoder(self.state)
+            self.encoder_outputs, self.encoder_state = Encoder(self.state, self.keep_prob)
 
         # HELPERS
         self.training_index = tf.concat([tf.expand_dims(self.start_tokens, -1), self.or_action], axis=1)
         self.training_index = self.training_index[:, :-1]
         self.gather_ids = tf.concat([tf.expand_dims(
-            tf.reshape(tf.tile(tf.reshape(tf.range(self.batch_size), [-1, 1]), [1, tf.shape(self.state)[1]]), [-1]), -1),
+            tf.reshape(tf.tile(tf.reshape(tf.range(self.batch_size), [-1, 1]), [1, tf.shape(self.with_depot_state)[1]]), [-1]), -1),
                                      tf.reshape(self.training_index, [-1, 1])], -1)
         if Config.STATE_EMBED == 0:
-            self.training_inputs = tf.reshape(tf.gather_nd(self.state, self.gather_ids),
-                                              [self.batch_size, tf.shape(self.state)[1], 2])
+            self.training_inputs = tf.reshape(tf.gather_nd(self.with_depot_state, self.gather_ids),
+                                              [self.batch_size, tf.shape(self.with_depot_state)[1], 2])
         else:
-            self.training_inputs = tf.reshape(tf.gather_nd(self.state, self.gather_ids),
-                                              [self.batch_size, tf.shape(self.state)[1], Config.RNN_HIDDEN_DIM])
-        train_helper, pred_helper = Helper(self.state, self.batch_size, self.training_inputs, self.start_tokens, self.end_token)
+            self.training_inputs = tf.reshape(tf.gather_nd(self.with_depot_state, self.gather_ids),
+                                              [self.batch_size, tf.shape(self.with_depot_state)[1], Config.RNN_HIDDEN_DIM])
+        train_helper, pred_helper = Helper(self.with_depot_state, self.batch_size, self.training_inputs,
+                                           self.start_tokens, self.end_token)
 
         # DECODER
         if Config.DIRECTION != 9:
             train_decoder, pred_decoder, critic_decoder = Decoder(self.batch_size, self.encoder_state, self.encoder_outputs,
                                                                   train_helper, pred_helper, self.state, self.start_tokens,
-                                                                  self.end_token)
+                                                                  self.end_token, self.keep_prob)
 
             self.train_final_output, self.train_final_state, train_final_sequence_lengths = tf.contrib.seq2seq.dynamic_decode(
-                train_decoder, impute_finished=False, maximum_iterations=tf.shape(self.state)[1]-1)
+                train_decoder, impute_finished=False, maximum_iterations=tf.shape(self.state)[1])
             self.train_final_action = self.train_final_output.sample_id
 
             self.pred_final_output, self.pred_final_state, pred_final_sequence_lengths = tf.contrib.seq2seq.dynamic_decode(
-                pred_decoder, impute_finished=False, maximum_iterations=tf.shape(self.state)[1]-1)
+                pred_decoder, impute_finished=False, maximum_iterations=tf.shape(self.state)[1])
             if Config.DIRECTION == 4:
                 self.pred_final_action = tf.transpose(self.pred_final_output.predicted_ids, [2, 0, 1])[0]
             else:
                 self.pred_final_action = self.pred_final_output.sample_id
 
             self.critic_final_output, self.critic_final_state, critic_final_sequence_lengths = tf.contrib.seq2seq.dynamic_decode(
-                critic_decoder, impute_finished=False, maximum_iterations=tf.shape(self.state)[1]-1)
+                critic_decoder, impute_finished=False, maximum_iterations=tf.shape(self.state)[1])
             if Config.DIRECTION != 2:
-                self.base_line_est = tf.layers.dense(self.critic_final_state.cell_state[0].h, Config.RNN_HIDDEN_DIM)
+                self.base_line_est = tf.layers.dense(self.critic_final_state.AttnState.cell_state[0].h, Config.RNN_HIDDEN_DIM)
             else:
-                self.base_line_est = tf.layers.dense(self.critic_final_state.cell_state.h,
+                self.base_line_est = tf.layers.dense(self.critic_final_state.AttnState.cell_state.h,
                                                      Config.RNN_HIDDEN_DIM, activation=tf.nn.relu)
             self.base_line_est = tf.layers.dense(self.base_line_est, 1)
         else:
             self.train_final_action, self.pred_final_action, self.base_line_est, self.logits = Reza_Model(self.batch_size, self.state)
 
+        # x = tf.range(0, 19, dtype=tf.int32)
+        # x = [tf.random_shuffle(x)]
+
+        # for i in range(499):
+        #     y = tf.range(0, 19, dtype=tf.int32)
+        #     y = [tf.random_shuffle(y)]
+        #     x = tf.concat((x, y), axis=0)
+        # self.pred_final_action = x[:self.batch_size, :]
+
         self.critic_loss = tf.losses.mean_squared_error(self.sampled_cost, self.base_line_est)
 
         if Config.DIRECTION != 9:
+            # self.logits = tf.Print(self.train_final_output.rnn_output, [tf.shape(self.train_final_output.rnn_output)])
             self.logits = self.train_final_output.rnn_output
 
         if Config.LOGIT_CLIP_SCALAR != 0:
@@ -161,18 +166,20 @@ class NetworkVP:
             self.loss = tf.contrib.seq2seq.sequence_loss(
                 logits=self.logits,
                 targets=self.or_action[:, :-1],
-                weights=tf.ones([self.batch_size, tf.shape(self.state)[1]-1])
+                weights=tf.ones([self.batch_size, tf.shape(self.state)[1]])
             )
         else:
             self.neg_log_prob = -1*tf.nn.sparse_softmax_cross_entropy_with_logits(logits=self.logits,
                                                                                   labels=self.train_final_action)
             self.R = tf.stop_gradient(self.sampled_cost)
-            assign = tf.assign(self.MA_baseline, self.MA_baseline*.8 + tf.reduce_mean(self.R)*.2)
-            with tf.control_dependencies([assign]):
-                V = self.MA_baseline
+            if Config.MOVING_AVERAGE == 1:
+                assign = tf.assign(self.MA_baseline, self.MA_baseline*.9 + tf.reduce_mean(self.R)*.1)
+                with tf.control_dependencies([assign]):
+                    V = self.MA_baseline
+                    self.loss = tf.reduce_mean(tf.multiply(tf.reduce_sum(self.neg_log_prob, axis=1), self.R-V))
+            else:
+                V = tf.stop_gradient(self.base_line_est)
                 self.loss = tf.reduce_mean(tf.multiply(tf.reduce_sum(self.neg_log_prob, axis=1), self.R-V))
-            # V = tf.stop_gradient(self.base_line_est)
-            # self.loss = tf.reduce_mean(tf.multiply(tf.reduce_sum(self.neg_log_prob, axis=1), self.R-V))
 
         with tf.name_scope("train"):
             if Config.GPU == 1:
@@ -208,6 +215,7 @@ class NetworkVP:
             tf.summary.scalar("Avg_sampled_cost", tf.reduce_mean(self.sampled_cost))
             tf.summary.histogram("LocationStartDist", tf.transpose(self.pred_final_action, [1, 0])[0])
             tf.summary.histogram("LocationEndDist", tf.transpose(self.pred_final_action, [1, 0])[-1])
+        # self.tmp = tf.reduce_sum(self.neg_log_prob, axis=1)
 
     def get_global_step(self):
         step = self.sess.run(self.global_step)
@@ -224,7 +232,9 @@ class NetworkVP:
     def train(self, state, current_location, action, or_action, sampled_cost, or_cost, depot_idx, trainer_id):
         step = self.get_global_step()
         feed_dict = {self.raw_state: state, self.current_location: current_location, self.or_action: or_action,
-                     self.sampled_cost: sampled_cost, self.or_cost: or_cost, self.start_tokens: depot_idx, self.keep_prob: .8}
+                     self.sampled_cost: sampled_cost, self.or_cost: or_cost, self.start_tokens: depot_idx, self.keep_prob: .9}
+        # print(self.sess.run([self.training_inputs, self.or_action, self.raw_state], feed_dict=feed_dict))
+        # print(self.sess.run([self.loss, self.sampled_cost, self.base_line_est, self.tmp], feed_dict=feed_dict))
         # for i in range(or_cost.shape[0]):
         #     if(or_cost[i] > sampled_cost[i]):
         #         env = Environment()

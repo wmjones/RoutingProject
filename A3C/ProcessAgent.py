@@ -30,12 +30,15 @@ class ProcessAgent(Process):
             file_state = np.load('data_state.npy', 'r')
             file_or_route = np.load('data_or_route.npy', 'r')
             file_or_cost = np.load('data_or_cost.npy', 'r')
-            self.batch_idx = np.random.randint(3)
+            self.batch_idx = np.random.randint(10000)
             self.env.current_state = file_state[self.batch_idx, :]
             self.env.distance_matrix = self.env.get_distance_matrix()
             current_location = self.env.get_current_location()  # may need to change in future
             idx = int(self.env.get_depot_idx())
             or_route = file_or_route[self.batch_idx]
+            # tmp_or_model = OR_Tool(self.env.current_state, current_location, idx)
+            # tmp_or_route, tmp_or_cost = tmp_or_model.solve()
+            # print(or_route, tmp_or_route)
             or_cost = file_or_cost[self.batch_idx]
             action, base_line = self.predict(self.env.current_state, current_location, idx)
             sampled_value = self.env.G(action, current_location)

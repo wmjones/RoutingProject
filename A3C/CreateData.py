@@ -1,14 +1,12 @@
 import numpy as np
 from OR_Tool import OR_Tool
-from Config import Config
 
 file_state = open('data_state.npy', 'wb')
 file_or_route = open('data_or_route.npy', 'wb')
 file_or_cost = open('data_or_cost.npy', 'wb')
-for i in range(10):
+for i in range(10000):
     depot_location = np.array([.5, .5])
-    data_state = np.vstack((depot_location, np.random.rand(Config.NUM_OF_CUSTOMERS, 2)))
-    np.random.shuffle(data_state)
+    data_state = np.vstack((np.random.rand(19, 2), np.array([.5, .5])))
     depot_idx = int(np.where(data_state[:, 0] == .5)[0][0])
     or_model = OR_Tool(data_state, depot_location, depot_idx)
     or_route, or_cost = or_model.solve()

@@ -40,7 +40,7 @@ class Environment:
         return self.current_state[self.depot_idx]
 
     def get_depot_idx(self):
-        return(self.depot_idx)
+        return(np.where(self.current_state[:, 0] == .5)[0][0])
 
     def get_distance_matrix(self):
         dist_mat = [[np.linalg.norm(self.current_state[i]-self.current_state[j])

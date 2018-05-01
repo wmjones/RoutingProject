@@ -7,7 +7,8 @@ from tensorflow.python.ops.distributions import categorical
 def _build_rnn_cell(keep_prob):
     # tf.contrib.cudnn_rnn.CudnnCompatibleLSTMCell
     cell = tf.nn.rnn_cell.LSTMCell(Config.RNN_HIDDEN_DIM)
-    cell = tf.contrib.rnn.DropoutWrapper(cell, input_keep_prob=keep_prob)
+    if Config.DROPOUT == 1:
+        cell = tf.contrib.rnn.DropoutWrapper(cell, input_keep_prob=keep_prob)
     return cell
 
 
@@ -74,47 +75,46 @@ def Encoder(enc_inputs, keep_prob):
 
 def Helper(problem_state, batch_size, training_inputs, start_tokens, end_token):
     with tf.variable_scope("Helper"):
-        if Config.REINFORCE == 1:
-            if Config.STOCHASTIC == 1:
-                def initialize_fn():
-                    if Config.STATE_EMBED == 0:
-                        return (tf.tile([False], [batch_size]), tf.zeros([batch_size, 2]))
-                    else:
-                        return (tf.tile([False], [batch_size]), tf.zeros([batch_size, Config.RNN_HIDDEN_DIM]))
+        if Config.STOCHASTIC == 1:
+            def initialize_fn():
+                if Config.STATE_EMBED == 0:
+                    return (tf.tile([False], [batch_size]), tf.zeros([batch_size, 2]))
+                else:
+                    return (tf.tile([False], [batch_size]), tf.zeros([batch_size, Config.RNN_HIDDEN_DIM]))
 
-                def sample_fn(time, outputs, state):
-                    logits = outputs / Config.SOFTMAX_TEMP
-                    sample_id_sampler = categorical.Categorical(logits=logits)
-                    sample_ids = sample_id_sampler.sample()
-                    return sample_ids
+            def sample_fn(time, outputs, state):
+                logits = outputs / Config.SOFTMAX_TEMP
+                sample_id_sampler = categorical.Categorical(logits=logits)
+                sample_ids = sample_id_sampler.sample()
+                return sample_ids
 
-                def next_inputs_fn(time, outputs, state, sample_ids):
-                    finished = tf.tile([tf.equal(time, Config.NUM_OF_CUSTOMERS)], [batch_size])
-                    next_inputs = tf.gather_nd(
+            def next_inputs_fn(time, outputs, state, sample_ids):
+                finished = tf.tile([tf.equal(time, Config.NUM_OF_CUSTOMERS)], [batch_size])
+                next_inputs = tf.gather_nd(
+                    problem_state, tf.concat([tf.reshape(tf.range(0, batch_size), [-1, 1]),
+                                              tf.reshape(sample_ids, [-1, 1])], 1)
+                )
+                next_state = MaskWrapperAttnState(
+                    AttnState=state.AttnState,
+                    mask=state.mask + tf.one_hot(sample_ids, depth=Config.NUM_OF_CUSTOMERS, dtype=tf.float32))
+                return (finished, next_inputs, next_state)
+            train_helper = tf.contrib.seq2seq.CustomHelper(
+                initialize_fn=initialize_fn,
+                sample_fn=sample_fn,
+                next_inputs_fn=next_inputs_fn
+            )
+            pred_helper = train_helper
+
+        if Config.REINFORCE == 1 and Config.STOCHASTIC == 0:
+            pred_helper = tf.contrib.seq2seq.GreedyEmbeddingHelper(
+                    lambda sample_ids: tf.gather_nd(
                         problem_state, tf.concat([tf.reshape(tf.range(0, batch_size), [-1, 1]),
                                                   tf.reshape(sample_ids, [-1, 1])], 1)
-                    )
-                    next_state = MaskWrapperAttnState(
-                        AttnState=state.AttnState,
-                        mask=state.mask + tf.one_hot(sample_ids, depth=Config.NUM_OF_CUSTOMERS, dtype=tf.float32))
-                    # finished = tf.Print(finished, [next_state.mask], summarize=1000)
-                    return (finished, next_inputs, next_state)
-                train_helper = tf.contrib.seq2seq.CustomHelper(
-                    initialize_fn=initialize_fn,
-                    sample_fn=sample_fn,
-                    next_inputs_fn=next_inputs_fn
-                )
-                pred_helper = train_helper
-            else:
-                pred_helper = tf.contrib.seq2seq.GreedyEmbeddingHelper(
-                        lambda sample_ids: tf.gather_nd(
-                            problem_state, tf.concat([tf.reshape(tf.range(0, batch_size), [-1, 1]),
-                                                      tf.reshape(sample_ids, [-1, 1])], 1)
-                        ),
-                        start_tokens,
-                        end_token)
-                train_helper = pred_helper
-        else:
+                    ),
+                    start_tokens,
+                    end_token)
+            train_helper = pred_helper
+        if Config.STOCHASTIC == 0 and Config.REINFORCE == 0:
             pred_helper = tf.contrib.seq2seq.GreedyEmbeddingHelper(
                 lambda sample_ids: tf.gather_nd(
                     problem_state, tf.concat([tf.reshape(tf.range(0, batch_size), [-1, 1]),
@@ -306,6 +306,11 @@ def Decoder(batch_size, encoder_state, encoder_outputs, train_helper, pred_helpe
         pred_decoder = tf.contrib.seq2seq.BasicDecoder(cell, pred_helper, initial_state,
                                                        output_layer=tf.layers.Dense(Config.NUM_OF_CUSTOMERS+1))
     if Config.DIRECTION == 8:
+        # encoder_outputs_1 = tf.layers.dense(encoder_outputs, 10, activation=tf.nn.relu)
+        # encoder_outputs_2 = tf.layers.dense(encoder_outputs_1, 10, activation=tf.nn.relu)
+        # encoder_outputs_3 = tf.layers.dense(encoder_outputs_2, 10, activation=tf.nn.relu)
+        # encoder_outputs_4 = tf.layers.dense(encoder_outputs_3, 10, activation=tf.nn.relu)
+        # encoder_outputs_5 = tf.layers.dense(encoder_outputs_4, 10)
         out_cells = []
         for i in range(Config.LAYERS_STACKED_COUNT):
             with tf.variable_scope('RNN_{}'.format(i)):

@@ -22,7 +22,7 @@ class NetworkVP:
                 config.gpu_options.allow_growth = True
             else:
                 config = tf.ConfigProto()
-            config.graph_options.optimizer_options.global_jit_level = tf.OptimizerOptions.ON_1
+            # config.graph_options.optimizer_options.global_jit_level = tf.OptimizerOptions.ON_1
             self.sess = tf.Session(
                 graph=self.graph,
                 config=config
@@ -66,33 +66,15 @@ class NetworkVP:
         self.relative_length = tf.reduce_mean(self.sampled_cost/self.or_cost)
         self.start_tokens = tf.placeholder(tf.int32, shape=[None])
         self.end_token = -1
-        self.is_training = tf.placeholder_with_default(
-            tf.constant(True, dtype=tf.bool),
-            shape=(), name='is_training'
-        )
         self.MA_baseline = tf.Variable(10.0, dtype=tf.float32, trainable=False)
-        with tf.name_scope("Config"):
-            tf.summary.scalar("REINFORCE", Config.REINFORCE)
-            tf.summary.scalar("DIRECTION", Config.DIRECTION)
-            tf.summary.scalar("NUM_OF_CUSTOMERS", Config.NUM_OF_CUSTOMERS)
-            tf.summary.scalar("StateEmbed", tf.cast(Config.STATE_EMBED, tf.int32))
-            tf.summary.scalar("MAX_GRAD", Config.MAX_GRAD)
-            tf.summary.scalar("LogitPen", Config.LOGIT_PENALTY)
-            tf.summary.scalar("batch_size", self.batch_size)
-            tf.summary.scalar("Config.LAYERS_STACKED_COUNT", Config.LAYERS_STACKED_COUNT)
-            tf.summary.scalar("RNN_HIDDEN_DIM", Config.RNN_HIDDEN_DIM)
-            tf.summary.scalar("RUN_TIME", Config.RUN_TIME)
-            tf.summary.scalar("LOGIT_CLIP_SCALAR", Config.LOGIT_CLIP_SCALAR)
-            tf.summary.scalar("EncEmb", tf.cast(Config.ENC_EMB, tf.int32))
-            tf.summary.scalar("DecEmb", tf.cast(Config.DEC_EMB, tf.int32))
-            tf.summary.scalar("Droput", tf.cast(Config.DROPOUT, tf.int32))
-            tf.summary.scalar("GPU", Config.GPU)
 
         if Config.STATE_EMBED == 1:
-            self.with_deopt_state = tf.layers.conv1d(self.raw_state, Config.RNN_HIDDEN_DIM, 1)
+            self.with_depot_state = tf.layers.conv1d(self.raw_state, Config.RNN_HIDDEN_DIM, 10, padding="same")
         else:
             self.with_depot_state = self.raw_state
         self.state = self.with_depot_state[:, :-1, :]
+        # self.state = tf.concat((self.state, tf.square(self.state - tf.constant(.5, shape=[19, 2]))), axis=2)
+        # self.state = tf.Print(self.state, [self.batch_size, tf.shape(self.state), self.state], summarize=10000)
 
         # ENCODER
         if Config.DIRECTION == 8:
@@ -136,13 +118,15 @@ class NetworkVP:
             self.critic_final_output, self.critic_final_state, critic_final_sequence_lengths = tf.contrib.seq2seq.dynamic_decode(
                 critic_decoder, impute_finished=False, maximum_iterations=tf.shape(self.state)[1])
             if Config.DIRECTION != 2:
-                self.base_line_est = tf.layers.dense(self.critic_final_state.AttnState.cell_state[0].h, Config.RNN_HIDDEN_DIM)
+                self.base_line_est = tf.layers.dense(self.critic_final_state.AttnState.cell_state[0].h,
+                                                     Config.RNN_HIDDEN_DIM, activation=tf.nn.relu)
             else:
                 self.base_line_est = tf.layers.dense(self.critic_final_state.AttnState.cell_state.h,
                                                      Config.RNN_HIDDEN_DIM, activation=tf.nn.relu)
             self.base_line_est = tf.layers.dense(self.base_line_est, 1)
         else:
-            self.train_final_action, self.pred_final_action, self.base_line_est, self.logits = Reza_Model(self.batch_size, self.state)
+            self.train_final_action, self.pred_final_action, self.base_line_est, self.logits = Reza_Model(self.batch_size,
+                                                                                                          self.with_depot_state)
 
         # x = tf.range(0, 19, dtype=tf.int32)
         # x = [tf.random_shuffle(x)]
@@ -181,22 +165,24 @@ class NetworkVP:
                 V = tf.stop_gradient(self.base_line_est)
                 self.loss = tf.reduce_mean(tf.multiply(tf.reduce_sum(self.neg_log_prob, axis=1), self.R-V))
 
-        with tf.name_scope("train"):
+        with tf.name_scope("Train"):
             if Config.GPU == 1:
                 colocate = True
             else:
                 colocate = False
             self.lr = tf.train.exponential_decay(
-                Config.LEARNING_RATE, self.global_step, 10000,
+                Config.LEARNING_RATE, self.global_step, 100000,
                 .9, staircase=True, name="learning_rate")
             self.critic_train_op = tf.train.AdamOptimizer(self.lr).minimize(self.critic_loss)
             if Config.MAX_GRAD != 0:
                 self.params = tf.trainable_variables()
-                self.gradients = tf.gradients(self.loss, self.params, colocate_gradients_with_ops=colocate)
-                self.clipped_gradients, gradient_norm = tf.clip_by_global_norm(self.gradients, Config.MAX_GRAD)
+                # self.gradients = tf.gradients(self.loss, self.params, colocate_gradients_with_ops=colocate)
                 opt = tf.train.AdamOptimizer(self.lr)
-                self.train_op = opt.apply_gradients(zip(self.clipped_gradients, self.params), global_step=self.global_step)
-                tf.summary.scalar("grad_norm", gradient_norm)
+                self.gradients = opt.compute_gradients(self.loss, self.params)
+                self.clipped_gradients = [(tf.clip_by_norm(grad, Config.MAX_GRAD), var) for grad, var in self.gradients]
+                self.train_op = opt.apply_gradients(self.clipped_gradients, global_step=self.global_step)
+                # self.train_op = opt.apply_gradients(zip(self.clipped_gradients, self.params), global_step=self.global_step)
+                # tf.summary.scalar("grad_norm", gradient_norm)
                 tf.summary.scalar("LearningRate", self.lr)
             else:
                 self.train_op = tf.train.AdamOptimizer(self.lr).minimize(self.loss,
@@ -204,9 +190,9 @@ class NetworkVP:
                                                                          colocate_gradients_with_ops=colocate)
         # for gradient clipping https://github.com/tensorflow/nmt/blob/master/nmt/model.py
 
-        with tf.name_scope("loss"):
-            tf.summary.scalar("loss", self.loss)
-            tf.summary.scalar("critic_loss", self.critic_loss)
+        with tf.name_scope("Loss"):
+            tf.summary.scalar("Loss", self.loss)
+            tf.summary.scalar("Critic_Loss", self.critic_loss)
         with tf.name_scope("Performace"):
             tf.summary.scalar("Relative Critic Loss", tf.reduce_mean(self.base_line_est/self.or_cost))
             tf.summary.scalar("difference_in_length", self.difference_in_length)
@@ -215,6 +201,22 @@ class NetworkVP:
             tf.summary.scalar("Avg_sampled_cost", tf.reduce_mean(self.sampled_cost))
             tf.summary.histogram("LocationStartDist", tf.transpose(self.pred_final_action, [1, 0])[0])
             tf.summary.histogram("LocationEndDist", tf.transpose(self.pred_final_action, [1, 0])[-1])
+        with tf.name_scope("Config"):
+            tf.summary.scalar("REINFORCE", Config.REINFORCE)
+            tf.summary.scalar("DIRECTION", Config.DIRECTION)
+            tf.summary.scalar("NUM_OF_CUSTOMERS", Config.NUM_OF_CUSTOMERS)
+            tf.summary.scalar("StateEmbed", tf.cast(Config.STATE_EMBED, tf.int32))
+            tf.summary.scalar("MAX_GRAD", Config.MAX_GRAD)
+            tf.summary.scalar("LogitPen", Config.LOGIT_PENALTY)
+            tf.summary.scalar("batch_size", self.batch_size)
+            tf.summary.scalar("Config.LAYERS_STACKED_COUNT", Config.LAYERS_STACKED_COUNT)
+            tf.summary.scalar("RNN_HIDDEN_DIM", Config.RNN_HIDDEN_DIM)
+            tf.summary.scalar("RUN_TIME", Config.RUN_TIME)
+            tf.summary.scalar("LOGIT_CLIP_SCALAR", Config.LOGIT_CLIP_SCALAR)
+            tf.summary.scalar("EncEmb", tf.cast(Config.ENC_EMB, tf.int32))
+            tf.summary.scalar("DecEmb", tf.cast(Config.DEC_EMB, tf.int32))
+            tf.summary.scalar("Droput", tf.cast(Config.DROPOUT, tf.int32))
+            tf.summary.scalar("GPU", Config.GPU)
         # self.tmp = tf.reduce_sum(self.neg_log_prob, axis=1)
 
     def get_global_step(self):
@@ -222,18 +224,17 @@ class NetworkVP:
         return step
 
     def predict(self, state, current_location, depot_idx):
-        feed_dict = {self.raw_state: state, self.current_location: current_location, self.is_training: False,
+        feed_dict = {self.raw_state: state, self.current_location: current_location,
                      self.keep_prob: 1.0, self.start_tokens: depot_idx}
         prediction = self.sess.run([self.pred_final_action, self.base_line_est], feed_dict=feed_dict)
         # prediction = [np.zeros([state.shape[0], Config.NUM_OF_CUSTOMERS+1], dtype=np.int32),
-        #               np.zeros([state.shape[0], 1], dtype=np.float32)]
+        #           np.zeros([state.shape[0], 1], dtype=np.float32)]
         return prediction
 
     def train(self, state, current_location, action, or_action, sampled_cost, or_cost, depot_idx, trainer_id):
         step = self.get_global_step()
         feed_dict = {self.raw_state: state, self.current_location: current_location, self.or_action: or_action,
                      self.sampled_cost: sampled_cost, self.or_cost: or_cost, self.start_tokens: depot_idx, self.keep_prob: .9}
-        # print(self.sess.run([self.training_inputs, self.or_action, self.raw_state], feed_dict=feed_dict))
         # print(self.sess.run([self.loss, self.sampled_cost, self.base_line_est, self.tmp], feed_dict=feed_dict))
         # for i in range(or_cost.shape[0]):
         #     if(or_cost[i] > sampled_cost[i]):
@@ -262,6 +263,7 @@ class NetworkVP:
                 _, _, loss, diff = self.sess.run([self.train_op, self.critic_train_op,
                                                   self.loss, self.relative_length], feed_dict=feed_dict)
             print(loss, diff)
+            # print(self.sess.run([], feed_dict=feed_dict))
         else:
             self.sess.run([self.train_op, self.critic_train_op], feed_dict=feed_dict)
         if step % 1000 == 0 and Config.TRAIN:

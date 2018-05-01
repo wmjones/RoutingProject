@@ -40,6 +40,9 @@ class ProcessAgent(Process):
             # tmp_or_route, tmp_or_cost = tmp_or_model.solve()
             # print(or_route, tmp_or_route)
             or_cost = file_or_cost[self.batch_idx]
+            # action = np.zeros([Config.NUM_OF_CUSTOMERS+1], dtype=np.int32)
+            # base_line = 1.0
+            # sampled_value = 1.0
             action, base_line = self.predict(self.env.current_state, current_location, idx)
             sampled_value = self.env.G(action, current_location)
         else:

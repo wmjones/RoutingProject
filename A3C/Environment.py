@@ -17,12 +17,9 @@ class Environment:
 
     def reset(self):
         self.current_state = np.vstack((np.random.rand(Config.NUM_OF_CUSTOMERS, 2), np.array([.5, .5])))
-        # self.current_state = np.vstack((np.array([0, 0]), np.random.rand(Config.NUM_OF_CUSTOMERS, 2)))
-        # self.current_state = np.vstack((np.random.rand(Config.NUM_OF_CUSTOMERS+1, 2)))
-        # self.current_state = np.vstack((np.array([0, 0]), np.random.rand(Config.NUM_OF_CUSTOMERS, 2)*10))
+        # self.current_state = np.vstack((np.random.rand(Config.NUM_OF_CUSTOMERS, 2)*10, np.array([0, 0])))
         # np.random.shuffle(self.current_state)
         self.depot_idx = np.where(self.current_state[:, 0] == .5)[0][0]
-        # self.depot_idx = 0
         # self.depot_idx = np.where(self.current_state[:, 0] == 0)[0][0]
         self.distance_matrix = self.get_distance_matrix()
 
@@ -41,6 +38,7 @@ class Environment:
 
     def get_depot_idx(self):
         return(np.where(self.current_state[:, 0] == .5)[0][0])
+        # return(np.where(self.current_state[:, 0] == 0)[0][0])
 
     def get_distance_matrix(self):
         dist_mat = [[np.linalg.norm(self.current_state[i]-self.current_state[j])
@@ -67,6 +65,8 @@ class Environment:
 
 # env = Environment()
 # env.reset()
+# print(env.get_depot_idx())
+# print(env.current_state)
 # route = np.arange(20)
 # np.random.shuffle(route)
 # print(env.G(route, env.current_state[0]))

@@ -27,9 +27,9 @@ class ProcessAgent(Process):
 
     def run_episode(self):
         if Config.FROM_FILE == 1:
-            file_state = np.load('data_state.npy', 'r')
-            file_or_route = np.load('data_or_route.npy', 'r')
-            file_or_cost = np.load('data_or_cost.npy', 'r')
+            file_state = np.load('data_state_00.npy', 'r')
+            file_or_route = np.load('data_or_route_00.npy', 'r')
+            file_or_cost = np.load('data_or_cost_00.npy', 'r')
             self.batch_idx = np.random.randint(10000)
             self.env.current_state = file_state[self.batch_idx, :]
             self.env.distance_matrix = self.env.get_distance_matrix()

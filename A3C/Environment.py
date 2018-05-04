@@ -16,11 +16,11 @@ class Environment:
         return self.distance_matrix[from_node][to_node]
 
     def reset(self):
-        self.current_state = np.vstack((np.random.rand(Config.NUM_OF_CUSTOMERS, 2), np.array([.5, .5])))
-        # self.current_state = np.vstack((np.random.rand(Config.NUM_OF_CUSTOMERS, 2)*10, np.array([0, 0])))
+        # self.current_state = np.vstack((np.random.rand(Config.NUM_OF_CUSTOMERS, 2), np.array([.5, .5])))
+        self.current_state = np.vstack((np.random.rand(Config.NUM_OF_CUSTOMERS, 2)*10, np.array([0, 0])))
         # np.random.shuffle(self.current_state)
-        self.depot_idx = np.where(self.current_state[:, 0] == .5)[0][0]
-        # self.depot_idx = np.where(self.current_state[:, 0] == 0)[0][0]
+        # self.depot_idx = np.where(self.current_state[:, 0] == .5)[0][0]
+        self.depot_idx = np.where(self.current_state[:, 0] == 0)[0][0]
         self.distance_matrix = self.get_distance_matrix()
 
     def G(self, route, current_location):
@@ -37,7 +37,7 @@ class Environment:
         return self.current_state[self.depot_idx]
 
     def get_depot_idx(self):
-        return(np.where(self.current_state[:, 0] == .5)[0][0])
+        return(np.where(self.current_state[:, 0] == 0)[0][0])
         # return(np.where(self.current_state[:, 0] == 0)[0][0])
 
     def get_distance_matrix(self):

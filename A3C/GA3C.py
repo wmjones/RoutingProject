@@ -13,58 +13,61 @@ variables = [attr for attr in dir(Config) if not callable(getattr(Config, attr))
 if Config.MODEL_SETTING == 1:
     Config.DIRECTION = 1
     Config.FROM_FILE = 1
-    # Config.STOCHASTIC = 1
+    Config.LOGIT_CLIP_SCALAR = 10
 elif Config.MODEL_SETTING == 2:
     Config.DIRECTION = 3
     Config.FROM_FILE = 1
-    # Config.STOCHASTIC = 1
+    Config.LOGIT_CLIP_SCALAR = 10
 elif Config.MODEL_SETTING == 3:
     Config.DIRECTION = 1
-    Config.REINFORCE = 1
+    Config.FROM_FILE = 1
+    Config.LOGIT_CLIP_SCALAR = 10
+    Config.STOCHASTIC = 1
 elif Config.MODEL_SETTING == 4:
     Config.DIRECTION = 2
-    Config.REINFORCE = 1
-elif Config.MODEL_SETTING == 5:
-    Config.DIRECTION = 1
-    Config.STATE_EMBED = 1
     Config.FROM_FILE = 1
-elif Config.MODEL_SETTING == 6:
-    Config.DIRECTION = 3
-    Config.STATE_EMBED = 1
-    Config.FROM_FILE = 1
-elif Config.MODEL_SETTING == 7:
-    Config.DIRECTION = 1
-    Config.STATE_EMBED = 1
-    Config.REINFORCE = 1
-elif Config.MODEL_SETTING == 8:
-    Config.DIRECTION = 3
-    Config.STATE_EMBED = 1
-    Config.REINFORCE = 1
-elif Config.MODEL_SETTING == 9:
-    Config.DIRECTION = 8
+    Config.LOGIT_CLIP_SCALAR = 10
     Config.STOCHASTIC = 1
-    Config.FROM_FILE = 0
-    Config.STATE_EMBED = 0
-elif Config.MODEL_SETTING == 10:
-    Config.DIRECTION = 8
-    Config.STATE_EMBED = 1
+elif Config.MODEL_SETTING == 5:
+    Config.DIRECTION = 2
     Config.REINFORCE = 1
-elif Config.MODEL_SETTING == 11:
-    Config.DIRECTION = 1
+elif Config.MODEL_SETTING == 6:
+    Config.DIRECTION = 2
     Config.REINFORCE = 1
     Config.MOVING_AVERAGE = 1
-elif Config.MODEL_SETTING == 12:
-    Config.DIRECTION = 3
-    Config.STATE_EMBED = 1
-    Config.REINFORCE = 1
-    Config.MOVING_AVERAGE = 1
+# elif Config.MODEL_SETTING == 7:
+#     Config.DIRECTION = 1
+#     Config.STATE_EMBED = 1
+#     Config.REINFORCE = 1
+# elif Config.MODEL_SETTING == 8:
+#     Config.DIRECTION = 3
+#     Config.STATE_EMBED = 1
+#     Config.REINFORCE = 1
+# elif Config.MODEL_SETTING == 9:
+#     Config.DIRECTION = 8
+#     Config.STOCHASTIC = 1
+#     Config.FROM_FILE = 0
+#     Config.STATE_EMBED = 0
+# elif Config.MODEL_SETTING == 10:
+#     Config.DIRECTION = 8
+#     Config.STATE_EMBED = 1
+#     Config.REINFORCE = 1
+# elif Config.MODEL_SETTING == 11:
+#     Config.DIRECTION = 1
+#     Config.REINFORCE = 1
+#     Config.MOVING_AVERAGE = 1
+# elif Config.MODEL_SETTING == 12:
+#     Config.DIRECTION = 3
+#     Config.STATE_EMBED = 1
+#     Config.REINFORCE = 1
+#     Config.MOVING_AVERAGE = 1
 elif Config.MODEL_SETTING == 13:
     Config.DIRECTION = 9
     Config.REINFORCE = 1
-elif Config.MODEL_SETTING == 14:
-    Config.DIRECTION = 9
-    Config.REINFORCE = 1
-    Config.REZA = 1
+# elif Config.MODEL_SETTING == 14:
+#     Config.DIRECTION = 9
+#     Config.REINFORCE = 1
+#     Config.REZA = 1
 if Config.REINFORCE == 0 and Config.LOGIT_CLIP_SCALAR == 0:
     print()
     print("You need to set LOGIT_CLIP_SCALAR to not be zero!")
@@ -77,7 +80,7 @@ if Config.RESTORE == 1:
         print(var, type(getattr(Config, var))(ConfigParse.get("VARIABLES", var)))
         setattr(Config, var, type(getattr(Config, var))(ConfigParse.get("VARIABLES", var)))
     setattr(Config, "RESTORE", 1)
-    setattr(Config, "MODEL_NAME", Config.MODEL_NAME + 'res')
+    setattr(Config, "MODEL_NAME", Config.MODEL_NAME)
 else:
     cfgfile = open(Config.PATH + "ini_files/" + Config.MODEL_NAME + ".ini", 'w')
     ConfigParse.add_section('VARIABLES')

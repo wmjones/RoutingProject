@@ -38,6 +38,8 @@ class NetworkVP:
                 latest_checkpoint = tf.train.latest_checkpoint(str(Config.PATH) + 'checkpoint/' + Config.MODEL_NAME + '/')
                 print(latest_checkpoint)
                 self.saver.restore(self.sess, latest_checkpoint)
+                self.name = self.name + 'res'
+                self._create_tensor_board()
 
     def _model_save(self):
         self.saver.save(self.sess, str(Config.PATH) + 'checkpoint/' + self.name + '/model.ckpt')
@@ -51,6 +53,18 @@ class NetworkVP:
         attention_mechanism = tf.contrib.seq2seq.BahdanauAttention(num_units=Config.RNN_HIDDEN_DIM, memory=memory)
         attn_cell = tf.contrib.seq2seq.AttentionWrapper(cell, attention_mechanism, output_attention=False)
         return attn_cell
+
+    def _create_tensor_board(self):
+        # for added metadata https://www.tensorflow.org/programmers_guide/graph_viz
+        log_name = str(Config.PATH) + "logs/" + self.name
+        self.log_writer = tf.summary.FileWriter(log_name)
+        self.log_writer.add_graph(self.sess.graph)
+        self.merged = tf.summary.merge_all()
+
+    def finish(self):
+        if Config.TRAIN == 1:
+            self._model_save()
+        self.log_writer.close()
 
     def _create_graph(self):
         self.raw_state = tf.placeholder(tf.float32, shape=[None, Config.NUM_OF_CUSTOMERS+1, 2], name='State')
@@ -69,6 +83,7 @@ class NetworkVP:
         self.MA_baseline = tf.Variable(10.0, dtype=tf.float32, trainable=False)
 
         if Config.STATE_EMBED == 1:
+            # self.with_deopt_state = tf.layers.conv1d(self.raw_state, Config.RNN_HIDDEN_DIM, 1)
             self.with_depot_state = tf.layers.conv1d(self.raw_state, Config.RNN_HIDDEN_DIM, 10, padding="same")
         else:
             self.with_depot_state = self.raw_state
@@ -147,10 +162,14 @@ class NetworkVP:
             self.logits = Config.LOGIT_CLIP_SCALAR*tf.nn.tanh(self.logits)
 
         if Config.REINFORCE == 0:
+            self.weights = tf.to_float(tf.tile(tf.reshape(tf.range(
+                1, tf.divide(1, tf.shape(self.state)[1]), -tf.divide(1, tf.shape(self.state)[1])),
+                                                          [1, -1]), [self.batch_size, 1]))
             self.loss = tf.contrib.seq2seq.sequence_loss(
                 logits=self.logits,
                 targets=self.or_action[:, :-1],
-                weights=tf.ones([self.batch_size, tf.shape(self.state)[1]])
+                # weights=tf.ones([self.batch_size, tf.shape(self.state)[1]])
+                weights=self.weights
             )
         else:
             self.neg_log_prob = -1*tf.nn.sparse_softmax_cross_entropy_with_logits(logits=self.logits,
@@ -176,13 +195,11 @@ class NetworkVP:
             self.critic_train_op = tf.train.AdamOptimizer(self.lr).minimize(self.critic_loss)
             if Config.MAX_GRAD != 0:
                 self.params = tf.trainable_variables()
-                # self.gradients = tf.gradients(self.loss, self.params, colocate_gradients_with_ops=colocate)
+                self.gradients = tf.gradients(self.loss, self.params, colocate_gradients_with_ops=colocate)
                 opt = tf.train.AdamOptimizer(self.lr)
-                self.gradients = opt.compute_gradients(self.loss, self.params)
-                self.clipped_gradients = [(tf.clip_by_norm(grad, Config.MAX_GRAD), var) for grad, var in self.gradients]
-                self.train_op = opt.apply_gradients(self.clipped_gradients, global_step=self.global_step)
-                # self.train_op = opt.apply_gradients(zip(self.clipped_gradients, self.params), global_step=self.global_step)
-                # tf.summary.scalar("grad_norm", gradient_norm)
+                self.clipped_gradients, gradient_norm = tf.clip_by_global_norm(self.gradients, Config.MAX_GRAD)
+                self.train_op = opt.apply_gradients(zip(self.clipped_gradients, self.params), global_step=self.global_step)
+                tf.summary.scalar("grad_norm", gradient_norm)
                 tf.summary.scalar("LearningRate", self.lr)
             else:
                 self.train_op = tf.train.AdamOptimizer(self.lr).minimize(self.loss,
@@ -266,20 +283,10 @@ class NetworkVP:
             # print(self.sess.run([], feed_dict=feed_dict))
         else:
             self.sess.run([self.train_op, self.critic_train_op], feed_dict=feed_dict)
-        if step % 1000 == 0 and Config.TRAIN:
+        self._model_save()
+        if step % 10000 == 0 and Config.TRAIN:
             print("Saving Model...")
             self._model_save()
-            print(self.sess.run([self.pred_final_action], feed_dict=feed_dict))
-            print(self.sess.run([self.or_action], feed_dict=feed_dict))
-
-    def _create_tensor_board(self):
-        # for added metadata https://www.tensorflow.org/programmers_guide/graph_viz
-        log_name = str(Config.PATH) + "logs/" + self.name
-        self.log_writer = tf.summary.FileWriter(log_name)
-        self.log_writer.add_graph(self.sess.graph)
-        self.merged = tf.summary.merge_all()
-
-    def finish(self):
-        if Config.TRAIN == 1:
-            self._model_save()
-        self.log_writer.close()
+            pred_action, or_action = self.sess.run([self.pred_final_action, self.or_action], feed_dict=feed_dict)
+            print(pred_action)
+            print(or_action)

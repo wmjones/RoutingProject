@@ -76,7 +76,8 @@ class Server:
         plt.ylim(0, 1)
         plt.plot(points[:, 0], points[:, 1], 'ro')
         plt.title('Total Steps=' + str(step))
-        fig.savefig('./figs/TSP_' + str((Config.NUM_OF_CUSTOMERS+1)) + '_' + 'MODEL_NAME_' + str(Config.MODEL_NAME) + '.png')
+        fig.savefig(str(Config.PATH) + 'figs/TSP_' + str((Config.NUM_OF_CUSTOMERS+1)) + '_' + 'MODEL_NAME_' + str(Config.MODEL_NAME) +
+                    '_STEP_' + str(step) + '.png')
         if False:
             or_model = OR_Tool(env.current_state, env.get_current_location(), int(env.depot_idx))
             or_route, or_cost = or_model.solve()
@@ -89,12 +90,14 @@ class Server:
             plt.xlim(0, 1)
             plt.ylim(0, 1)
             plt.plot(points[:, 0], points[:, 1], 'ro')
-            fig.savefig('./figs/TSP_' + str((Config.NUM_OF_CUSTOMERS+1)) + 'Optimal' + '.png')
+            fig.savefig(str(Config.PATH) + 'figs/TSP_' + str((Config.NUM_OF_CUSTOMERS+1)) + '_Optimal' + '.png')
 
     def main(self):
         self.trainer_count = Config.TRAINERS
         self.predictor_count = Config.PREDICTORS
         self.agent_count = Config.AGENTS
+
+        self.plot(self.model.get_global_step())
 
         for _ in np.arange(0, Config.TRAINERS):
             self.add_trainer()

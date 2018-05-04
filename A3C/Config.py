@@ -11,10 +11,10 @@ class Config:
     FROM_FILE = 0
     GPU = 1
     LAYERS_STACKED_COUNT = 2
-    LEARNING_RATE = 1e-2
+    LEARNING_RATE = 1e-3
     LOGIT_CLIP_SCALAR = 0
     LOGIT_PENALTY = 1e6
-    MAX_GRAD = 0
+    MAX_GRAD = 2
     MOVING_AVERAGE = 0
     MODEL_NAME = ''
     MODEL_SETTING = 0
@@ -31,4 +31,4 @@ class Config:
     SOFTMAX_TEMP = 1.0
     STATE_EMBED = 0
     TRAIN = 0
-    TRAINING_MIN_BATCH_SIZE = 20
+    TRAINING_MIN_BATCH_SIZE = 10

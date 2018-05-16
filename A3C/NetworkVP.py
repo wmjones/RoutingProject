@@ -22,7 +22,7 @@ class NetworkVP:
                 config.gpu_options.allow_growth = True
             else:
                 config = tf.ConfigProto()
-            # config.graph_options.optimizer_options.global_jit_level = tf.OptimizerOptions.ON_1
+            config.graph_options.optimizer_options.global_jit_level = tf.OptimizerOptions.ON_1
             self.sess = tf.Session(
                 graph=self.graph,
                 config=config
@@ -271,7 +271,7 @@ class NetworkVP:
         #     [self.pred_final_action, self.logits],
         #     feed_dict=feed_dict)
         # print(self.sess.run([self.or_action[:,:-1]], feed_dict=feed_dict))
-        if step % 100 == 0:
+        if step % 200 == 0:
             if Config.TRAIN == 1:
                 _, _, summary, loss, diff = self.sess.run([self.train_op, self.critic_train_op,
                                                            self.merged, self.loss, self.relative_length], feed_dict=feed_dict)

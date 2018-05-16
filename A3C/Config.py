@@ -14,7 +14,7 @@ class Config:
     LEARNING_RATE = 1e-3
     LOGIT_CLIP_SCALAR = 0
     LOGIT_PENALTY = 1e6
-    MAX_GRAD = 2
+    MAX_GRAD = 2.0
     MOVING_AVERAGE = 0
     MODEL_NAME = ''
     MODEL_SETTING = 0
@@ -25,7 +25,7 @@ class Config:
     REINFORCE = 0
     RESTORE = 0
     RNN_HIDDEN_DIM = 128
-    RUN_TIME = 30
+    RUN_TIME = 60
     REZA = 0
     STOCHASTIC = 0
     SOFTMAX_TEMP = 1.0

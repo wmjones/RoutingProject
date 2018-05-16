@@ -15,19 +15,19 @@ if Config.MODEL_SETTING == 1:
     Config.FROM_FILE = 1
     Config.LOGIT_CLIP_SCALAR = 10
 elif Config.MODEL_SETTING == 2:
-    Config.DIRECTION = 3
+    Config.DIRECTION = 2
     Config.FROM_FILE = 1
     Config.LOGIT_CLIP_SCALAR = 10
 elif Config.MODEL_SETTING == 3:
-    Config.DIRECTION = 1
+    Config.DIRECTION = 3
     Config.FROM_FILE = 1
     Config.LOGIT_CLIP_SCALAR = 10
-    Config.STOCHASTIC = 1
+    # Config.STOCHASTIC = 1
 elif Config.MODEL_SETTING == 4:
     Config.DIRECTION = 2
     Config.FROM_FILE = 1
     Config.LOGIT_CLIP_SCALAR = 10
-    Config.STOCHASTIC = 1
+    # Config.STOCHASTIC = 1
 elif Config.MODEL_SETTING == 5:
     Config.DIRECTION = 2
     Config.REINFORCE = 1

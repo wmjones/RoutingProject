@@ -450,29 +450,46 @@ def Reza_Model(batch_size, problem_state):
 
 
 def Wyatt_Model(batch_size, problem_state):
-    inputs = tf.zeros([batch_size, 2])
-    cell = tf.nn.rnn_cell.LSTMCell(Config.RNN_HIDDEN_DIM)
-    attention_mechanism = tf.contrib.seq2seq.LuongAttention(num_units=Config.RNN_HIDDEN_DIM, memory=problem_state,
-                                                            probability_fn=tf.identity)
-    cell = tf.contrib.seq2seq.AttentionWrapper(cell, attention_mechanism, output_attention=True)
-    state = cell.zero_state(dtype=tf.float32, batch_size=batch_size)
-    mask = tf.zeros([batch_size, Config.NUM_OF_CUSTOMERS], dtype=tf.float32)
-    actions = []
-    logits = []
-    for i in range(Config.NUM_OF_CUSTOMERS):
-        outputs, state = cell(inputs, state)
-        logit = state.alignments
-        action = tf.argmax(logit-mask*1e6, axis=1, output_type=tf.int32)
-        mask = mask + tf.one_hot(action, Config.NUM_OF_CUSTOMERS, dtype=tf.float32)
-        inputs = tf.gather_nd(problem_state, tf.concat([tf.reshape(tf.range(0, batch_size), [-1, 1]),
-                                                        tf.reshape(action, [-1, 1])], 1))
-        logits.append(logit)
-        actions.append(action)
-    actions = tf.convert_to_tensor(actions)
-    actions = tf.transpose(actions, [1, 0])
-    logits = tf.convert_to_tensor(logits)
-    logits = tf.transpose(logits, [1, 0, 2])
-    pred_final_action = actions
-    train_final_action = actions
-    base_line_est = tf.layers.dense(state.cell_state.h, 1)
+    if Config.STATE_EMBED == 1:
+        initial_inputs = tf.zeros([batch_size, Config.RNN_HIDDEN_DIM])
+    else:
+        initial_inputs = tf.zeros([batch_size, 2])
+
+    with tf.variable_scope("Actor"):
+        cell = tf.nn.rnn_cell.LSTMCell(Config.RNN_HIDDEN_DIM)
+        attention_mechanism = tf.contrib.seq2seq.LuongAttention(num_units=Config.RNN_HIDDEN_DIM, memory=problem_state,
+                                                                probability_fn=tf.identity)
+        cell = tf.contrib.seq2seq.AttentionWrapper(cell, attention_mechanism, output_attention=True)
+        state = cell.zero_state(dtype=tf.float32, batch_size=batch_size)
+        mask = tf.zeros([batch_size, Config.NUM_OF_CUSTOMERS], dtype=tf.float32)
+        actions = []
+        logits = []
+        inputs = initial_inputs
+        for i in range(Config.NUM_OF_CUSTOMERS):
+            outputs, state = cell(inputs, state)
+            logit = state.alignments-mask*1e6
+            action = tf.argmax(logit, axis=1, output_type=tf.int32)
+            mask = mask + tf.one_hot(action, Config.NUM_OF_CUSTOMERS, dtype=tf.float32)
+            inputs = tf.gather_nd(problem_state, tf.concat([tf.reshape(tf.range(0, batch_size), [-1, 1]),
+                                                            tf.reshape(action, [-1, 1])], 1))
+            logits.append(logit)
+            actions.append(action)
+        actions = tf.convert_to_tensor(actions)
+        actions = tf.transpose(actions, [1, 0])
+        logits = tf.convert_to_tensor(logits)
+        logits = tf.transpose(logits, [1, 0, 2])
+        pred_final_action = actions
+        train_final_action = actions
+
+    with tf.variable_scope("Critic"):
+        critic_inputs = initial_inputs
+        critic_cell = tf.nn.rnn_cell.LSTMCell(Config.RNN_HIDDEN_DIM)
+        critic_attention_mechanism = tf.contrib.seq2seq.LuongAttention(num_units=Config.RNN_HIDDEN_DIM, memory=problem_state)
+        critic_cell = tf.contrib.seq2seq.AttentionWrapper(critic_cell, critic_attention_mechanism, output_attention=True)
+        critic_state = critic_cell.zero_state(dtype=tf.float32, batch_size=batch_size)
+        for i in range(5):
+            critic_outputs, critic_state = critic_cell(critic_inputs, critic_state)
+            critic_inputs = critic_outputs
+        base_line_est = tf.layers.dense(critic_state.cell_state.h, 1)
+
     return train_final_action, pred_final_action, base_line_est, logits

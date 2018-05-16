@@ -79,7 +79,7 @@ class Server:
         plt.title('Total Steps=' + str(step))
         fig.savefig(str(Config.PATH) + 'figs/TSP_' + str((Config.NUM_OF_CUSTOMERS+1)) + '_' + 'MODEL_NAME_' + str(Config.MODEL_NAME) +
                     '_STEP_' + str(step) + '.png')
-        if True:
+        if False:
             or_model = OR_Tool(env.current_state, env.get_current_location(), int(env.depot_idx))
             or_route, or_cost = or_model.solve()
             or_route = np.asarray(or_route)

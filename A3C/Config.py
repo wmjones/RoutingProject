@@ -11,7 +11,7 @@ class Config:
     FROM_FILE = 0
     GPU = 1
     LAYERS_STACKED_COUNT = 2
-    LEARNING_RATE = 1e-2
+    LEARNING_RATE = 1e-3
     LOGIT_CLIP_SCALAR = 0
     LOGIT_PENALTY = 1e6
     MAX_GRAD = 2.0

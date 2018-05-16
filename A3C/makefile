@@ -5,10 +5,6 @@ path="/Users/wyatt/Documents/Github_Repositories/RoutingProject/A3C/"
 train=0
 
 short_test :
-	mkdir -p figs
-	mkdir -p ini_files
-	mkdir -p logs
-	mkdir -p checkpoint
 	python3 GA3C.py PATH=$(path) MODEL_SETTING=$(mod) AGENTS=8 NUM_OF_CUSTOMERS=19 MODEL_NAME=$(MODEL_NAME) TRAIN=$(train) TRAINING_MIN_BATCH_SIZE=10 TRAIN=1
 test :
 	python3 GA3C.py PATH=$(path) MODEL_SETTING=1 AGENTS=8 MODEL_NAME=$(MODEL_NAME) TRAIN=0 TRAINING_MIN_BATCH_SIZE=10

@@ -467,7 +467,7 @@ def Wyatt_Model(batch_size, problem_state):
         inputs = initial_inputs
         for i in range(Config.NUM_OF_CUSTOMERS):
             outputs, state = cell(inputs, state)
-            logit = state.alignments-mask*1e6
+            logit = state.alignments-mask*Config.LOGIT_PENALTY
             action = tf.argmax(logit, axis=1, output_type=tf.int32)
             mask = mask + tf.one_hot(action, Config.NUM_OF_CUSTOMERS, dtype=tf.float32)
             inputs = tf.gather_nd(problem_state, tf.concat([tf.reshape(tf.range(0, batch_size), [-1, 1]),
@@ -481,15 +481,23 @@ def Wyatt_Model(batch_size, problem_state):
         pred_final_action = actions
         train_final_action = actions
 
-    with tf.variable_scope("Critic"):
-        critic_inputs = initial_inputs
-        critic_cell = tf.nn.rnn_cell.LSTMCell(Config.RNN_HIDDEN_DIM)
-        critic_attention_mechanism = tf.contrib.seq2seq.LuongAttention(num_units=Config.RNN_HIDDEN_DIM, memory=problem_state)
-        critic_cell = tf.contrib.seq2seq.AttentionWrapper(critic_cell, critic_attention_mechanism, output_attention=True)
-        critic_state = critic_cell.zero_state(dtype=tf.float32, batch_size=batch_size)
+    # with tf.variable_scope("Critic"):
+    #     critic_inputs = initial_inputs
+    #     critic_cell = tf.nn.rnn_cell.LSTMCell(Config.RNN_HIDDEN_DIM)
+    #     critic_attention_mechanism = tf.contrib.seq2seq.LuongAttention(num_units=Config.RNN_HIDDEN_DIM, memory=problem_state)
+    #     critic_cell = tf.contrib.seq2seq.AttentionWrapper(critic_cell, critic_attention_mechanism, output_attention=True)
+    #     critic_state = critic_cell.zero_state(dtype=tf.float32, batch_size=batch_size)
+    #     for i in range(5):
+    #         critic_outputs, critic_state = critic_cell(critic_inputs, critic_state)
+    #         critic_inputs = critic_outputs
+    #     base_line_est = tf.layers.dense(tf.layers.dense(critic_state.cell_state.h, 10, tf.nn.relu), 1)
+
+    with tf.variable_scope("Conv_Critic"):
+        out = problem_state
         for i in range(5):
-            critic_outputs, critic_state = critic_cell(critic_inputs, critic_state)
-            critic_inputs = critic_outputs
-        base_line_est = tf.layers.dense(critic_state.cell_state.h, 1)
+            out = tf.layers.conv1d(out, 128, 1)
+        out = tf.layers.conv1d(out, 128, 19)
+        out = tf.reshape(out, [-1, 128])
+        base_line_est = tf.layers.dense(tf.layers.dense(out, 10, tf.nn.relu), 1)
 
     return train_final_action, pred_final_action, base_line_est, logits

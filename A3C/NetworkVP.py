@@ -215,6 +215,7 @@ class NetworkVP:
             tf.summary.scalar("Critic_Loss", self.critic_loss)
         with tf.name_scope("Performace"):
             tf.summary.scalar("Relative Critic Loss", tf.reduce_mean(self.base_line_est/self.or_cost))
+            tf.summary.scalar("Relative Critic Loss to Sampled", tf.reduce_mean(self.base_line_est/self.sampled_cost))
             tf.summary.scalar("difference_in_length", self.difference_in_length)
             tf.summary.scalar("relative_length", self.relative_length)
             tf.summary.scalar("Avg_or_cost", tf.reduce_mean(self.or_cost))

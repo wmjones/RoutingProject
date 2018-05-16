@@ -2,7 +2,7 @@ import tensorflow as tf
 # import time
 # from MaskWrapper import MaskWrapper
 # from MaskWrapper import MaskWrapperAttnState
-from Model import Encoder, Helper, Decoder, Reza_Model
+from Model import Encoder, Helper, Decoder, Reza_Model, Wyatt_Model
 # from MaskWrapper import MaskWrapperState
 # import numpy as np
 # from Environment import Environment
@@ -95,7 +95,7 @@ class NetworkVP:
         if Config.DIRECTION == 8:
             self.encoder_outputs = self.state
             self.encoder_state = None
-        if Config.DIRECTION != 9 and Config.DIRECTION != 8:
+        if Config.DIRECTION < 9 and Config.DIRECTION != 8:
             self.encoder_outputs, self.encoder_state = Encoder(self.state, self.keep_prob)
 
         # HELPERS
@@ -114,7 +114,7 @@ class NetworkVP:
                                            self.start_tokens, self.end_token)
 
         # DECODER
-        if Config.DIRECTION != 9:
+        if Config.DIRECTION < 9:
             train_decoder, pred_decoder, critic_decoder = Decoder(self.batch_size, self.encoder_state, self.encoder_outputs,
                                                                   train_helper, pred_helper, self.state, self.start_tokens,
                                                                   self.end_token, self.keep_prob)
@@ -139,9 +139,12 @@ class NetworkVP:
                 self.base_line_est = tf.layers.dense(self.critic_final_state.AttnState.cell_state.h,
                                                      Config.RNN_HIDDEN_DIM, activation=tf.nn.relu)
             self.base_line_est = tf.layers.dense(self.base_line_est, 1)
-        else:
+        elif Config.DIRECTION == 9:
             self.train_final_action, self.pred_final_action, self.base_line_est, self.logits = Reza_Model(self.batch_size,
                                                                                                           self.with_depot_state)
+        elif Config.DIRECTION == 10:
+            self.train_final_action, self.pred_final_action, self.base_line_est, self.logits = Wyatt_Model(self.batch_size,
+                                                                                                           self.state)
 
         # x = tf.range(0, 19, dtype=tf.int32)
         # x = [tf.random_shuffle(x)]
@@ -154,7 +157,7 @@ class NetworkVP:
 
         self.critic_loss = tf.losses.mean_squared_error(self.sampled_cost, self.base_line_est)
 
-        if Config.DIRECTION != 9:
+        if Config.DIRECTION < 9:
             # self.logits = tf.Print(self.train_final_output.rnn_output, [tf.shape(self.train_final_output.rnn_output)])
             self.logits = self.train_final_output.rnn_output
 
@@ -205,7 +208,7 @@ class NetworkVP:
                 self.train_op = tf.train.AdamOptimizer(self.lr).minimize(self.loss,
                                                                          global_step=self.global_step,
                                                                          colocate_gradients_with_ops=colocate)
-        # for gradient clipping https://github.com/tensorflow/nmt/blob/master/nmt/model.py
+        # # for gradient clipping https://github.com/tensorflow/nmt/blob/master/nmt/model.py
 
         with tf.name_scope("Loss"):
             tf.summary.scalar("Loss", self.loss)
@@ -234,7 +237,7 @@ class NetworkVP:
             tf.summary.scalar("DecEmb", tf.cast(Config.DEC_EMB, tf.int32))
             tf.summary.scalar("Droput", tf.cast(Config.DROPOUT, tf.int32))
             tf.summary.scalar("GPU", Config.GPU)
-        # self.tmp = tf.reduce_sum(self.neg_log_prob, axis=1)
+        # # self.tmp = tf.reduce_sum(self.neg_log_prob, axis=1)
 
     def get_global_step(self):
         step = self.sess.run(self.global_step)
@@ -244,15 +247,15 @@ class NetworkVP:
         feed_dict = {self.raw_state: state, self.current_location: current_location,
                      self.keep_prob: 1.0, self.start_tokens: depot_idx}
         prediction = self.sess.run([self.pred_final_action, self.base_line_est], feed_dict=feed_dict)
-        # prediction = [np.zeros([state.shape[0], Config.NUM_OF_CUSTOMERS+1], dtype=np.int32),
-        #           np.zeros([state.shape[0], 1], dtype=np.float32)]
+        # prediction = [np.zeros([10, Config.NUM_OF_CUSTOMERS+1], dtype=np.int32),
+        #               np.zeros([10, 1], dtype=np.float32)]
         return prediction
 
     def train(self, state, current_location, action, or_action, sampled_cost, or_cost, depot_idx, trainer_id):
         step = self.get_global_step()
         feed_dict = {self.raw_state: state, self.current_location: current_location, self.or_action: or_action,
                      self.sampled_cost: sampled_cost, self.or_cost: or_cost, self.start_tokens: depot_idx, self.keep_prob: .9}
-        # print(self.sess.run([self.loss, self.sampled_cost, self.base_line_est, self.tmp], feed_dict=feed_dict))
+        # print(self.sess.run([self.actions], feed_dict=feed_dict))
         # for i in range(or_cost.shape[0]):
         #     if(or_cost[i] > sampled_cost[i]):
         #         env = Environment()
@@ -271,7 +274,7 @@ class NetworkVP:
         #     [self.pred_final_action, self.logits],
         #     feed_dict=feed_dict)
         # print(self.sess.run([self.or_action[:,:-1]], feed_dict=feed_dict))
-        if step % 200 == 0:
+        if step % 500 == 0:
             if Config.TRAIN == 1:
                 _, _, summary, loss, diff = self.sess.run([self.train_op, self.critic_train_op,
                                                            self.merged, self.loss, self.relative_length], feed_dict=feed_dict)

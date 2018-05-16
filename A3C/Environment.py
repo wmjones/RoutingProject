@@ -17,7 +17,8 @@ class Environment:
 
     def reset(self):
         # self.current_state = np.vstack((np.random.rand(Config.NUM_OF_CUSTOMERS, 2), np.array([.5, .5])))
-        self.current_state = np.vstack((np.random.rand(Config.NUM_OF_CUSTOMERS, 2)*10, np.array([0, 0])))
+        self.current_state = np.vstack((np.random.rand(Config.NUM_OF_CUSTOMERS, 2), np.array([0, 0])))
+        # self.current_state = np.vstack((np.random.rand(Config.NUM_OF_CUSTOMERS, 2)*10, np.array([0, 0])))
         # np.random.shuffle(self.current_state)
         # self.depot_idx = np.where(self.current_state[:, 0] == .5)[0][0]
         self.depot_idx = np.where(self.current_state[:, 0] == 0)[0][0]

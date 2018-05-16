@@ -11,7 +11,7 @@ class Config:
     FROM_FILE = 0
     GPU = 1
     LAYERS_STACKED_COUNT = 2
-    LEARNING_RATE = 1e-3
+    LEARNING_RATE = 1e-2
     LOGIT_CLIP_SCALAR = 0
     LOGIT_PENALTY = 1e6
     MAX_GRAD = 2.0
@@ -25,7 +25,7 @@ class Config:
     REINFORCE = 0
     RESTORE = 0
     RNN_HIDDEN_DIM = 128
-    RUN_TIME = 60
+    RUN_TIME = 180
     REZA = 0
     STOCHASTIC = 0
     SOFTMAX_TEMP = 1.0

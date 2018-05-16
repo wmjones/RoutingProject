@@ -13,7 +13,8 @@ def _build_rnn_cell(keep_prob):
 
 
 def _build_attention(cell, memory):
-    attention_mechanism = tf.contrib.seq2seq.BahdanauAttention(num_units=Config.RNN_HIDDEN_DIM, memory=memory)
+    # attention_mechanism = tf.contrib.seq2seq.BahdanauAttention(num_units=Config.RNN_HIDDEN_DIM, memory=memory)
+    attention_mechanism = tf.contrib.seq2seq.LuongAttention(num_units=Config.RNN_HIDDEN_DIM, memory=memory)
     attn_cell = tf.contrib.seq2seq.AttentionWrapper(cell, attention_mechanism, output_attention=True)
     # attn_cell = AttentionWrapper(cell, attention_mechanism, output_attention=True)
     return attn_cell
@@ -445,4 +446,33 @@ def Reza_Model(batch_size, problem_state):
         with tf.variable_scope("Linear"):
             base_line_est = tf.squeeze(tf.layers.dense(tf.layers.dense(hy, Config.RNN_HIDDEN_DIM, tf.nn.relu), 1), 1)
             base_line_est = tf.reshape(base_line_est, [-1, 1])
+    return train_final_action, pred_final_action, base_line_est, logits
+
+
+def Wyatt_Model(batch_size, problem_state):
+    inputs = tf.zeros([batch_size, 2])
+    cell = tf.nn.rnn_cell.LSTMCell(Config.RNN_HIDDEN_DIM)
+    attention_mechanism = tf.contrib.seq2seq.LuongAttention(num_units=Config.RNN_HIDDEN_DIM, memory=problem_state,
+                                                            probability_fn=tf.identity)
+    cell = tf.contrib.seq2seq.AttentionWrapper(cell, attention_mechanism, output_attention=True)
+    state = cell.zero_state(dtype=tf.float32, batch_size=batch_size)
+    mask = tf.zeros([batch_size, Config.NUM_OF_CUSTOMERS], dtype=tf.float32)
+    actions = []
+    logits = []
+    for i in range(Config.NUM_OF_CUSTOMERS):
+        outputs, state = cell(inputs, state)
+        logit = state.alignments
+        action = tf.argmax(logit-mask*1e6, axis=1, output_type=tf.int32)
+        mask = mask + tf.one_hot(action, Config.NUM_OF_CUSTOMERS, dtype=tf.float32)
+        inputs = tf.gather_nd(problem_state, tf.concat([tf.reshape(tf.range(0, batch_size), [-1, 1]),
+                                                        tf.reshape(action, [-1, 1])], 1))
+        logits.append(logit)
+        actions.append(action)
+    actions = tf.convert_to_tensor(actions)
+    actions = tf.transpose(actions, [1, 0])
+    logits = tf.convert_to_tensor(logits)
+    logits = tf.transpose(logits, [1, 0, 2])
+    pred_final_action = actions
+    train_final_action = actions
+    base_line_est = tf.layers.dense(state.cell_state.h, 1)
     return train_final_action, pred_final_action, base_line_est, logits

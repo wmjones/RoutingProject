@@ -11,7 +11,7 @@ ConfigParse = configparser.ConfigParser()
 ConfigParse.optionxform = str
 variables = [attr for attr in dir(Config) if not callable(getattr(Config, attr)) and not attr.startswith("__")]
 if Config.MODEL_SETTING == 1:
-    Config.DIRECTION = 1
+    Config.DIRECTION = 10
     Config.FROM_FILE = 1
     Config.LOGIT_CLIP_SCALAR = 10
 elif Config.MODEL_SETTING == 2:

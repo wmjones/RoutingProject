@@ -183,6 +183,9 @@ class NetworkVP:
                 with tf.control_dependencies([assign]):
                     V = self.MA_baseline
                     self.loss = tf.reduce_mean(tf.multiply(tf.reduce_sum(self.neg_log_prob, axis=1), self.R-V))
+            elif Config.USE_OR_COST == 1:
+                V = tf.stop_gradient(self.or_cost)
+                self.loss = tf.reduce_mean(tf.multiply(tf.reduce_sum(self.neg_log_prob, axis=1), (self.R-V)/5))
             else:
                 V = tf.stop_gradient(self.base_line_est)
                 self.loss = tf.reduce_mean(tf.multiply(tf.reduce_sum(self.neg_log_prob, axis=1), self.R-V))

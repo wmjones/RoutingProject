@@ -32,6 +32,9 @@ class Environment:
         # dist = dist + 6*(len(route) - len(np.unique(route)))  # can probably take out since it shouldnt happen anymore
         if len(route) - len(np.unique(route)) > 0:
             print("Error same location chosen twice")
+            print(route)
+            if Config.REINFORCE == 1:
+                dist = 1e6
         return(dist)
 
     def get_current_location(self):

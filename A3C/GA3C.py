@@ -11,28 +11,30 @@ ConfigParse = configparser.ConfigParser()
 ConfigParse.optionxform = str
 variables = [attr for attr in dir(Config) if not callable(getattr(Config, attr)) and not attr.startswith("__")]
 if Config.MODEL_SETTING == 1:
-    Config.DIRECTION = 10
-    Config.FROM_FILE = 1
-    Config.LOGIT_CLIP_SCALAR = 10
-elif Config.MODEL_SETTING == 2:
-    Config.DIRECTION = 10
-    Config.FROM_FILE = 1
-    Config.LOGIT_CLIP_SCALAR = 0
-elif Config.MODEL_SETTING == 3:
-    Config.DIRECTION = 10
-    Config.FROM_FILE = 1
-    Config.LOGIT_CLIP_SCALAR = 10
-    Config.STATE_EMBED = 1
-elif Config.MODEL_SETTING == 4:
-    Config.DIRECTION = 10
-    Config.REINFORCE = 1
-elif Config.MODEL_SETTING == 5:
     Config.DIRECTION = 2
     Config.REINFORCE = 1
-elif Config.MODEL_SETTING == 6:
+    Config.TRAINING_MIN_BATCH_SIZE = 30
+    Config.LOGIT_CLIP_SCALAR = 10
+elif Config.MODEL_SETTING == 2:
     Config.DIRECTION = 2
     Config.REINFORCE = 1
     Config.MOVING_AVERAGE = 1
+    Config.TRAINING_MIN_BATCH_SIZE = 30
+elif Config.MODEL_SETTING == 3:
+    Config.DIRECTION = 2
+    Config.REINFORCE = 1
+    Config.TRAINING_MIN_BATCH_SIZE = 30
+    Config.USE_OR_COST = 1
+# elif Config.MODEL_SETTING == 4:
+#     Config.DIRECTION = 10
+#     Config.REINFORCE = 1
+# elif Config.MODEL_SETTING == 5:
+#     Config.DIRECTION = 2
+#     Config.REINFORCE = 1
+# elif Config.MODEL_SETTING == 6:
+#     Config.DIRECTION = 2
+#     Config.REINFORCE = 1
+#     Config.MOVING_AVERAGE = 1
 # elif Config.MODEL_SETTING == 7:
 #     Config.DIRECTION = 1
 #     Config.STATE_EMBED = 1

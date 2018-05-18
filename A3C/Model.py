@@ -14,9 +14,11 @@ def _build_rnn_cell(keep_prob):
 
 def _build_attention(cell, memory):
     # attention_mechanism = tf.contrib.seq2seq.BahdanauAttention(num_units=Config.RNN_HIDDEN_DIM, memory=memory)
-    attention_mechanism = tf.contrib.seq2seq.LuongAttention(num_units=Config.RNN_HIDDEN_DIM, memory=memory)
+    if Config.DIRECTION == 2 or Config.DIRECTION == 3:
+        attention_mechanism = tf.contrib.seq2seq.LuongAttention(num_units=Config.RNN_HIDDEN_DIM*2, memory=memory)
+    else:
+        attention_mechanism = tf.contrib.seq2seq.LuongAttention(num_units=Config.RNN_HIDDEN_DIM, memory=memory)
     attn_cell = tf.contrib.seq2seq.AttentionWrapper(cell, attention_mechanism, output_attention=True)
-    # attn_cell = AttentionWrapper(cell, attention_mechanism, output_attention=True)
     return attn_cell
 
 

@@ -48,6 +48,7 @@ def next_batch():
 
 problem_state_with_depot = tf.placeholder(tf.float32, shape=[None, 20, 2])
 problem_label = tf.placeholder(tf.float32, shape=[None, 1])
+sampled_cost = tf.placeholder(tf.float32, shape=[None, 1])
 problem_action = tf.placeholder(tf.int32, shape=[None, 20])
 problem_state = problem_state_with_depot[:, :-1, :]
 for i in range(5):
@@ -103,15 +104,29 @@ loss = tf.contrib.seq2seq.sequence_loss(
 )
 train_op = tf.train.AdamOptimizer(1e-3).minimize(loss)
 
+with tf.name_scope("Loss"):
+    tf.summary.scalar("Loss", loss)
+with tf.name_scope("Performace"):
+    tf.summary.scalar("Avg_sampled_cost", tf.reduce_mean(sampled_cost))
+
 config = tf.ConfigProto()
 config.graph_options.optimizer_options.global_jit_level = tf.OptimizerOptions.ON_1
+log_name = "./logs/" + "test0"
+log_writer = tf.summary.FileWriter(log_name)
+merged = tf.summary.merge_all()
 with tf.Session(config=config) as sess:
+    log_writer.add_graph(sess.graph)
     sess.run(tf.global_variables_initializer())
     for i in range(MAX_STEPS):
         new_state, new_label, new_route = next_batch()
         feed_dict = {problem_state_with_depot: new_state, problem_label: new_label, problem_action: new_route}
         if i % 1000 == 0:
             _, batch_loss, pred_route = sess.run([train_op, loss, actions], feed_dict=feed_dict)
+            new_cost = cost(new_state, pred_route)
+            feed_dict = {problem_state_with_depot: new_state, problem_label: new_label, problem_action: new_route,
+                         sampled_cost: new_cost}
+            summary, _ = sess.run([merged, loss], feed_dict=feed_dict)
+            log_writer.add_summary(summary, i)
             print("step: " + str(i) + "    loss: " + str(batch_loss))
             if i % 10000 == 0:
                 print("pred_route:")
@@ -127,3 +142,4 @@ with tf.Session(config=config) as sess:
             sess.run(train_op, feed_dict=feed_dict)
     # print(feed_dict)
     # print(sess.run(base_line_est, feed_dict=feed_dict))
+log_writer.close()

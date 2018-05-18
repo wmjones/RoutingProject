@@ -13,7 +13,7 @@ class Config:
     LAYERS_STACKED_COUNT = 2
     LEARNING_RATE = 1e-3
     LOGIT_CLIP_SCALAR = 0
-    LOGIT_PENALTY = 1e6
+    LOGIT_PENALTY = 1e8
     MAX_GRAD = 2.0
     MOVING_AVERAGE = 0
     MODEL_NAME = ''
@@ -32,3 +32,4 @@ class Config:
     STATE_EMBED = 0
     TRAIN = 0
     TRAINING_MIN_BATCH_SIZE = 10
+    USE_OR_COST = 0

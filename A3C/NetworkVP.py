@@ -238,7 +238,7 @@ class NetworkVP:
             tf.summary.scalar("DecEmb", tf.cast(Config.DEC_EMB, tf.int32))
             tf.summary.scalar("Droput", tf.cast(Config.DROPOUT, tf.int32))
             tf.summary.scalar("GPU", Config.GPU)
-        # # self.tmp = tf.reduce_sum(self.neg_log_prob, axis=1)
+        # self.tmp = tf.reduce_sum(self.neg_log_prob, axis=1)
 
     def get_global_step(self):
         step = self.sess.run(self.global_step)

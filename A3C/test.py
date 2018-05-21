@@ -1,8 +1,9 @@
 import tensorflow as tf
 import numpy as np
+import time
 
 batch_size = 10
-MAX_STEPS = 300000
+MAX_STEPS = 1000000
 file_state = np.load('data_state_00.npy', 'r')
 file_or_route = np.load('data_or_route_00.npy', 'r')
 file_or_cost = np.load('data_or_cost_00.npy', 'r')
@@ -111,7 +112,7 @@ with tf.name_scope("Performace"):
 
 config = tf.ConfigProto()
 config.graph_options.optimizer_options.global_jit_level = tf.OptimizerOptions.ON_1
-log_name = "./logs/" + "test0"
+log_name = "./logs/" + "test_" + str(time.time())
 log_writer = tf.summary.FileWriter(log_name)
 merged = tf.summary.merge_all()
 with tf.Session(config=config) as sess:

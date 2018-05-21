@@ -52,7 +52,7 @@ sampled_cost = tf.placeholder(tf.float32, shape=[None, 1])
 problem_action = tf.placeholder(tf.int32, shape=[None, 20])
 problem_state = problem_state_with_depot[:, :-1, :]
 for i in range(5):
-    problem_state = tf.layers.conv1d(problem_state, 128, 3, padding="SAME", activation=tf.nn.relu)
+    problem_state = tf.layers.conv1d(problem_state, 128, 1, padding="SAME", activation=tf.nn.relu)
 initial_inputs = tf.zeros([batch_size, 128])
 
 with tf.variable_scope("Actor"):
@@ -128,7 +128,7 @@ with tf.Session(config=config) as sess:
             summary, _ = sess.run([merged, loss], feed_dict=feed_dict)
             log_writer.add_summary(summary, i)
             print("step: " + str(i) + "    loss: " + str(batch_loss))
-            if i % 10000 == 0:
+            if i % 1000 == 0:
                 print("pred_route:")
                 print(str(pred_route))
                 print("or_route:")

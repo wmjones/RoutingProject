@@ -4,6 +4,9 @@ MODEL_NAME='test'
 path="/Users/wyatt/Documents/Github_Repositories/RoutingProject/A3C/"
 train=0
 
+new_test :
+	python3 test.py
+
 short_test :
 	python3 GA3C.py PATH=$(path) MODEL_SETTING=$(mod) AGENTS=8 NUM_OF_CUSTOMERS=19 MODEL_NAME=$(MODEL_NAME) TRAIN=$(train) TRAINING_MIN_BATCH_SIZE=10 TRAIN=1
 test :

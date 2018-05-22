@@ -94,14 +94,14 @@ with tf.variable_scope("Actor"):
 
 # loss = tf.losses.mean_squared_error(problem_label, base_line_est)
 
-# weights = tf.to_float(tf.tile(tf.reshape(tf.range(
-#     1, tf.divide(1, tf.shape(state)[1]), -tf.divide(1, tf.shape(problem_state)[1])),
-#                                               [1, -1]), [batch_size, 1]))
+weights = tf.to_float(tf.tile(tf.reshape(tf.range(
+    1, tf.divide(1, tf.shape(problem_state)[1]), -tf.divide(1, tf.shape(problem_state)[1])),
+                                              [1, -1]), [batch_size, 1]))
 loss = tf.contrib.seq2seq.sequence_loss(
     logits=logits,
     targets=problem_action[:, :-1],
-    weights=tf.ones([batch_size, tf.shape(problem_state)[1]])
-    # weights=weights
+    # weights=tf.ones([batch_size, tf.shape(problem_state)[1]])
+    weights=weights
 )
 train_op = tf.train.AdamOptimizer(1e-3).minimize(loss)
 

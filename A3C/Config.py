@@ -25,11 +25,10 @@ class Config:
     REINFORCE = 0
     RESTORE = 0
     RNN_HIDDEN_DIM = 128
-    RUN_TIME = 180
+    RUN_TIME = 30
     REZA = 0
     STOCHASTIC = 0
     SOFTMAX_TEMP = 1.0
     STATE_EMBED = 0
-    TRAIN = 0
     TRAINING_MIN_BATCH_SIZE = 10
     USE_OR_COST = 0

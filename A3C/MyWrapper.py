@@ -15,9 +15,9 @@ class MaskWrapper(rnn_cell_impl.RNNCell):
 
     def call(self, inputs, state):
         cell_output, new_AttnState = self._cell(inputs, state.AttnState)
+        # cell_output = tf.Print(cell_output, [tf.reduce_min(cell_output)], summarize=19)
         cell_output = cell_output - state.mask*Config.LOGIT_PENALTY
-        # cell_output = tf.Print(cell_output, [cell_output], summarize=10000)
-        sample_ids = tf.argmax(tf.nn.softmax(cell_output), axis=1, output_type=tf.int32)
+        sample_ids = tf.argmax(cell_output, axis=1, output_type=tf.int32)
         # cell_output = Config.LOGIT_CLIP_SCALAR*tf.nn.tanh(cell_output)
         if Config.STOCHASTIC == 0:
             next_mask = state.mask + tf.one_hot(sample_ids, depth=Config.NUM_OF_CUSTOMERS, dtype=tf.float32)

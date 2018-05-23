@@ -64,6 +64,49 @@ if Config.MODEL_SETTING == 12:
     Config.STATE_EMBED = 1
     Config.FROM_FILE = 1
     Config.LOGIT_CLIP_SCALAR = 10
+if Config.MODEL_SETTING == 13:
+    Config.DIRECTION = 1
+    Config.FROM_FILE = 1
+    Config.LOGIT_CLIP_SCALAR = 10
+    Config.STOCHASTIC = 1
+if Config.MODEL_SETTING == 14:
+    Config.DIRECTION = 1
+    Config.REINFORCE = 1
+    Config.USE_OR_COST = 1
+if Config.MODEL_SETTING == 15:
+    Config.DIRECTION = 2
+    Config.FROM_FILE = 1
+    Config.LOGIT_CLIP_SCALAR = 10
+    Config.STOCHASTIC = 1
+if Config.MODEL_SETTING == 16:
+    Config.DIRECTION = 2
+    Config.REINFORCE = 1
+    Config.USE_OR_COST = 1
+if Config.MODEL_SETTING == 17:
+    Config.DIRECTION = 3
+    Config.FROM_FILE = 1
+    Config.LOGIT_CLIP_SCALAR = 10
+    Config.STOCHASTIC = 1
+if Config.MODEL_SETTING == 18:
+    Config.DIRECTION = 3
+    Config.REINFORCE = 1
+    Config.USE_OR_COST = 1
+if Config.MODEL_SETTING == 19:
+    Config.DIRECTION = 4
+    Config.FROM_FILE = 1
+    Config.LOGIT_CLIP_SCALAR = 10
+    Config.STOCHASTIC = 1
+if Config.MODEL_SETTING == 20:
+    Config.DIRECTION = 4
+    Config.REINFORCE = 1
+    Config.USE_OR_COST = 1
+if Config.MODEL_SETTING == 21:
+    Config.DIRECTION = 10
+    Config.FROM_FILE = 1
+    Config.LOGIT_CLIP_SCALAR = 10
+if Config.MODEL_SETTING == 22:
+    Config.DIRECTION = 10
+    Config.REINFORCE = 1
 
 if Config.REINFORCE == 0 and Config.LOGIT_CLIP_SCALAR == 0:
     print()

@@ -129,10 +129,10 @@ class NetworkVP:
             #                                          Config.RNN_HIDDEN_DIM, activation=tf.nn.relu)
             # self.base_line_est = tf.layers.dense(self.base_line_est, 1)
             self.base_line_est = critic_network_pred
-        elif Config.DIRECTION == 9:
+        if Config.DIRECTION == 9:
             self.train_final_action, self.pred_final_action, self.base_line_est, self.logits = Reza_Model(self.batch_size,
                                                                                                           self.with_depot_state)
-        elif Config.DIRECTION == 10:
+        if Config.DIRECTION == 10:
             self.train_final_action, self.pred_final_action, self.base_line_est, self.logits = Wyatt_Model(self.batch_size,
                                                                                                            self.state,
                                                                                                            self.raw_state)
@@ -243,14 +243,14 @@ class NetworkVP:
         #                          np.zeros([10, 1], dtype=np.float32)]
         return pred_route, pred_cost
 
-    def train(self, state, depot_location, or_action=0, sampled_cost=0):
+    def train(self, state, depot_location, or_action=0, sampled_cost=0, or_cost=0):
         if Config.REINFORCE == 0:
             feed_dict = {self.raw_state: state, self.or_route: or_action,
                          self.start_tokens: depot_location, self.keep_prob: 1}
             self.sess.run([self.train_actor_op], feed_dict=feed_dict)
         else:
             feed_dict = {self.raw_state: state, self.sampled_cost: sampled_cost,
-                         self.start_tokens: depot_location, self.keep_prob: 1}
+                         self.start_tokens: depot_location, self.keep_prob: 1, self.or_cost: or_cost}
             self.sess.run([self.train_actor_op, self.train_critic_op], feed_dict=feed_dict)
 
     def summary(self, state, or_cost, or_route, depot_location, last_pred_route, pred_cost, sampled_cost):

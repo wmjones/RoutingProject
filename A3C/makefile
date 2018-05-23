@@ -3,9 +3,6 @@ run=43200
 MODEL_NAME='test'
 path="/Users/wyatt/Documents/Github_Repositories/RoutingProject/A3C/"
 
-# new_test :
-# 	python3 test.py
-
 short_test :
 	python3 GA3C.py PATH=$(path) MODEL_SETTING=$(mod) AGENTS=8 NUM_OF_CUSTOMERS=19 MODEL_NAME=$(MODEL_NAME) TRAINING_MIN_BATCH_SIZE=10
 test :
@@ -27,9 +24,11 @@ tsp :
 	mkdir -p ini_files
 	mkdir -p logs
 	mkdir -p checkpoint
+	mkdir -p RunLogs
 	python3 GA3C.py MODEL_SETTING=$(MODEL_SETTING) RUN_TIME=$(run) AGENTS=8 MODEL_NAME=$(MODEL_NAME)
 clean :
 	rm -rf ./logs/*
 	rm -rf ./checkpoint/*
 	rm -rf ./ini_files/*
 	rm -rf ./figs/*
+	rm -rf ./RunLogs

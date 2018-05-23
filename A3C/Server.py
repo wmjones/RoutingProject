@@ -63,7 +63,8 @@ class Server:
                 #         self.model._model_save()
                 #         print(step)
                 #         sys.exit("Error same location chosen twice")
-                self.model.train(state=batch_state, depot_location=batch_depot_location, sampled_cost=batch_sampled_cost)
+                self.model.train(state=batch_state, depot_location=batch_depot_location,
+                                 sampled_cost=batch_sampled_cost, or_cost=batch_or_cost)
 
             if step % 1000 == 0:
                 if Config.REINFORCE == 0:

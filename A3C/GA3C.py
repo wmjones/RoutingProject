@@ -103,16 +103,24 @@ if Config.MODEL_SETTING == 22:
     Config.REINFORCE = 1
 if Config.MODEL_SETTING == 23:
     Config.DIRECTION = 10
-    Config.STATE_EMBED = 1
     Config.REINFORCE = 1
-    Config.TRAINING_MIN_BATCH_SIZE = 10
     Config.MOVING_AVERAGE = 1
 if Config.MODEL_SETTING == 24:
     Config.DIRECTION = 10
     Config.REINFORCE = 1
-    Config.MOVING_AVERAGE = 1
+    Config.USE_OR_COST = 1
 if Config.MODEL_SETTING == 25:
     Config.DIRECTION = 10
+    Config.STATE_EMBED = 1
+    Config.REINFORCE = 1
+if Config.MODEL_SETTING == 26:
+    Config.DIRECTION = 10
+    Config.STATE_EMBED = 1
+    Config.REINFORCE = 1
+    Config.MOVING_AVERAGE = 1
+if Config.MODEL_SETTING == 27:
+    Config.DIRECTION = 10
+    Config.STATE_EMBED = 1
     Config.REINFORCE = 1
     Config.USE_OR_COST = 1
 

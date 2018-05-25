@@ -22,7 +22,7 @@ class Server:
         points = batch_state[0]
         edges = np.array([[19, action[0][0]]], dtype=np.int32)
         edges = np.append(edges, np.concatenate((action[0][:-1].reshape(-1, 1), action[0][1:].reshape(-1, 1)), axis=1), axis=0)
-        edges = np.append(edges, np.array([[action[0][-1], 19]], dtype=np.int32), axis=0)
+        # edges = np.append(edges, np.array([[action[0][-1], 19]], dtype=np.int32), axis=0) # taken out so i can see direction
         lc = LineCollection(points[edges])
         fig = plt.figure()
         plt.gca().add_collection(lc)
@@ -58,11 +58,11 @@ class Server:
             else:
                 batch_pred_route, batch_pred_cost = self.model.predict(batch_state, batch_depot_location)
                 batch_sampled_cost = self.env.cost(batch_state, batch_pred_route)
-                # for i in range(len(batch_sampled_cost)):
-                #     if len(batch_pred_route[i]) > len(np.unique(batch_pred_route[i])):
-                #         self.model._model_save()
-                #         print(step)
-                #         sys.exit("Error same location chosen twice")
+                for i in range(len(batch_sampled_cost)):
+                    if len(batch_pred_route[i]) > len(np.unique(batch_pred_route[i])):
+                        self.model._model_save()
+                        print(step)
+                        sys.exit("Error same location chosen twice")
                 self.model.train(state=batch_state, depot_location=batch_depot_location,
                                  sampled_cost=batch_sampled_cost, or_cost=batch_or_cost)
 

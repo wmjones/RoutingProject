@@ -81,10 +81,10 @@ class NetworkVP:
         self.state = self.with_depot_state[:, :-1, :]
 
         # ENCODER
-        if Config.DIRECTION == 8:
+        if Config.DIRECTION == 4 or Config.DIRECTION == 5:
             self.encoder_outputs = self.state
             self.encoder_state = None
-        if Config.DIRECTION < 9 and Config.DIRECTION != 8:
+        if Config.DIRECTION < 9 and Config.DIRECTION != 4 and Config.DIRECTION != 5:
             self.encoder_outputs, self.encoder_state = Encoder(self.state, self.keep_prob)
 
         # HELPERS

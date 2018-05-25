@@ -12,12 +12,21 @@ def _build_rnn_cell(keep_prob):
     return cell
 
 
-def _build_attention(cell, memory):
-    # attention_mechanism = tf.contrib.seq2seq.BahdanauAttention(num_units=Config.RNN_HIDDEN_DIM, memory=memory)
-    if Config.DIRECTION == 2 or Config.DIRECTION == 3:
-        attention_mechanism = tf.contrib.seq2seq.LuongAttention(num_units=Config.RNN_HIDDEN_DIM*2, memory=memory)
+def _build_attention(cell, memory, probability_fn=None):
+    if Config.USE_BAHDANAU == 0:
+        if Config.DIRECTION == 2 or Config.DIRECTION == 3:
+            attention_mechanism = tf.contrib.seq2seq.LuongAttention(num_units=Config.RNN_HIDDEN_DIM*2, memory=memory,
+                                                                    probability_fn=probability_fn)
+        else:
+            attention_mechanism = tf.contrib.seq2seq.LuongAttention(num_units=Config.RNN_HIDDEN_DIM, memory=memory,
+                                                                    probability_fn=probability_fn)
     else:
-        attention_mechanism = tf.contrib.seq2seq.LuongAttention(num_units=Config.RNN_HIDDEN_DIM, memory=memory)
+        if Config.DIRECTION == 2 or Config.DIRECTION == 3:
+            attention_mechanism = tf.contrib.seq2seq.BahdanauAttention(num_units=Config.RNN_HIDDEN_DIM*2, memory=memory,
+                                                                       probability_fn=probability_fn)
+        else:
+            attention_mechanism = tf.contrib.seq2seq.BahdanauAttention(num_units=Config.RNN_HIDDEN_DIM, memory=memory,
+                                                                       probability_fn=probability_fn)
     attn_cell = tf.contrib.seq2seq.AttentionWrapper(cell, attention_mechanism, output_attention=True)
     return attn_cell
 
@@ -62,17 +71,17 @@ def Encoder(enc_inputs, keep_prob):
                     (encoder_fw_state[i].h, encoder_bw_state[i].h), 1, name='bidirectional_concat_h')
                 encoder_state.append(tf.contrib.rnn.LSTMStateTuple(c=encoder_state_c, h=encoder_state_h))
             encoder_state = tuple(encoder_state)
-        if Config.DIRECTION == 4:
-            in_cells = []
-            for i in range(Config.LAYERS_STACKED_COUNT):
-                with tf.variable_scope('ENC_RNN_{}'.format(i)):
-                    # cell = tf.nn.rnn_cell.LSTMCell(Config.RNN_HIDDEN_DIM)
-                    cell = _build_rnn_cell(keep_prob)
-                    in_cells.append(cell)
-            in_cell = tf.nn.rnn_cell.MultiRNNCell(in_cells)
-            encoder_outputs, encoder_state = tf.nn.dynamic_rnn(in_cell,
-                                                               enc_inputs,
-                                                               dtype=tf.float32)
+        # if Config.DIRECTION == 4:
+        #     in_cells = []
+        #     for i in range(Config.LAYERS_STACKED_COUNT):
+        #         with tf.variable_scope('ENC_RNN_{}'.format(i)):
+        #             # cell = tf.nn.rnn_cell.LSTMCell(Config.RNN_HIDDEN_DIM)
+        #             cell = _build_rnn_cell(keep_prob)
+        #             in_cells.append(cell)
+        #     in_cell = tf.nn.rnn_cell.MultiRNNCell(in_cells)
+        #     encoder_outputs, encoder_state = tf.nn.dynamic_rnn(in_cell,
+        #                                                        enc_inputs,
+        #                                                        dtype=tf.float32)
         return encoder_outputs, encoder_state
 
 
@@ -331,6 +340,18 @@ def Decoder(batch_size, encoder_state, encoder_outputs, train_helper, pred_helpe
         train_decoder = tf.contrib.seq2seq.BasicDecoder(out_cell, train_helper, initial_state)
         pred_decoder = tf.contrib.seq2seq.BasicDecoder(out_cell, pred_helper, initial_state)
         # critic_decoder = tf.contrib.seq2seq.BasicDecoder(critic_out_cell, pred_helper, critic_initial_state)
+    if Config.DIRECTION == 5:
+        out_cells = []
+        for i in range(Config.LAYERS_STACKED_COUNT):
+            with tf.variable_scope('RNN_{}'.format(i)):
+                cell = _build_rnn_cell(keep_prob)
+                out_cells.append(cell)
+        out_cell = tf.nn.rnn_cell.MultiRNNCell(out_cells)
+        out_cell = _build_attention(out_cell, encoder_outputs, probability_fn=tf.identity)
+        out_cell = MaskWrapper(out_cell)
+        initial_state = out_cell.zero_state(dtype=tf.float32, batch_size=batch_size)
+        train_decoder = tf.contrib.seq2seq.BasicDecoder(out_cell, train_helper, initial_state)
+        pred_decoder = tf.contrib.seq2seq.BasicDecoder(out_cell, pred_helper, initial_state)
 
     with tf.variable_scope("Conv_Critic"):
         out = raw_state
@@ -463,9 +484,7 @@ def Wyatt_Model(batch_size, problem_state, raw_state):
 
     with tf.variable_scope("Actor"):
         cell = tf.nn.rnn_cell.LSTMCell(Config.RNN_HIDDEN_DIM)
-        attention_mechanism = tf.contrib.seq2seq.LuongAttention(num_units=Config.RNN_HIDDEN_DIM, memory=problem_state,
-                                                                probability_fn=tf.identity)
-        cell = tf.contrib.seq2seq.AttentionWrapper(cell, attention_mechanism, output_attention=True)
+        cell = _build_attention(cell, problem_state, tf.identity)
         state = cell.zero_state(dtype=tf.float32, batch_size=batch_size)
         mask = tf.zeros([batch_size, Config.NUM_OF_CUSTOMERS], dtype=tf.float32)
         actions = []
@@ -490,9 +509,9 @@ def Wyatt_Model(batch_size, problem_state, raw_state):
     with tf.variable_scope("Conv_Critic"):
         out = raw_state
         for i in range(5):
-            out = tf.layers.conv1d(out, 128, 2, padding="SAME", activation=tf.nn.relu)
-        out = tf.layers.conv1d(out, 128, 20)
-        out = tf.reshape(out, [-1, 128])
+            out = tf.layers.conv1d(out, Config.RNN_HIDDEN_DIM, 2, padding="SAME", activation=tf.nn.relu)
+        out = tf.layers.conv1d(out, Config.RNN_HIDDEN_DIM, 20)
+        out = tf.reshape(out, [-1, Config.RNN_HIDDEN_DIM])
         base_line_est = tf.layers.dense(tf.layers.dense(out, 10, tf.nn.relu), 1)
 
     return train_final_action, pred_final_action, base_line_est, logits

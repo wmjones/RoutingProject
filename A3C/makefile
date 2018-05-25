@@ -1,5 +1,4 @@
 mod=1
-run=43200
 MODEL_NAME='test'
 path="/Users/wyatt/Documents/Github_Repositories/RoutingProject/A3C/"
 
@@ -25,10 +24,10 @@ tsp :
 	mkdir -p logs
 	mkdir -p checkpoint
 	mkdir -p RunLogs
-	python3 GA3C.py MODEL_SETTING=$(MODEL_SETTING) RUN_TIME=$(run) AGENTS=8 MODEL_NAME=$(MODEL_NAME)
+	python3 GA3C.py MODEL_SETTING=$(MODEL_SETTING) AGENTS=8 MODEL_NAME=$(MODEL_NAME)
 clean :
 	rm -rf ./logs/*
 	rm -rf ./checkpoint/*
 	rm -rf ./ini_files/*
 	rm -rf ./figs/*
-	rm -rf ./RunLogs
+	rm -rf ./RunLogs/*

@@ -32,3 +32,4 @@ class Config:
     STATE_EMBED = 0
     TRAINING_MIN_BATCH_SIZE = 10
     USE_OR_COST = 0
+    USE_BAHDANAU = 0

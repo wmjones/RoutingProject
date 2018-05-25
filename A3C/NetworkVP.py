@@ -198,9 +198,9 @@ class NetworkVP:
                 tf.summary.scalar("grad_norm", gradient_norm)
                 tf.summary.scalar("LearningRate", self.lr)
             else:
-                self.train_op = tf.train.AdamOptimizer(self.lr).minimize(self.actor_loss,
-                                                                         global_step=self.global_step,
-                                                                         colocate_gradients_with_ops=colocate)
+                self.train_actor_op = tf.train.AdamOptimizer(self.lr).minimize(self.actor_loss,
+                                                                               global_step=self.global_step,
+                                                                               colocate_gradients_with_ops=colocate)
         # # for gradient clipping https://github.com/tensorflow/nmt/blob/master/nmt/model.py
 
         with tf.name_scope("Loss"):

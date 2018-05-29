@@ -75,7 +75,8 @@ class NetworkVP:
         if Config.STATE_EMBED == 1:
             self.with_depot_state = self.raw_state
             for i in range(5):
-                self.with_depot_state = tf.layers.conv1d(self.with_depot_state, 128, 1, padding="SAME", activation=tf.nn.relu)
+                self.with_depot_state = tf.layers.conv1d(self.with_depot_state, Config.RNN_HIDDEN_DIM, 1,
+                                                         padding="SAME", activation=tf.nn.relu)
         else:
             self.with_depot_state = self.raw_state
         self.state = self.with_depot_state[:, :-1, :]

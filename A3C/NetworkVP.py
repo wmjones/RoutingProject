@@ -189,6 +189,8 @@ class NetworkVP:
                 self.lr = tf.train.exponential_decay(
                     Config.LEARNING_RATE, self.global_step, 100000,
                     .9, staircase=True, name="learning_rate")
+            else:
+                self.lr = Config.LEARNING_RATE
             self.train_critic_op = tf.train.AdamOptimizer(self.lr).minimize(self.critic_loss)
             if Config.MAX_GRAD != 0:
                 self.params = tf.trainable_variables()

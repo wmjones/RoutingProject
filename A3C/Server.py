@@ -32,19 +32,18 @@ class Server:
         plt.title('Total Steps=' + str(step))
         fig.savefig(str(Config.PATH) + 'figs/TSP_' + str((Config.NUM_OF_CUSTOMERS+1)) + '_MODEL_NAME_' + str(Config.MODEL_NAME) +
                     '_STEP_' + str(step) + '.png')
-        if False:
+        if step > 0:
             or_route = batch_or_route[0]
-            or_route = np.asarray(or_route)
             edges = np.array([[19, or_route[0]]], dtype=np.int32)
-            edges = np.append(edges, np.concatenate((or_route[:-1].reshape(-1, 1), or_route[1:].reshape(-1, 1)), axis=1), axis=0)
+            edges = np.append(edges, np.concatenate((or_route[:-2].reshape(-1, 1), or_route[1:-1].reshape(-1, 1)), axis=1), axis=0)
             lc = LineCollection(points[edges])
             fig = plt.figure()
             plt.gca().add_collection(lc)
             plt.xlim(0, 1)
             plt.ylim(0, 1)
             plt.plot(points[:, 0], points[:, 1], 'ro')
-            fig.savefig(str(Config.PATH) + 'figs/TSP_' + str((Config.NUM_OF_CUSTOMERS+1)) + '_OPTIMAL_MODEL_NAME_' +
-                        str(Config.MODEL_NAME) + '.png')
+            fig.savefig(str(Config.PATH) + 'figs/TSP_' + str((Config.NUM_OF_CUSTOMERS+1)) + '_MODEL_NAME_' + str(Config.MODEL_NAME) +
+                        '_OPTIMAL' + '.png')
 
     def main(self):
         self.plot(self.model.get_global_step())

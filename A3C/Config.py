@@ -12,6 +12,7 @@ class Config:
     GPU = 1
     LAYERS_STACKED_COUNT = 2
     LEARNING_RATE = 1e-3
+    LR_DECAY_OFF = 0
     LOGIT_CLIP_SCALAR = 0
     LOGIT_PENALTY = 1e8
     MAX_GRAD = 2.0

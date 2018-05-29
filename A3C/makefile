@@ -23,11 +23,9 @@ tsp :
 	mkdir -p ini_files
 	mkdir -p logs
 	mkdir -p checkpoint
-	mkdir -p RunLogs
 	python3 GA3C.py MODEL_SETTING=$(MODEL_SETTING) AGENTS=8 MODEL_NAME=$(MODEL_NAME)
 clean :
 	rm -rf ./logs/*
 	rm -rf ./checkpoint/*
 	rm -rf ./ini_files/*
 	rm -rf ./figs/*
-	rm -rf ./RunLogs/*

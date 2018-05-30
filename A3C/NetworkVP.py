@@ -70,22 +70,24 @@ class NetworkVP:
         self.relative_length = tf.reduce_mean(self.sampled_cost/self.or_cost)
         self.start_tokens = tf.placeholder(tf.int32, shape=[None])
         self.end_token = -1
-        self.MA_baseline = tf.Variable(10.0, dtype=tf.float32, trainable=False)
+        self.MA_baseline = tf.Variable(7.0, dtype=tf.float32, trainable=False)
 
         if Config.STATE_EMBED == 1:
             self.with_depot_state = self.raw_state
-            for i in range(5):
+            for i in range(0):
                 self.with_depot_state = tf.layers.conv1d(self.with_depot_state, Config.RNN_HIDDEN_DIM, 1,
                                                          padding="SAME", activation=tf.nn.relu)
+            self.with_depot_state = tf.layers.conv1d(self.with_depot_state, Config.RNN_HIDDEN_DIM, 1,
+                                                     padding="SAME")
         else:
             self.with_depot_state = self.raw_state
         self.state = self.with_depot_state[:, :-1, :]
 
         # ENCODER
-        if Config.DIRECTION == 4 or Config.DIRECTION == 5:
+        if Config.DIRECTION == 4 or Config.DIRECTION == 5 or Config.DIRECTION == 6:
             self.encoder_outputs = self.state
             self.encoder_state = None
-        if Config.DIRECTION < 9 and Config.DIRECTION != 4 and Config.DIRECTION != 5:
+        if Config.DIRECTION < 9 and Config.DIRECTION != 4 and Config.DIRECTION != 5 and Config.DIRECTION != 6:
             self.encoder_outputs, self.encoder_state = Encoder(self.state, self.keep_prob)
 
         # HELPERS
@@ -115,10 +117,10 @@ class NetworkVP:
 
             self.pred_final_output, self.pred_final_state, pred_final_sequence_lengths = tf.contrib.seq2seq.dynamic_decode(
                 pred_decoder, impute_finished=False, maximum_iterations=tf.shape(self.state)[1])
-            # if Config.DIRECTION == 4:
-            #     self.pred_final_action = tf.transpose(self.pred_final_output.predicted_ids, [2, 0, 1])[0]
-            # else:
-            self.pred_final_action = self.pred_final_output.sample_id
+            if Config.DIRECTION == 6:
+                self.pred_final_action = tf.transpose(self.pred_final_output.predicted_ids, [2, 0, 1])[0]
+            else:
+                self.pred_final_action = self.pred_final_output.sample_id
 
             # self.critic_final_output, self.critic_final_state, critic_final_sequence_lengths = tf.contrib.seq2seq.dynamic_decode(
             #     critic_decoder, impute_finished=False, maximum_iterations=tf.shape(self.state)[1])
@@ -156,21 +158,21 @@ class NetworkVP:
             self.logits = Config.LOGIT_CLIP_SCALAR*tf.nn.tanh(self.logits)
 
         if Config.REINFORCE == 0:
-            self.weights = tf.to_float(tf.tile(tf.reshape(tf.range(
-                1, tf.divide(1, tf.shape(self.state)[1]), -tf.divide(1, tf.shape(self.state)[1])),
-                                                          [1, -1]), [self.batch_size, 1]))
+            # self.weights = tf.to_float(tf.tile(tf.reshape(tf.range(
+            #     1, tf.divide(1, tf.shape(self.state)[1]), -tf.divide(1, tf.shape(self.state)[1])),
+            #                                               [1, -1]), [self.batch_size, 1]))
             self.actor_loss = tf.contrib.seq2seq.sequence_loss(
                 logits=self.logits,
                 targets=self.or_route[:, :-1],
-                # weights=tf.ones([self.batch_size, tf.shape(self.state)[1]])
-                weights=self.weights
+                weights=tf.ones([self.batch_size, tf.shape(self.state)[1]])
+                # weights=self.weights
             )
         else:
             self.neg_log_prob = -1*tf.nn.sparse_softmax_cross_entropy_with_logits(logits=self.logits,
                                                                                   labels=self.train_final_action)
             self.R = tf.stop_gradient(self.sampled_cost)
             if Config.MOVING_AVERAGE == 1:
-                assign = tf.assign(self.MA_baseline, self.MA_baseline*.9 + tf.reduce_mean(self.R)*.1)
+                assign = tf.assign(self.MA_baseline, self.MA_baseline*.99 + tf.reduce_mean(self.R)*.01)
                 with tf.control_dependencies([assign]):
                     V = self.MA_baseline
                     self.actor_loss = tf.reduce_mean(tf.multiply(tf.reduce_sum(self.neg_log_prob, axis=1), self.R-V))

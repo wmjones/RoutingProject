@@ -7,45 +7,58 @@ for i in range(1, len(sys.argv)):
     x, y = sys.argv[i].split('=')
     setattr(Config, x, type(getattr(Config, x))(y))
 
-ConfigParse = configparser.ConfigParser()
-ConfigParse.optionxform = str
-variables = [attr for attr in dir(Config) if not callable(getattr(Config, attr)) and not attr.startswith("__")]
 if Config.MODEL_SETTING == 1:
     Config.DIRECTION = 1
+    Config.USE_BAHDANAU = 1
     Config.FROM_FILE = 1
+    Config.RNN_HIDDEN_DIM = 16
     Config.LOGIT_CLIP_SCALAR = 10
-    Config.RUN_TIME = 43200
+    Config.LR_DECAY_OFF = 1
+    Config.RUN_TIME = 64800
 if Config.MODEL_SETTING == 2:
     Config.DIRECTION = 1
+    Config.USE_BAHDANAU = 1
     Config.REINFORCE = 1
-    Config.RUN_TIME = 43200
+    Config.RNN_HIDDEN_DIM = 16
+    Config.LR_DECAY_OFF = 1
+    Config.RUN_TIME = 64800
 if Config.MODEL_SETTING == 3:
     Config.DIRECTION = 2
+    Config.USE_BAHDANAU = 1
     Config.FROM_FILE = 1
     Config.LOGIT_CLIP_SCALAR = 10
-    Config.RUN_TIME = 43200
+    Config.RNN_HIDDEN_DIM = 16
+    Config.LR_DECAY_OFF = 1
+    Config.RUN_TIME = 64800
 if Config.MODEL_SETTING == 4:
     Config.DIRECTION = 2
+    Config.USE_BAHDANAU = 1
     Config.REINFORCE = 1
-    Config.RUN_TIME = 43200
+    Config.RNN_HIDDEN_DIM = 16
+    Config.LR_DECAY_OFF = 1
+    Config.RUN_TIME = 64800
 if Config.MODEL_SETTING == 5:
     Config.DIRECTION = 3
+    Config.USE_BAHDANAU = 1
     Config.FROM_FILE = 1
     Config.LOGIT_CLIP_SCALAR = 10
-    Config.RUN_TIME = 43200
+    Config.RUN_TIME = 64800
 if Config.MODEL_SETTING == 6:
     Config.DIRECTION = 3
+    Config.USE_BAHDANAU = 1
     Config.REINFORCE = 1
-    Config.RUN_TIME = 43200
+    Config.RUN_TIME = 64800
 if Config.MODEL_SETTING == 7:
     Config.DIRECTION = 4
+    Config.USE_BAHDANAU = 1
     Config.FROM_FILE = 1
     Config.LOGIT_CLIP_SCALAR = 10
-    Config.RUN_TIME = 43200
+    Config.RUN_TIME = 64800
 if Config.MODEL_SETTING == 8:
     Config.DIRECTION = 4
+    Config.USE_BAHDANAU = 1
     Config.REINFORCE = 1
-    Config.RUN_TIME = 43200
+    Config.RUN_TIME = 64800
 if Config.MODEL_SETTING == 9:
     Config.DIRECTION = 10
     Config.STATE_EMBED = 1
@@ -272,6 +285,10 @@ if Config.MODEL_SETTING == 50:
     Config.DIRECTION = 2
     Config.FROM_FILE = 1
     Config.LOGIT_CLIP_SCALAR = 10
+    # Config.RNN_HIDDEN_DIM = 8
+    # Config.LEARNING_RATE = 1e-2
+    # Config.REINFORCE = 1
+    # Config.MOVING_AVERAGE = 1
     Config.USE_BAHDANAU = 1
     Config.RUN_TIME = 86400
 if Config.MODEL_SETTING == 51:
@@ -367,13 +384,38 @@ if Config.MODEL_SETTING == 63:
     Config.LR_DECAY_OFF = 1
     Config.USE_BAHDANAU = 1
     Config.RUN_TIME = 86400
+if Config.MODEL_SETTING == 64:
+    Config.DIRECTION = 5
+    Config.REINFORCE = 1
+    Config.USE_BAHDANAU = 1
+    Config.LR_DECAY_OFF = 1
+    Config.RNN_HIDDEN_DIM = 16
+    Config.RUN_TIME = 64800
+if Config.MODEL_SETTING == 65:
+    Config.DIRECTION = 5
+    Config.REINFORCE = 1
+    Config.USE_BAHDANAU = 1
+    Config.MOVING_AVERAGE = 1
+    Config.LR_DECAY_OFF = 1
+    Config.RNN_HIDDEN_DIM = 16
+    Config.RUN_TIME = 64800
+if Config.MODEL_SETTING == 66:
+    Config.DIRECTION = 10
+    Config.STATE_EMBED = 1
+    Config.REINFORCE = 1
+    Config.RNN_HIDDEN_DIM = 32
+    Config.LR_DECAY_OFF = 1
+    Config.RUN_TIME = 64800
+if Config.MODEL_SETTING == 67:
+    Config.DIRECTION = 6
+    Config.FROM_FILE = 1
+    Config.LOGIT_CLIP_SCALAR = 10
+
 
 # if Config.MODEL_SETTING ==
-
-
-if Config.REINFORCE == 0 and Config.LOGIT_CLIP_SCALAR == 0:
-    print()
-    print("You need to set LOGIT_CLIP_SCALAR to not be zero!")
+ConfigParse = configparser.ConfigParser()
+ConfigParse.optionxform = str
+variables = [attr for attr in dir(Config) if not callable(getattr(Config, attr)) and not attr.startswith("__")]
 if Config.RESTORE == 1:
     print()
     print("RESTORING...")

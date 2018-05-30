@@ -32,6 +32,7 @@ class Server:
         plt.title('Total Steps=' + str(step))
         fig.savefig(str(Config.PATH) + 'figs/TSP_' + str((Config.NUM_OF_CUSTOMERS+1)) + '_MODEL_NAME_' + str(Config.MODEL_NAME) +
                     '_STEP_' + str(step) + '.png')
+        plt.close(fig)
         if step > 0:
             or_route = batch_or_route[0]
             edges = np.array([[19, or_route[0]]], dtype=np.int32)
@@ -44,6 +45,7 @@ class Server:
             plt.plot(points[:, 0], points[:, 1], 'ro')
             fig.savefig(str(Config.PATH) + 'figs/TSP_' + str((Config.NUM_OF_CUSTOMERS+1)) + '_MODEL_NAME_' + str(Config.MODEL_NAME) +
                         '_OPTIMAL' + '.png')
+            plt.close(fig)
 
     def main(self):
         self.plot(self.model.get_global_step())
@@ -66,12 +68,14 @@ class Server:
                                  sampled_cost=batch_sampled_cost, or_cost=batch_or_cost)
 
             if step % 1000 == 0:
+                # self.plot(self.model.get_global_step())
                 if Config.REINFORCE == 0:
                     batch_pred_route, batch_pred_cost = self.model.predict(batch_state, batch_depot_location)
                     batch_sampled_cost = self.env.cost(batch_state, batch_pred_route)
                 self.model.summary(batch_state, batch_or_cost, batch_or_route, batch_depot_location,
                                    batch_pred_route, batch_pred_cost, batch_sampled_cost)
-            if step % 10000 == 0:
+            if step % 100000 == 0 and step > 0:
+                print("Saving Model...")
                 self.model._model_save()
 
         self.plot(self.model.get_global_step())

@@ -36,6 +36,7 @@ class Environment:
             state = np.take(raw_state[i], action[i], axis=0)
             cost = np.sum(np.sqrt(np.sum(np.square(state[1:]-state[:-1]), axis=1)))
             cost += np.sum(np.sqrt(np.sum(np.square(state[0], np.array([0, 0], dtype=np.float32)))))
+            cost += np.sum(np.sqrt(np.sum(np.square(state[-1], np.array([0, 0], dtype=np.float32)))))
             costs.append(cost)
         costs = np.asarray(costs)
         return(costs.reshape(-1, 1))

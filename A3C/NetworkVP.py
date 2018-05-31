@@ -2,7 +2,7 @@ import tensorflow as tf
 # import time
 # from MaskWrapper import MaskWrapper
 # from MaskWrapper import MaskWrapperAttnState
-from Model import Encoder, Helper, Decoder, Reza_Model, Wyatt_Model
+from Model import Encoder, Helper, Decoder, Reza_Model, Wyatt_Model, Beam_Search
 # from MaskWrapper import MaskWrapperState
 # import numpy as np
 # from Environment import Environment
@@ -64,7 +64,7 @@ class NetworkVP:
         self.global_step = tf.Variable(0, trainable=False, name='step')
         self.input_lengths = tf.convert_to_tensor([Config.NUM_OF_CUSTOMERS]*(self.batch_size))
         self.or_route = tf.placeholder(tf.int32, shape=[None, Config.NUM_OF_CUSTOMERS+1])
-        self.last_pred_route = tf.placeholder(tf.int32, shape=[None, Config.NUM_OF_CUSTOMERS])
+        self.last_pred_route = tf.placeholder(tf.int32, shape=[None, Config.BEAM_WIDTH, Config.NUM_OF_CUSTOMERS])
         self.or_cost = tf.placeholder(tf.float32, shape=[None, 1])
         self.difference_in_length = tf.reduce_mean(self.sampled_cost - self.or_cost)
         self.relative_length = tf.reduce_mean(self.sampled_cost/self.or_cost)
@@ -87,7 +87,7 @@ class NetworkVP:
         if Config.DIRECTION == 4 or Config.DIRECTION == 5 or Config.DIRECTION == 6:
             self.encoder_outputs = self.state
             self.encoder_state = None
-        if Config.DIRECTION < 9 and Config.DIRECTION != 4 and Config.DIRECTION != 5 and Config.DIRECTION != 6:
+        if Config.DIRECTION < 6 and Config.DIRECTION != 4 and Config.DIRECTION != 5 and Config.DIRECTION != 6:
             self.encoder_outputs, self.encoder_state = Encoder(self.state, self.keep_prob)
 
         # HELPERS
@@ -106,7 +106,7 @@ class NetworkVP:
                                            self.start_tokens, self.end_token)
 
         # DECODER
-        if Config.DIRECTION < 9:
+        if Config.DIRECTION < 6:
             train_decoder, pred_decoder, critic_network_pred = Decoder(self.batch_size, self.encoder_state, self.encoder_outputs,
                                                                        train_helper, pred_helper, self.state, self.start_tokens,
                                                                        self.end_token, self.keep_prob, self.raw_state)
@@ -117,21 +117,14 @@ class NetworkVP:
 
             self.pred_final_output, self.pred_final_state, pred_final_sequence_lengths = tf.contrib.seq2seq.dynamic_decode(
                 pred_decoder, impute_finished=False, maximum_iterations=tf.shape(self.state)[1])
-            if Config.DIRECTION == 6:
-                self.pred_final_action = tf.transpose(self.pred_final_output.predicted_ids, [2, 0, 1])[0]
-            else:
-                self.pred_final_action = self.pred_final_output.sample_id
-
-            # self.critic_final_output, self.critic_final_state, critic_final_sequence_lengths = tf.contrib.seq2seq.dynamic_decode(
-            #     critic_decoder, impute_finished=False, maximum_iterations=tf.shape(self.state)[1])
-            # if Config.DIRECTION != 2:
-            #     self.base_line_est = tf.layers.dense(self.critic_final_state.AttnState.cell_state[0].h,
-            #                                          Config.RNN_HIDDEN_DIM, activation=tf.nn.relu)
-            # else:
-            #     self.base_line_est = tf.layers.dense(self.critic_final_state.AttnState.cell_state.h,
-            #                                          Config.RNN_HIDDEN_DIM, activation=tf.nn.relu)
-            # self.base_line_est = tf.layers.dense(self.base_line_est, 1)
+            self.pred_final_action = self.pred_final_output.sample_id
             self.base_line_est = critic_network_pred
+
+        if Config.DIRECTION == 6:
+            self.train_final_action, self.pred_final_action, self.base_line_est, self.logits = Beam_Search(
+                self.batch_size, self.encoder_state, self.encoder_outputs,
+                train_helper, pred_helper, self.with_depot_state, self.start_tokens,
+                self.end_token, self.keep_prob, self.raw_state)
         if Config.DIRECTION == 9:
             self.train_final_action, self.pred_final_action, self.base_line_est, self.logits = Reza_Model(self.batch_size,
                                                                                                           self.with_depot_state)
@@ -151,7 +144,7 @@ class NetworkVP:
 
         self.critic_loss = tf.losses.mean_squared_error(self.sampled_cost, self.base_line_est)
 
-        if Config.DIRECTION < 9:
+        if Config.DIRECTION < 6:
             self.logits = self.train_final_output.rnn_output
 
         if Config.LOGIT_CLIP_SCALAR != 0:
@@ -219,8 +212,8 @@ class NetworkVP:
             tf.summary.scalar("relative_length", self.relative_length)
             tf.summary.scalar("Avg_or_cost", tf.reduce_mean(self.or_cost))
             tf.summary.scalar("Avg_sampled_cost", tf.reduce_mean(self.sampled_cost))
-            tf.summary.histogram("LocationStartDist", tf.transpose(self.pred_final_action, [1, 0])[0])
-            tf.summary.histogram("LocationEndDist", tf.transpose(self.pred_final_action, [1, 0])[-1])
+            # tf.summary.histogram("LocationStartDist", tf.transpose(self.pred_final_action, [1, 0])[0])
+            # tf.summary.histogram("LocationEndDist", tf.transpose(self.pred_final_action, [1, 0])[-1])
         with tf.name_scope("Config"):
             tf.summary.scalar("REINFORCE", Config.REINFORCE)
             tf.summary.scalar("DIRECTION", Config.DIRECTION)

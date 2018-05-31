@@ -33,10 +33,14 @@ class Environment:
     def cost(self, raw_state, action):
         costs = []
         for i in range(raw_state.shape[0]):
-            state = np.take(raw_state[i], action[i], axis=0)
-            cost = np.sum(np.sqrt(np.sum(np.square(state[1:]-state[:-1]), axis=1)))
-            cost += np.sum(np.sqrt(np.sum(np.square(state[0], np.array([0, 0], dtype=np.float32)))))
-            cost += np.sum(np.sqrt(np.sum(np.square(state[-1], np.array([0, 0], dtype=np.float32)))))
+            best_cost = 1e10
+            for j in range(Config.BEAM_WIDTH):
+                state = np.take(raw_state[i], action[i][j], axis=0)
+                cost = np.sum(np.sqrt(np.sum(np.square(state[1:]-state[:-1]), axis=1)))
+                cost += np.sum(np.sqrt(np.sum(np.square(state[0], np.array([0, 0], dtype=np.float32)))))
+                cost += np.sum(np.sqrt(np.sum(np.square(state[-1], np.array([0, 0], dtype=np.float32)))))
+                if cost < best_cost:
+                    best_cost = cost
             costs.append(cost)
         costs = np.asarray(costs)
         return(costs.reshape(-1, 1))

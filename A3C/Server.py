@@ -19,6 +19,8 @@ class Server:
         env = Environment()
         batch_state, batch_or_cost, batch_or_route, batch_depot_location = env.next_batch()
         action, _ = self.model.predict([batch_state[0]], [batch_depot_location[0]])
+        if Config.DIRECTION == 6:
+            action = action[0]
         points = batch_state[0]
         edges = np.array([[19, action[0][0]]], dtype=np.int32)
         edges = np.append(edges, np.concatenate((action[0][:-1].reshape(-1, 1), action[0][1:].reshape(-1, 1)), axis=1), axis=0)
@@ -59,14 +61,8 @@ class Server:
             else:
                 batch_pred_route, batch_pred_cost = self.model.predict(batch_state, batch_depot_location)
                 batch_sampled_cost = self.env.cost(batch_state, batch_pred_route)
-                for i in range(len(batch_sampled_cost)):
-                    if len(batch_pred_route[i]) > len(np.unique(batch_pred_route[i])):
-                        self.model._model_save()
-                        print(step)
-                        sys.exit("Error same location chosen twice")
                 self.model.train(state=batch_state, depot_location=batch_depot_location,
                                  sampled_cost=batch_sampled_cost, or_cost=batch_or_cost)
-
             if step % 1000 == 0:
                 # self.plot(self.model.get_global_step())
                 if Config.REINFORCE == 0:
@@ -77,6 +73,11 @@ class Server:
             if step % 100000 == 0 and step > 0:
                 print("Saving Model...")
                 self.model._model_save()
+            # for i in range(len(batch_pred_route)):
+            #     if len(batch_pred_route[i]) > len(np.unique(batch_pred_route[i])):
+            #         self.model._model_save()
+            #         print(step)
+            #         sys.exit("Error same location chosen twice")
 
         self.plot(self.model.get_global_step())
         self.model.finish()

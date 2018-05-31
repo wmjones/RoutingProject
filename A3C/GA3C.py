@@ -285,10 +285,6 @@ if Config.MODEL_SETTING == 50:
     Config.DIRECTION = 2
     Config.FROM_FILE = 1
     Config.LOGIT_CLIP_SCALAR = 10
-    # Config.RNN_HIDDEN_DIM = 8
-    # Config.LEARNING_RATE = 1e-2
-    # Config.REINFORCE = 1
-    # Config.MOVING_AVERAGE = 1
     Config.USE_BAHDANAU = 1
     Config.RUN_TIME = 86400
 if Config.MODEL_SETTING == 51:
@@ -410,6 +406,66 @@ if Config.MODEL_SETTING == 67:
     Config.DIRECTION = 6
     Config.FROM_FILE = 1
     Config.LOGIT_CLIP_SCALAR = 10
+    Config.USE_BAHDANAU = 1
+    Config.RNN_HIDDEN_DIM = 32
+    Config.LR_DECAY_OFF = 1
+    Config.RUN_TIME = 64800
+if Config.MODEL_SETTING == 68:
+    Config.DIRECTION = 6
+    Config.FROM_FILE = 1
+    Config.LOGIT_CLIP_SCALAR = 10
+    Config.USE_BAHDANAU = 1
+    Config.RNN_HIDDEN_DIM = 32
+    Config.STATE_EMBED = 1
+    Config.LR_DECAY_OFF = 1
+    Config.RUN_TIME = 64800
+if Config.MODEL_SETTING == 69:
+    Config.DIRECTION = 6
+    Config.FROM_FILE = 1
+    Config.LOGIT_CLIP_SCALAR = 10
+    Config.RNN_HIDDEN_DIM = 32
+    Config.LR_DECAY_OFF = 1
+    Config.RUN_TIME = 64800
+if Config.MODEL_SETTING == 70:
+    Config.DIRECTION = 6
+    Config.FROM_FILE = 1
+    Config.LOGIT_CLIP_SCALAR = 10
+    Config.RNN_HIDDEN_DIM = 32
+    Config.STATE_EMBED = 1
+    Config.LR_DECAY_OFF = 1
+    Config.RUN_TIME = 64800
+if Config.MODEL_SETTING == 71:
+    Config.DIRECTION = 6
+    Config.FROM_FILE = 1
+    Config.LOGIT_CLIP_SCALAR = 10
+    Config.USE_BAHDANAU = 1
+    Config.RNN_HIDDEN_DIM = 16
+    Config.LR_DECAY_OFF = 1
+    Config.RUN_TIME = 64800
+if Config.MODEL_SETTING == 72:
+    Config.DIRECTION = 6
+    Config.FROM_FILE = 1
+    Config.LOGIT_CLIP_SCALAR = 10
+    Config.USE_BAHDANAU = 1
+    Config.RNN_HIDDEN_DIM = 16
+    Config.STATE_EMBED = 1
+    Config.LR_DECAY_OFF = 1
+    Config.RUN_TIME = 64800
+if Config.MODEL_SETTING == 73:
+    Config.DIRECTION = 6
+    Config.FROM_FILE = 1
+    Config.LOGIT_CLIP_SCALAR = 10
+    Config.RNN_HIDDEN_DIM = 16
+    Config.LR_DECAY_OFF = 1
+    Config.RUN_TIME = 64800
+if Config.MODEL_SETTING == 74:
+    Config.DIRECTION = 6
+    Config.FROM_FILE = 1
+    Config.LOGIT_CLIP_SCALAR = 10
+    Config.RNN_HIDDEN_DIM = 16
+    Config.STATE_EMBED = 1
+    Config.LR_DECAY_OFF = 1
+    Config.RUN_TIME = 64800
 
 
 # if Config.MODEL_SETTING ==

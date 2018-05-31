@@ -2,7 +2,12 @@ import tensorflow as tf
 from Config import Config
 from MyWrapper import MaskWrapper, MaskWrapperAttnState
 from tensorflow.python.ops.distributions import categorical
-
+from tensorflow.python.framework import tensor_shape
+from tensorflow.python.framework import tensor_util
+from tensorflow.python.ops import array_ops
+from tensorflow.python.util import nest
+from tensorflow.python.framework import ops
+from tensorflow.python.ops import tensor_array_ops
 
 def _build_rnn_cell(keep_prob):
     cell = tf.nn.rnn_cell.LSTMCell(Config.RNN_HIDDEN_DIM)
@@ -217,63 +222,6 @@ def Decoder(batch_size, encoder_state, encoder_outputs, train_helper, pred_helpe
         train_decoder = tf.contrib.seq2seq.BasicDecoder(out_cell, train_helper, initial_state)
         pred_decoder = tf.contrib.seq2seq.BasicDecoder(out_cell, pred_helper, initial_state)
         # critic_decoder = tf.contrib.seq2seq.BasicDecoder(critic_out_cell, pred_helper, critic_initial_state)
-    if Config.DIRECTION == 6:
-        out_cells = []
-        for i in range(Config.LAYERS_STACKED_COUNT):
-            with tf.variable_scope('DEC_RNN_{}'.format(i)):
-                cell = _build_rnn_cell(keep_prob)
-                out_cells.append(cell)
-        out_cell = tf.nn.rnn_cell.MultiRNNCell(out_cells)
-        with tf.variable_scope("beam"):
-            train_out_cell = _build_attention(out_cell, encoder_outputs, tf.identity)
-            train_out_cell = MaskWrapper(train_out_cell)
-            initial_state = train_out_cell.zero_state(dtype=tf.float32, batch_size=batch_size)
-            # initial_state = initial_state.clone(AttnState=initial_state.AttnState.clone(cell_state=encoder_state))
-            train_decoder = tf.contrib.seq2seq.BasicDecoder(train_out_cell, train_helper, initial_state)
-        with tf.variable_scope("beam", reuse=True):
-            beam_width = 10
-            tiled_encoder_outputs = tf.contrib.seq2seq.tile_batch(
-                encoder_outputs, multiplier=beam_width)
-            # tiled_encoder_final_state = tf.contrib.seq2seq.tile_batch(
-            #     encoder_state, multiplier=beam_width)
-            # tiled_sequence_length = tf.contrib.seq2seq.tile_batch(
-            #     tf.tile([tf.shape(state)[1]], [batch_size]), multiplier=beam_width)
-            pred_out_cell = _build_attention(out_cell, tiled_encoder_outputs, tf.identity)
-            # pred_out_cell = tf.contrib.rnn.OutputProjectionWrapper(pred_out_cell, Config.NUM_OF_CUSTOMERS)
-            pred_out_cell = MaskWrapper(pred_out_cell)
-            pred_initial_state = pred_out_cell.zero_state(dtype=tf.float32, batch_size=batch_size * beam_width)
-            # pred_initial_state = initial_state.clone(AttnState=pred_initial_state.AttnState.clone(cell_state=tiled_encoder_final_state))
-            if Config.STATE_EMBED == 1:
-                def beam_embed(x):
-                    return(
-                        tf.reshape(tf.nn.conv1d(tf.reshape(tf.gather_nd(problem_state, tf.concat(
-                            [tf.reshape(tf.range(batch_size), [-1, 1]),
-                             tf.reshape(x, [-1, 1])], -1)), [batch_size, 1, 2]), W_embed, 1, "VALID"),
-                                   [batch_size, Config.RNN_HIDDEN_DIM])
-                    )
-                # even with logit pen it is outputing infeas routes
-                pred_decoder = tf.contrib.seq2seq.BeamSearchDecoder(
-                    pred_out_cell,
-                    embedding=lambda ids: tf.transpose(
-                        tf.map_fn(beam_embed, tf.transpose(ids, [1, 0]), dtype=tf.float32),
-                        [1, 0, 2]),
-                    start_tokens=start_tokens,
-                    end_token=end_token,
-                    initial_state=pred_initial_state,
-                    beam_width=beam_width)
-            else:
-                pred_decoder = tf.contrib.seq2seq.BeamSearchDecoder(
-                    pred_out_cell,
-                    embedding=lambda sample_ids: tf.transpose(
-                        tf.reshape(tf.gather_nd(
-                            problem_state,
-                            tf.concat([tf.tile(tf.reshape(tf.range(0, batch_size), [-1, 1]), [beam_width, 1]),
-                                       tf.reshape(sample_ids, [-1, 1])], 1)), [beam_width, batch_size, 2]), [1, 0, 2]),
-                    start_tokens=start_tokens,
-                    end_token=end_token,
-                    initial_state=pred_initial_state,
-                    beam_width=beam_width)
-            # pred_decoder = tf.contrib.seq2seq.BasicDecoder(train_out_cell, pred_helper, initial_state)
     # if Config.DIRECTION == 5:
     #     cell = tf.contrib.grid_rnn.Grid2LSTMCell(Config.RNN_HIDDEN_DIM,
     #                                              use_peepholes=True,
@@ -346,9 +294,9 @@ def Decoder(batch_size, encoder_state, encoder_outputs, train_helper, pred_helpe
     with tf.variable_scope("Conv_Critic"):
         out = raw_state
         for i in range(5):
-            out = tf.layers.conv1d(out, 128, 2, padding="SAME", activation=tf.nn.relu)
-        out = tf.layers.conv1d(out, 128, 20)
-        out = tf.reshape(out, [-1, 128])
+            out = tf.layers.conv1d(out, Config.RNN_HIDDEN_DIM, 2, padding="SAME", activation=tf.nn.relu)
+        out = tf.layers.conv1d(out, Config.RNN_HIDDEN_DIM, Config.NUM_OF_CUSTOMERS+1)
+        out = tf.reshape(out, [-1, Config.RNN_HIDDEN_DIM])
         critic_network_pred = tf.layers.dense(tf.layers.dense(out, 10, tf.nn.relu), 1)
     return train_decoder, pred_decoder, critic_network_pred
 
@@ -500,8 +448,112 @@ def Wyatt_Model(batch_size, problem_state, raw_state):
         out = raw_state
         for i in range(5):
             out = tf.layers.conv1d(out, Config.RNN_HIDDEN_DIM, 2, padding="SAME", activation=tf.nn.relu)
-        out = tf.layers.conv1d(out, Config.RNN_HIDDEN_DIM, 20)
+        out = tf.layers.conv1d(out, Config.RNN_HIDDEN_DIM, Config.NUM_OF_CUSTOMERS+1)
         out = tf.reshape(out, [-1, Config.RNN_HIDDEN_DIM])
         base_line_est = tf.layers.dense(tf.layers.dense(out, 10, tf.nn.relu), 1)
 
     return train_final_action, pred_final_action, base_line_est, logits
+
+
+def Beam_Search(batch_size, encoder_state, encoder_outputs, train_helper, pred_helper, with_depot_state,
+                start_tokens, end_token, keep_prob, raw_state):
+    problem_state = with_depot_state[:, :-1, :]
+    out_cells = []
+    for i in range(Config.LAYERS_STACKED_COUNT):
+        with tf.variable_scope('Beam_RNN_{}'.format(i)):
+            cell = _build_rnn_cell(keep_prob)
+            out_cells.append(cell)
+    out_cell = tf.nn.rnn_cell.MultiRNNCell(out_cells)
+    with tf.variable_scope("Beam"):
+        train_out_cell = _build_attention(out_cell, encoder_outputs, tf.identity)
+        train_out_cell = MaskWrapper(train_out_cell)
+        initial_state = train_out_cell.zero_state(dtype=tf.float32, batch_size=batch_size)
+        # initial_state = initial_state.clone(AttnState=initial_state.AttnState.clone(cell_state=encoder_state))
+        beam_train_decoder = tf.contrib.seq2seq.BasicDecoder(train_out_cell, train_helper, initial_state)
+    with tf.variable_scope("Beam", reuse=True):
+        beam_width = Config.BEAM_WIDTH
+        tiled_encoder_outputs = tf.contrib.seq2seq.tile_batch(
+            encoder_outputs, multiplier=beam_width)
+        # tiled_encoder_final_state = tf.contrib.seq2seq.tile_batch(
+        #     encoder_state, multiplier=beam_width)
+        # tiled_sequence_length = tf.contrib.seq2seq.tile_batch(
+        #     tf.tile([tf.shape(state)[1]], [batch_size]), multiplier=beam_width)
+        pred_out_cell = _build_attention(out_cell, tiled_encoder_outputs, tf.identity)
+        pred_out_cell = MaskWrapper(pred_out_cell)
+        pred_initial_state = pred_out_cell.zero_state(dtype=tf.float32, batch_size=batch_size * beam_width)
+        # pred_initial_state = initial_state.clone(AttnState=pred_initial_state.AttnState.clone(cell_state=tiled_encoder_final_state))
+        if Config.STATE_EMBED == 1:
+            def beam_embed(sample_ids):
+                return(tf.reshape(tf.gather_nd(
+                    with_depot_state,
+                    tf.concat([tf.reshape(tf.tile(tf.reshape(tf.range(0, batch_size), [-1, 1]), [1, beam_width]), [-1, 1]),
+                               tf.reshape(sample_ids, [-1, 1])], 1)), [batch_size, beam_width, Config.RNN_HIDDEN_DIM]))
+            pred_decoder = tf.contrib.seq2seq.BeamSearchDecoder(
+                pred_out_cell,
+                embedding=beam_embed,
+                start_tokens=start_tokens,
+                end_token=end_token,
+                initial_state=pred_initial_state,
+                beam_width=beam_width)
+        else:
+            def beam_lookup(sample_ids):
+                return(tf.reshape(tf.gather_nd(
+                    with_depot_state,
+                    tf.concat([tf.reshape(tf.tile(tf.reshape(tf.range(0, batch_size), [-1, 1]), [1, beam_width]), [-1, 1]),
+                               tf.reshape(sample_ids, [-1, 1])], 1)), [batch_size, beam_width, 2]))
+            pred_decoder = tf.contrib.seq2seq.BeamSearchDecoder(
+                pred_out_cell,
+                embedding=beam_lookup,
+                start_tokens=start_tokens,
+                end_token=end_token,
+                initial_state=pred_initial_state,
+                beam_width=beam_width)
+    beam_finished, beam_inputs, beam_next_state = pred_decoder.initialize()
+
+    def _shape(batch_size, from_shape):
+        if (not isinstance(from_shape, tensor_shape.TensorShape) or from_shape.ndims == 0):
+            return tensor_shape.TensorShape(None)
+        else:
+            batch_size = tensor_util.constant_value(
+                ops.convert_to_tensor(
+                    batch_size, name="batch_size"))
+            return tensor_shape.TensorShape([batch_size]).concatenate(from_shape)
+
+    def _create_ta(s, d):
+        return tensor_array_ops.TensorArray(
+            dtype=d,
+            size=0,
+            dynamic_size=True,
+            element_shape=_shape(pred_decoder.batch_size, s))
+    beam_outputs_ta = nest.map_structure(_create_ta, pred_decoder.output_size,
+                                         pred_decoder.output_dtype)
+    for i in range(Config.NUM_OF_CUSTOMERS):
+        beam_outputs, beam_state, beam_next_inputs, beam_finished = pred_decoder.step(i, beam_inputs, beam_next_state)
+        beam_next_state = tf.contrib.seq2seq.BeamSearchDecoderState(
+            cell_state=MaskWrapperAttnState(beam_state.cell_state.AttnState,
+                                            mask=beam_state.cell_state.mask +
+                                            tf.one_hot(beam_outputs.predicted_ids, depth=Config.NUM_OF_CUSTOMERS, dtype=tf.float32)),
+            finished=beam_state.finished,
+            lengths=beam_state.lengths,
+            log_probs=beam_state.log_probs)
+        beam_outputs_ta = nest.map_structure(lambda ta, out: ta.write(i, out), beam_outputs_ta, beam_outputs)
+    beam_final_outputs = nest.map_structure(lambda ta: ta.stack(), beam_outputs_ta)
+    tmp = tf.constant(0, shape=[Config.TRAINING_MIN_BATCH_SIZE, Config.BEAM_WIDTH], dtype=tf.int64)
+    beam_search_final_outputs, beam_search_final_state = pred_decoder.finalize(
+        beam_final_outputs, beam_next_state, sequence_lengths=tmp)
+    beam_pred_final_action = tf.transpose(tf.transpose(beam_search_final_outputs.predicted_ids, [2, 1, 0]), [1, 0, 2])
+
+    with tf.variable_scope("Conv_Critic"):
+        out = raw_state
+        for i in range(5):
+            out = tf.layers.conv1d(out, Config.RNN_HIDDEN_DIM, 2, padding="SAME", activation=tf.nn.relu)
+        out = tf.layers.conv1d(out, Config.RNN_HIDDEN_DIM, Config.NUM_OF_CUSTOMERS+1)
+        out = tf.reshape(out, [-1, Config.RNN_HIDDEN_DIM])
+        beam_base_line_est = tf.layers.dense(tf.layers.dense(out, 10, tf.nn.relu), 1)
+
+    beam_train_final_output, beam_train_final_state, beam_train_final_sequence_lengths = tf.contrib.seq2seq.dynamic_decode(
+        beam_train_decoder, impute_finished=False, maximum_iterations=Config.NUM_OF_CUSTOMERS)
+    beam_train_final_action = beam_train_final_output.sample_id
+    beam_logits = beam_train_final_output.rnn_output
+
+    return(beam_train_final_action, beam_pred_final_action, beam_base_line_est, beam_logits)

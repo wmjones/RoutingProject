@@ -1,7 +1,7 @@
 class Config:
     AGENTS = 4
     CELL_TYPE = 0
-    BEAM_WIDTH = 10
+    BEAM_WIDTH = 20
     DEC_EMB = 0
     DEVICE = 'cpu:0'
     TRAINERS = 1

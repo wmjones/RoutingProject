@@ -9,9 +9,10 @@ from Config import Config
 
 
 class MaskWrapper(rnn_cell_impl.RNNCell):
-    def __init__(self, cell, cell_is_attention=True):
+    def __init__(self, cell, DECODER_TYPE=0):
         super(MaskWrapper, self).__init__()
         self._cell = cell
+        self.DECODER_TYPE = DECODER_TYPE
 
     def call(self, inputs, state):
         cell_output, new_AttnState = self._cell(inputs, state.AttnState)
@@ -21,7 +22,7 @@ class MaskWrapper(rnn_cell_impl.RNNCell):
         # cell_output = tf.Print(cell_output, [cell_output], summarize=19)
         sample_ids = tf.argmax(cell_output, axis=1, output_type=tf.int32)
         # cell_output = Config.LOGIT_CLIP_SCALAR*tf.nn.tanh(cell_output)
-        if Config.STOCHASTIC == 0 and Config.DIRECTION != 6:
+        if Config.STOCHASTIC == 0 and self.DECODER_TYPE == 0:
             next_mask = state.mask + tf.one_hot(sample_ids, depth=Config.NUM_OF_CUSTOMERS, dtype=tf.float32)
         else:
             next_mask = state.mask

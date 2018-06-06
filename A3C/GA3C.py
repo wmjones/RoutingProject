@@ -11,7 +11,6 @@ if Config.MODEL_SETTING == 1:
     Config.DIRECTION = 1
     Config.USE_BAHDANAU = 1
     Config.FROM_FILE = 1
-    Config.RNN_HIDDEN_DIM = 16
     Config.LOGIT_CLIP_SCALAR = 10
     Config.LR_DECAY_OFF = 1
     Config.RUN_TIME = 64800
@@ -27,7 +26,6 @@ if Config.MODEL_SETTING == 3:
     Config.USE_BAHDANAU = 1
     Config.FROM_FILE = 1
     Config.LOGIT_CLIP_SCALAR = 10
-    Config.RNN_HIDDEN_DIM = 16
     Config.LR_DECAY_OFF = 1
     Config.RUN_TIME = 64800
 if Config.MODEL_SETTING == 4:
@@ -466,7 +464,76 @@ if Config.MODEL_SETTING == 74:
     Config.STATE_EMBED = 1
     Config.LR_DECAY_OFF = 1
     Config.RUN_TIME = 64800
-
+if Config.MODEL_SETTING == 75:
+    Config.DIRECTION = 10
+    Config.FROM_FILE = 1
+    Config.LOGIT_CLIP_SCALAR = 10
+    Config.RNN_HIDDEN_DIM = 32
+    Config.LR_DECAY_OFF = 1
+    Config.RUN_TIME = 64800
+if Config.MODEL_SETTING == 76:
+    Config.DIRECTION = 10
+    Config.FROM_FILE = 1
+    Config.LOGIT_CLIP_SCALAR = 10
+    Config.RNN_HIDDEN_DIM = 32
+    Config.INPUT_TIME = 1
+    Config.LR_DECAY_OFF = 1
+    Config.RUN_TIME = 64800
+if Config.MODEL_SETTING == 77:
+    Config.DIRECTION = 10
+    Config.FROM_FILE = 1
+    Config.STATE_EMBED = 1
+    Config.LOGIT_CLIP_SCALAR = 10
+    Config.RNN_HIDDEN_DIM = 32
+    Config.LR_DECAY_OFF = 1
+    Config.RUN_TIME = 64800
+if Config.MODEL_SETTING == 78:
+    Config.DIRECTION = 10
+    Config.FROM_FILE = 1
+    Config.STATE_EMBED = 1
+    Config.LOGIT_CLIP_SCALAR = 10
+    Config.RNN_HIDDEN_DIM = 32
+    Config.INPUT_TIME = 1
+    Config.LR_DECAY_OFF = 1
+    Config.RUN_TIME = 64800
+if Config.MODEL_SETTING == 79:
+    Config.DIRECTION = 10
+    Config.FROM_FILE = 1
+    Config.LOGIT_CLIP_SCALAR = 10
+    Config.RNN_HIDDEN_DIM = 32
+    Config.INPUT_ALL = 1
+    Config.LR_DECAY_OFF = 1
+    Config.RUN_TIME = 64800
+if Config.MODEL_SETTING == 80:
+    Config.DIRECTION = 5
+    Config.FROM_FILE = 1
+    Config.LOGIT_CLIP_SCALAR = 10
+    Config.RNN_HIDDEN_DIM = 32
+    Config.LR_DECAY_OFF = 1
+    Config.RUN_TIME = 64800
+    Config.USE_BAHDANAU = 1
+    Config.SAMPLING = 1
+    Config.INVERSE_SOFTMAX_TEMP = 1.0
+if Config.MODEL_SETTING == 81:
+    Config.DIRECTION = 5
+    Config.FROM_FILE = 1
+    Config.LOGIT_CLIP_SCALAR = 10
+    Config.RNN_HIDDEN_DIM = 32
+    Config.LR_DECAY_OFF = 1
+    Config.RUN_TIME = 64800
+    Config.USE_BAHDANAU = 1
+    Config.SAMPLING = 1
+    Config.INVERSE_SOFTMAX_TEMP = 5.0
+if Config.MODEL_SETTING == 82:
+    Config.DIRECTION = 5
+    Config.FROM_FILE = 1
+    Config.LOGIT_CLIP_SCALAR = 10
+    Config.RNN_HIDDEN_DIM = 32
+    Config.LR_DECAY_OFF = 1
+    Config.RUN_TIME = 64800
+    Config.USE_BAHDANAU = 1
+    Config.SAMPLING = 1
+    Config.INVERSE_SOFTMAX_TEMP = 10.0
 
 # if Config.MODEL_SETTING ==
 ConfigParse = configparser.ConfigParser()

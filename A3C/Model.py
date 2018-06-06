@@ -51,7 +51,6 @@ def Encoder(enc_inputs, keep_prob):
                                                                dtype=tf.float32)
         if Config.DIRECTION == 2:
             in_cell = _build_rnn_cell(keep_prob)
-            # in_cell = tf.contrib.rnn.BasicLSTMCell(Config.RNN_HIDDEN_DIM)
             (bi_outputs, (encoder_fw_state, encoder_bw_state)) = tf.nn.bidirectional_dynamic_rnn(
                              cell_fw=in_cell, cell_bw=in_cell, inputs=enc_inputs, dtype=tf.float32)
             encoder_state_c = tf.concat(
@@ -64,7 +63,6 @@ def Encoder(enc_inputs, keep_prob):
             in_cells = []
             for i in range(Config.LAYERS_STACKED_COUNT):
                 with tf.variable_scope('ENC_RNN_{}'.format(i)):
-                    # cell = tf.nn.rnn_cell.LSTMCell(Config.RNN_HIDDEN_DIM)
                     cell = _build_rnn_cell(keep_prob)
                     in_cells.append(cell)
             (encoder_outputs, encoder_fw_state, encoder_bw_state) = tf.contrib.rnn.stack_bidirectional_dynamic_rnn(
@@ -77,17 +75,6 @@ def Encoder(enc_inputs, keep_prob):
                     (encoder_fw_state[i].h, encoder_bw_state[i].h), 1, name='bidirectional_concat_h')
                 encoder_state.append(tf.contrib.rnn.LSTMStateTuple(c=encoder_state_c, h=encoder_state_h))
             encoder_state = tuple(encoder_state)
-        # if Config.DIRECTION == 4:
-        #     in_cells = []
-        #     for i in range(Config.LAYERS_STACKED_COUNT):
-        #         with tf.variable_scope('ENC_RNN_{}'.format(i)):
-        #             # cell = tf.nn.rnn_cell.LSTMCell(Config.RNN_HIDDEN_DIM)
-        #             cell = _build_rnn_cell(keep_prob)
-        #             in_cells.append(cell)
-        #     in_cell = tf.nn.rnn_cell.MultiRNNCell(in_cells)
-        #     encoder_outputs, encoder_state = tf.nn.dynamic_rnn(in_cell,
-        #                                                        enc_inputs,
-        #                                                        dtype=tf.float32)
         return encoder_outputs, encoder_state
 
 
@@ -101,7 +88,7 @@ def Helper(problem_state, batch_size, training_inputs, start_tokens, end_token):
                     return (tf.tile([False], [batch_size]), tf.zeros([batch_size, Config.RNN_HIDDEN_DIM]))
 
             def sample_fn(time, outputs, state):
-                logits = outputs / Config.SOFTMAX_TEMP
+                logits = outputs * Config.INVERSE_SOFTMAX_TEMP
                 sample_id_sampler = categorical.Categorical(logits=logits)
                 sample_ids = sample_id_sampler.sample()
                 return sample_ids
@@ -416,9 +403,17 @@ def Reza_Model(batch_size, problem_state):
 
 def Wyatt_Model(batch_size, problem_state, raw_state):
     if Config.STATE_EMBED == 1:
-        initial_inputs = tf.zeros([batch_size, Config.RNN_HIDDEN_DIM])
+        if Config.INPUT_TIME == 0:
+            initial_inputs = tf.zeros([batch_size, Config.RNN_HIDDEN_DIM])
+        else:
+            initial_inputs = tf.zeros([batch_size, Config.RNN_HIDDEN_DIM+1])
     else:
-        initial_inputs = tf.zeros([batch_size, 2])
+        if Config.INPUT_TIME == 0:
+            initial_inputs = tf.zeros([batch_size, 2])
+        else:
+            initial_inputs = tf.zeros([batch_size, 3])
+    if Config.INPUT_ALL == 1:
+        initial_inputs = tf.reshape(raw_state, [batch_size, 2*(Config.NUM_OF_CUSTOMERS+1)])
 
     with tf.variable_scope("Actor"):
         cell = tf.nn.rnn_cell.LSTMCell(Config.RNN_HIDDEN_DIM)
@@ -433,8 +428,15 @@ def Wyatt_Model(batch_size, problem_state, raw_state):
             logit = state.alignments-mask*Config.LOGIT_PENALTY
             action = tf.argmax(logit, axis=1, output_type=tf.int32)
             mask = mask + tf.one_hot(action, Config.NUM_OF_CUSTOMERS, dtype=tf.float32)
-            inputs = tf.gather_nd(problem_state, tf.concat([tf.reshape(tf.range(0, batch_size), [-1, 1]),
-                                                            tf.reshape(action, [-1, 1])], 1))
+            if Config.INPUT_TIME == 0:
+                inputs = tf.gather_nd(problem_state, tf.concat([tf.reshape(tf.range(0, batch_size), [-1, 1]),
+                                                                tf.reshape(action, [-1, 1])], 1))
+            else:
+                inputs = tf.concat([tf.to_float(tf.reshape(tf.tile([i], [batch_size]), [-1, 1])),
+                                    tf.gather_nd(problem_state, tf.concat([tf.reshape(tf.range(0, batch_size), [-1, 1]),
+                                                                           tf.reshape(action, [-1, 1])], 1))], 1)
+            if Config.INPUT_ALL:
+                inputs = initial_inputs
             logits.append(logit)
             actions.append(action)
         actions = tf.convert_to_tensor(actions)

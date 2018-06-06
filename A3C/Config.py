@@ -1,7 +1,7 @@
 class Config:
     AGENTS = 4
     CELL_TYPE = 0
-    BEAM_WIDTH = 20
+    BEAM_WIDTH = 2
     DEC_EMB = 0
     DEVICE = 'cpu:0'
     TRAINERS = 1
@@ -30,8 +30,11 @@ class Config:
     RUN_TIME = 30
     REZA = 0
     STOCHASTIC = 0
-    SOFTMAX_TEMP = 1.0
+    INVERSE_SOFTMAX_TEMP = 1.0
     STATE_EMBED = 0
     TRAINING_MIN_BATCH_SIZE = 10
     USE_OR_COST = 0
     USE_BAHDANAU = 0
+    INPUT_TIME = 0
+    INPUT_ALL = 0
+    SAMPLING = 0

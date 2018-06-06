@@ -18,8 +18,9 @@ class Server:
 
     def plot(self, step):
         env = Environment()
-        batch_state, batch_or_cost, batch_or_route, batch_depot_location = env.next_batch()
+        batch_state, batch_or_cost, batch_or_route, batch_depot_location = env.next_batch(1)
         action, _ = self.model.predict([batch_state[0]], [batch_depot_location[0]])
+        action = action[0]
         points = batch_state[0]
         edges = np.array([[19, action[0][0]]], dtype=np.int32)
         edges = np.append(edges, np.concatenate((action[0][:-1].reshape(-1, 1), action[0][1:].reshape(-1, 1)), axis=1), axis=0)
@@ -49,7 +50,7 @@ class Server:
             plt.close(fig)
 
     def main(self):
-        # self.plot(self.model.get_global_step())
+        self.plot(self.model.get_global_step())
         self.env = Environment()
         t_end = time.time() + Config.RUN_TIME
         while time.time() < t_end:
@@ -62,36 +63,39 @@ class Server:
                 batch_sampled_cost = self.env.cost(batch_state, batch_pred_route)
                 self.model.train(state=batch_state, depot_location=batch_depot_location,
                                  sampled_cost=batch_sampled_cost, or_cost=batch_or_cost)
+
             if step % 10000 == 0:
                 # self.plot(self.model.get_global_step())
-                if Config.REINFORCE == 0:
-                    batch_pred_route, batch_pred_cost = self.model.predict(batch_state, batch_depot_location)
-                    batch_sampled_cost = self.env.cost(batch_state, batch_pred_route)
-                self.model.summary(batch_state, batch_or_cost, batch_or_route, batch_depot_location,
-                                   batch_pred_cost, batch_sampled_cost)
-            if step % 100000 == 0 and step > 0:
                 print("Saving Model...")
                 self.model._model_save()
                 print("Done Saving Model")
-                # self.beam_model = NetworkVP(Config.DEVICE, DECODER_TYPE=1)
-                # batch_state, batch_or_cost, batch_or_route, batch_depot_location = self.env.next_batch(5)
-                # batch_beam_pred_route, batch_beam_pred_cost = self.beam_model.predict(batch_state,
-                #                                                                       batch_depot_location)
-                # batch_beam_sampled_cost = self.env.cost(batch_state, batch_beam_pred_route, 1)
-                # batch_pred_route, batch_pred_cost = self.model.predict(batch_state, batch_depot_location)
-                # batch_sampled_cost = self.env.cost(batch_state, batch_pred_route)
-                # print("batch_beam_pred_route:")
-                # print(batch_beam_pred_route)
-                # print("batch_pred_route:")
-                # print(batch_pred_route)
-                # print("batch_or_route:")
-                # print(batch_or_route)
-                # print("avg_batch_or_cost:")
-                # print(np.mean(batch_or_cost))
-                # print("avg_batch_beam_sampled_cost:")
-                # print(np.mean(batch_beam_sampled_cost))
-                # print("avg_batch_pred_cost:")
-                # print(np.mean(batch_sampled_cost))
+                batch_state, batch_or_cost, batch_or_route, batch_depot_location = self.env.next_batch(1)
+                batch_pred_route, batch_pred_cost = self.model.predict(batch_state, batch_depot_location)
+                batch_sampled_cost = self.env.cost(batch_state, batch_pred_route)
+                if Config.DIRECTION == 6:
+                    self.eval_model = NetworkVP(Config.DEVICE, DECODER_TYPE=1)
+                    batch_eval_pred_route, batch_eval_pred_cost = self.eval_model.predict(batch_state, batch_depot_location)
+                if Config.SAMPLING == 1:
+                    self.eval_model = NetworkVP(Config.DEVICE, DECODER_TYPE=2)
+                    batch_eval_pred_route, batch_eval_pred_cost = self.eval_model.predict(batch_state, batch_depot_location, 10)
+                batch_eval_sampled_cost = self.env.cost(batch_state, batch_eval_pred_route)
+
+                print("batch_or_route:")
+                print(batch_or_route)
+                print("batch_pred_route:")
+                print(batch_pred_route)
+                print("batch_eval_pred_route:")
+                print(batch_eval_pred_route)
+                print("avg_batch_or_cost:")
+                print(np.mean(batch_or_cost))
+                print("avg_batch_pred_cost:")
+                print(np.mean(batch_sampled_cost))
+                print("avg_batch_eval_sampled_cost:")
+                print(np.mean(batch_eval_sampled_cost))
+                if Config.SAMPLING == 1 or Config.DIRECTION == 6:
+                    batch_sampled_cost = batch_eval_sampled_cost
+                self.model.summary(batch_state, batch_or_cost, batch_or_route, batch_depot_location,
+                                   batch_pred_cost, batch_sampled_cost)
 
             # for i in range(len(batch_pred_route)):
             #     if len(batch_pred_route[i]) > len(np.unique(batch_pred_route[i])):

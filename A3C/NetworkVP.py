@@ -4,7 +4,7 @@ import tensorflow as tf
 # from MaskWrapper import MaskWrapperAttnState
 from Model import Encoder, Helper, Decoder, Reza_Model, Wyatt_Model, Beam_Search
 # from MaskWrapper import MaskWrapperState
-# import numpy as np
+import numpy as np
 # from Environment import Environment
 from Config import Config
 
@@ -57,6 +57,8 @@ class NetworkVP:
                 config=config
             )
             with self.graph.as_default():
+                if Config.SAMPLING == 1:
+                    Config.STOCHASTIC = 1
                 self._create_graph(DECODER_TYPE=DECODER_TYPE)
                 self.saver = tf.train.Saver()
                 self.sess.run(tf.global_variables_initializer())
@@ -100,11 +102,11 @@ class NetworkVP:
 
         if Config.STATE_EMBED == 1:
             self.with_depot_state = self.raw_state
-            for i in range(0):
+            for i in range(2):
                 self.with_depot_state = tf.layers.conv1d(self.with_depot_state, Config.RNN_HIDDEN_DIM, 1,
                                                          padding="SAME", activation=tf.nn.relu)
             self.with_depot_state = tf.layers.conv1d(self.with_depot_state, Config.RNN_HIDDEN_DIM, 1,
-                                                     padding="SAME")
+                                                     padding="VALID")
         else:
             self.with_depot_state = self.raw_state
         self.state = self.with_depot_state[:, :-1, :]
@@ -151,6 +153,7 @@ class NetworkVP:
                 self.batch_size, self.encoder_state, self.encoder_outputs,
                 train_helper, pred_helper, self.with_depot_state, self.start_tokens,
                 self.end_token, self.keep_prob, self.raw_state, DECODER_TYPE)
+
         if Config.DIRECTION == 9:
             self.train_final_action, self.pred_final_action, self.base_line_est, self.logits = Reza_Model(self.batch_size,
                                                                                                           self.with_depot_state)
@@ -262,11 +265,23 @@ class NetworkVP:
         step = self.sess.run(self.global_step)
         return step
 
-    def predict(self, state, depot_idx):
+    def predict(self, state, depot_idx, num_samples=1):
         feed_dict = {self.raw_state: state, self.start_tokens: depot_idx}
-        pred_route, pred_cost = self.sess.run([self.pred_final_action, self.base_line_est], feed_dict=feed_dict)
-        # pred_route, pred_cost = [np.zeros([10, Config.NUM_OF_CUSTOMERS], dtype=np.int32),
-        #                          np.zeros([10, 1], dtype=np.float32)]
+        sampled_pred_route, sampled_pred_cost = self.sess.run([self.pred_final_action, self.base_line_est], feed_dict=feed_dict)
+        pred_batch_size = sampled_pred_route.shape[0]
+        pred_route = []
+        pred_cost = []
+        for i in range(pred_batch_size):
+            pred_route.append([sampled_pred_route[i]])
+            pred_cost.append([sampled_pred_cost[i]])
+        for i in range(num_samples-1):
+            sampled_pred_route_i, sampled_pred_cost_i = self.sess.run(
+                [self.pred_final_action, self.base_line_est], feed_dict=feed_dict)
+            for j in range(pred_batch_size):
+                pred_route[j] = np.vstack((pred_route[j], sampled_pred_route_i[j]))
+                pred_cost[j] = np.vstack((pred_cost[j], sampled_pred_cost_i[j]))
+        pred_route = np.asarray(pred_route)
+        pred_cost = np.asarray(pred_cost)
         return pred_route, pred_cost
 
     def train(self, state, depot_location, or_action=0, sampled_cost=0, or_cost=0):
@@ -289,11 +304,8 @@ class NetworkVP:
             self.actor_loss, self.relative_length, self.pred_final_action,
             self.train_final_action], feed_dict=feed_dict)
         self.log_writer.add_summary(summary, step)
+        print("step_loss_diff:")
         print(step, loss, diff)
-        print("pred_route:")
-        print(pred_route)
-        print("or_route:")
-        print(or_route)
         print()
 
     # def beam_search_evaluation(self, state, depot_idx):

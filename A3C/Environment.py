@@ -29,23 +29,17 @@ class Environment:
         depot_location_batch = np.tile([19], batch_size)
         return(state_batch, cost_batch, route_batch, depot_location_batch)
 
-    def cost(self, raw_state, action, DECODE_TYPE=0):
+    def cost(self, raw_state, action):
         costs = []
-        for i in range(raw_state.shape[0]):
+        for i in range(action.shape[0]):
             best_cost = 1e10
-            if DECODE_TYPE == 0:
-                state = np.take(raw_state[i], action[i], axis=0)
+            for j in range(action.shape[1]):
+                state = np.take(raw_state[i], action[i][j], axis=0)
                 cost = np.sum(np.sqrt(np.sum(np.square(state[1:]-state[:-1]), axis=1)))
                 cost += np.sum(np.sqrt(np.sum(np.square(state[0], np.array([0, 0], dtype=np.float32)))))
                 cost += np.sum(np.sqrt(np.sum(np.square(state[-1], np.array([0, 0], dtype=np.float32)))))
-            else:
-                for j in range(Config.BEAM_WIDTH):
-                    state = np.take(raw_state[i], action[i][j], axis=0)
-                    cost = np.sum(np.sqrt(np.sum(np.square(state[1:]-state[:-1]), axis=1)))
-                    cost += np.sum(np.sqrt(np.sum(np.square(state[0], np.array([0, 0], dtype=np.float32)))))
-                    cost += np.sum(np.sqrt(np.sum(np.square(state[-1], np.array([0, 0], dtype=np.float32)))))
-                    if cost < best_cost:
-                        best_cost = cost
-            costs.append(cost)
+                if cost < best_cost:
+                    best_cost = cost
+            costs.append(best_cost)
         costs = np.asarray(costs)
         return(costs.reshape(-1, 1))

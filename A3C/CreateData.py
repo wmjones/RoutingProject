@@ -1,15 +1,15 @@
 import numpy as np
 from OR_Tool import OR_Tool
 
-file_state = open('data_state_00.npy', 'wb')
-file_or_route = open('data_or_route_00.npy', 'wb')
-file_or_cost = open('data_or_cost_00.npy', 'wb')
+file_state = open('data_state_50_00.npy', 'wb')
+file_or_route = open('data_or_route_50_00.npy', 'wb')
+file_or_cost = open('data_or_cost_50_00.npy', 'wb')
 for i in range(10000):
     # depot_location = np.array([.5, .5])
     # data_state = np.vstack((np.random.rand(19, 2), np.array([.5, .5])))
     # depot_idx = int(np.where(data_state[:, 0] == .5)[0][0])
     depot_location = np.array([0, 0])
-    data_state = np.vstack((np.random.rand(19, 2), np.array([0, 0])))
+    data_state = np.vstack((np.random.rand(50, 2), np.array([0, 0])))
     depot_idx = int(np.where(data_state[:, 0] == 0)[0][0])
     or_model = OR_Tool(data_state, depot_location, depot_idx)
     or_route, or_cost = or_model.solve()

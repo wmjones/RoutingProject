@@ -50,7 +50,6 @@ class Server:
         #     plt.close(fig)
 
     def main(self):
-        # self.plot(self.model.get_global_step())
         self.env = Environment()
         batch_state, batch_or_cost, batch_or_route, batch_depot_location = self.env.next_batch(Config.TRAINING_MIN_BATCH_SIZE)
         test_state = np.asarray([batch_state[0]], dtype=np.float32)
@@ -67,12 +66,12 @@ class Server:
                 self.model.train(state=batch_state, depot_location=batch_depot_location,
                                  sampled_cost=batch_sampled_cost, or_cost=batch_or_cost)
 
-            if step % 1000 == 0:
+            if step % 20000 == 0:
                 test_pred_route, _ = self.model.predict(test_state, [test_depot_location])
                 self.plot(test_state[0], test_pred_route[0][0], self.model.get_global_step())
-                # print("Saving Model...")
-                # self.model._model_save()
-                # print("Done Saving Model")
+                print("Saving Model...")
+                self.model._model_save()
+                print("Done Saving Model")
                 batch_state, batch_or_cost, batch_or_route, batch_depot_location = self.env.next_batch(10)
                 batch_pred_route, batch_pred_cost = self.model.predict(batch_state, batch_depot_location)
                 batch_sampled_cost = self.env.cost(batch_state, batch_pred_route)

@@ -38,3 +38,4 @@ class Config:
     INPUT_TIME = 0
     INPUT_ALL = 0
     SAMPLING = 0
+    SAME_BATCH = 1

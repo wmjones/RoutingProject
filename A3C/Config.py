@@ -20,7 +20,7 @@ class Config:
     MOVING_AVERAGE = 0
     MODEL_NAME = ''
     MODEL_SETTING = 0
-    NUM_OF_CUSTOMERS = 50
+    NUM_OF_CUSTOMERS = 19
     PATH = "./"
     PREDICTION_BATCH_SIZE = 20
     PREDICTORS = 1
@@ -38,4 +38,4 @@ class Config:
     INPUT_TIME = 0
     INPUT_ALL = 0
     SAMPLING = 0
-    SAME_BATCH = 1
+    SAME_BATCH = 0

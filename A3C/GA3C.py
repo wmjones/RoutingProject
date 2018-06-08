@@ -291,6 +291,7 @@ if Config.MODEL_SETTING == 50:
     Config.FROM_FILE = 1
     Config.LOGIT_CLIP_SCALAR = 10
     Config.USE_BAHDANAU = 1
+    Config.NUM_OF_CUSTOMERS = 50
     Config.RUN_TIME = 259200
 if Config.MODEL_SETTING == 51:
     Config.DIRECTION = 10

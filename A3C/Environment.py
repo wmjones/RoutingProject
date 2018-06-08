@@ -5,15 +5,15 @@ import sys
 
 class Environment:
     def __init__(self):
-        self.file_state = np.load('data_state_00.npy', 'r')
-        self.file_or_route = np.load('data_or_route_00.npy', 'r')
-        self.file_or_cost = np.load('data_or_cost_00.npy', 'r')
+        self.file_state = np.load('data_state_50_00.npy', 'r')
+        self.file_or_route = np.load('data_or_route_50_00.npy', 'r')
+        self.file_or_cost = np.load('data_or_cost_50_00.npy', 'r')
 
     def next_batch(self, batch_size):
         if Config.REINFORCE == 0:
-            batch_idx = [np.random.randint(10000) for i in range(batch_size)]
-            # batch_idx = [i for i in range(batch_size)]
-            batch_idx.insert(0, 0)
+            # batch_idx = [np.random.randint(10000) for i in range(batch_size)]
+            # batch_idx.insert(0, 0)
+            batch_idx = [i for i in range(batch_size)]
             state_batch = []
             for i in range(batch_size):
                 state_i = self.file_state[batch_idx[i], :]

@@ -589,7 +589,6 @@ if Config.MODEL_SETTING == 89:
     Config.INVERSE_SOFTMAX_TEMP = 10.0
     Config.RUN_TIME = 86400
 
-
 # if Config.MODEL_SETTING ==
 ConfigParse = configparser.ConfigParser()
 ConfigParse.optionxform = str

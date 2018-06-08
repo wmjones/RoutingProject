@@ -11,9 +11,9 @@ class Environment:
 
     def next_batch(self, batch_size):
         if Config.REINFORCE == 0:
-            # batch_idx = [np.random.randint(10000) for i in range(batch_size)]
-            batch_idx = [i for i in range(batch_size)]
-            # batch_idx.append(0)
+            batch_idx = [np.random.randint(10000) for i in range(batch_size)]
+            # batch_idx = [i for i in range(batch_size)]
+            batch_idx.insert(0, 0)
             state_batch = []
             for i in range(batch_size):
                 state_i = self.file_state[batch_idx[i], :]

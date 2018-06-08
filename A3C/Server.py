@@ -16,14 +16,14 @@ class Server:
         self.model = NetworkVP(Config.DEVICE, DECODER_TYPE=0)
         self.training_step = 0
 
-    def plot(self, step):
-        env = Environment()
-        batch_state, batch_or_cost, batch_or_route, batch_depot_location = env.next_batch(1)
-        action, _ = self.model.predict([batch_state[0]], [batch_depot_location[0]])
-        action = action[0]
-        points = batch_state[0]
-        edges = np.array([[19, action[0][0]]], dtype=np.int32)
-        edges = np.append(edges, np.concatenate((action[0][:-1].reshape(-1, 1), action[0][1:].reshape(-1, 1)), axis=1), axis=0)
+    def plot(self, state, action, step):
+        # env = Environment()
+        # batch_state, batch_or_cost, batch_or_route, batch_depot_location = env.next_batch(1)
+        # action, _ = self.model.predict([batch_state[0]], [batch_depot_location[0]])
+        # action = action[0]
+        points = state
+        edges = np.array([[19, action[0]]], dtype=np.int32)
+        edges = np.append(edges, np.concatenate((action[:-1].reshape(-1, 1), action[1:].reshape(-1, 1)), axis=1), axis=0)
         # edges = np.append(edges, np.array([[action[0][-1], 19]], dtype=np.int32), axis=0) # taken out so i can see direction
         lc = LineCollection(points[edges])
         fig = plt.figure()
@@ -31,27 +31,30 @@ class Server:
         plt.xlim(0, 1)
         plt.ylim(0, 1)
         plt.plot(points[:, 0], points[:, 1], 'ro')
-        plt.title('Total Steps=' + str(step))
+        plt.title('Total Steps=' + str(step-1))
         fig.savefig(str(Config.PATH) + 'figs/TSP_' + str((Config.NUM_OF_CUSTOMERS+1)) + '_MODEL_NAME_' + str(Config.MODEL_NAME) +
-                    '_STEP_' + str(step) + '.png')
+                    '_STEP_' + str(step-1) + '.png')
         plt.close(fig)
-        if step > 0:
-            or_route = batch_or_route[0]
-            edges = np.array([[19, or_route[0]]], dtype=np.int32)
-            edges = np.append(edges, np.concatenate((or_route[:-2].reshape(-1, 1), or_route[1:-1].reshape(-1, 1)), axis=1), axis=0)
-            lc = LineCollection(points[edges])
-            fig = plt.figure()
-            plt.gca().add_collection(lc)
-            plt.xlim(0, 1)
-            plt.ylim(0, 1)
-            plt.plot(points[:, 0], points[:, 1], 'ro')
-            fig.savefig(str(Config.PATH) + 'figs/TSP_' + str((Config.NUM_OF_CUSTOMERS+1)) + '_MODEL_NAME_' + str(Config.MODEL_NAME) +
-                        '_OPTIMAL' + '.png')
-            plt.close(fig)
+        # if step > 0:
+        #     or_route = batch_or_route[0]
+        #     edges = np.array([[19, or_route[0]]], dtype=np.int32)
+        #     edges = np.append(edges, np.concatenate((or_route[:-2].reshape(-1, 1), or_route[1:-1].reshape(-1, 1)), axis=1), axis=0)
+        #     lc = LineCollection(points[edges])
+        #     fig = plt.figure()
+        #     plt.gca().add_collection(lc)
+        #     plt.xlim(0, 1)
+        #     plt.ylim(0, 1)
+        #     plt.plot(points[:, 0], points[:, 1], 'ro')
+        #     fig.savefig(str(Config.PATH) + 'figs/TSP_' + str((Config.NUM_OF_CUSTOMERS+1)) + '_MODEL_NAME_' + str(Config.MODEL_NAME) +
+        #                 '_OPTIMAL' + '.png')
+        #     plt.close(fig)
 
     def main(self):
-        self.plot(self.model.get_global_step())
+        # self.plot(self.model.get_global_step())
         self.env = Environment()
+        batch_state, batch_or_cost, batch_or_route, batch_depot_location = self.env.next_batch(Config.TRAINING_MIN_BATCH_SIZE)
+        test_state = np.asarray([batch_state[0]], dtype=np.float32)
+        test_depot_location = batch_depot_location[0]
         t_end = time.time() + Config.RUN_TIME
         while time.time() < t_end:
             step = self.model.get_global_step()
@@ -64,20 +67,23 @@ class Server:
                 self.model.train(state=batch_state, depot_location=batch_depot_location,
                                  sampled_cost=batch_sampled_cost, or_cost=batch_or_cost)
 
-            if step % 10000 == 0:
-                # self.plot(self.model.get_global_step())
-                print("Saving Model...")
-                self.model._model_save()
-                print("Done Saving Model")
-                batch_state, batch_or_cost, batch_or_route, batch_depot_location = self.env.next_batch(1)
+            if step % 1000 == 0:
+                test_pred_route, _ = self.model.predict(test_state, [test_depot_location])
+                self.plot(test_state[0], test_pred_route[0][0], self.model.get_global_step())
+                # print("Saving Model...")
+                # self.model._model_save()
+                # print("Done Saving Model")
+                batch_state, batch_or_cost, batch_or_route, batch_depot_location = self.env.next_batch(10)
                 batch_pred_route, batch_pred_cost = self.model.predict(batch_state, batch_depot_location)
                 batch_sampled_cost = self.env.cost(batch_state, batch_pred_route)
                 if Config.DIRECTION == 6:
                     self.eval_model = NetworkVP(Config.DEVICE, DECODER_TYPE=1)
                     batch_eval_pred_route, batch_eval_pred_cost = self.eval_model.predict(batch_state, batch_depot_location)
-                if Config.SAMPLING == 1:
+                elif Config.SAMPLING == 1:
                     self.eval_model = NetworkVP(Config.DEVICE, DECODER_TYPE=2)
-                    batch_eval_pred_route, batch_eval_pred_cost = self.eval_model.predict(batch_state, batch_depot_location, 10)
+                    batch_eval_pred_route, batch_eval_pred_cost = self.eval_model.predict(batch_state, batch_depot_location, 100)
+                else:
+                    batch_eval_pred_route = batch_pred_route
                 batch_eval_sampled_cost = self.env.cost(batch_state, batch_eval_pred_route)
 
                 print("batch_or_route:")
@@ -103,6 +109,6 @@ class Server:
             #         print(step)
             #         sys.exit("Error same location chosen twice")
 
-        self.plot(self.model.get_global_step())
+        # self.plot(self.model.get_global_step())
         self.model.finish()
         print("total steps:", self.model.get_global_step())

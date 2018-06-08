@@ -98,7 +98,7 @@ class NetworkVP:
         self.relative_length = tf.reduce_mean(self.sampled_cost/self.or_cost)
         self.start_tokens = tf.placeholder(tf.int32, shape=[None])
         self.end_token = -1
-        self.MA_baseline = tf.Variable(7.0, dtype=tf.float32, trainable=False)
+        self.MA_baseline = tf.Variable(10.0, dtype=tf.float32, trainable=False)
 
         if Config.STATE_EMBED == 1:
             self.with_depot_state = self.raw_state
@@ -195,7 +195,7 @@ class NetworkVP:
                                                                                       labels=self.train_final_action)
                 self.R = tf.stop_gradient(self.sampled_cost)
                 if Config.MOVING_AVERAGE == 1:
-                    assign = tf.assign(self.MA_baseline, self.MA_baseline*.99 + tf.reduce_mean(self.R)*.01)
+                    assign = tf.assign(self.MA_baseline, self.MA_baseline*.999 + tf.reduce_mean(self.R)*.001)
                     with tf.control_dependencies([assign]):
                         V = self.MA_baseline
                         self.actor_loss = tf.reduce_mean(tf.multiply(tf.reduce_sum(self.neg_log_prob, axis=1), self.R-V))
@@ -213,7 +213,7 @@ class NetworkVP:
                     colocate = False
                 if Config.LR_DECAY_OFF == 0:
                     self.lr = tf.train.exponential_decay(
-                        Config.LEARNING_RATE, self.global_step, 100000,
+                        Config.LEARNING_RATE, self.global_step, 500000,
                         .9, staircase=True, name="learning_rate")
                 else:
                     self.lr = Config.LEARNING_RATE
@@ -299,13 +299,13 @@ class NetworkVP:
         feed_dict = {self.raw_state: state, self.or_cost: or_cost, self.or_route: or_route,
                      self.start_tokens: depot_location,
                      self.sampled_cost: sampled_cost}
-        _, _, summary, loss, diff, pred_route, train_route = self.sess.run([
+        _, _, summary, loss, diff, pred_route, train_route, MA = self.sess.run([
             self.train_actor_op, self.train_critic_op, self.merged,
             self.actor_loss, self.relative_length, self.pred_final_action,
-            self.train_final_action], feed_dict=feed_dict)
+            self.train_final_action, self.MA_baseline], feed_dict=feed_dict)
         self.log_writer.add_summary(summary, step)
         print("step_loss_diff:")
-        print(step, loss, diff)
+        print(step, loss, diff, MA)
         print()
 
     # def beam_search_evaluation(self, state, depot_idx):

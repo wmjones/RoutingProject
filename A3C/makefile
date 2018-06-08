@@ -3,6 +3,10 @@ MODEL_NAME='test'
 path="/Users/wyatt/Documents/Github_Repositories/RoutingProject/A3C/"
 
 short_test :
+	rm -rf ./logs/*
+	rm -rf ./checkpoint/*
+	rm -rf ./ini_files/*
+	rm -rf ./figs/*
 	python3 GA3C.py PATH=$(path) MODEL_SETTING=$(mod) AGENTS=8 NUM_OF_CUSTOMERS=19 MODEL_NAME=$(MODEL_NAME) TRAINING_MIN_BATCH_SIZE=10
 test :
 	python3 GA3C.py PATH=$(path) MODEL_SETTING=1 AGENTS=8 MODEL_NAME=$(MODEL_NAME) TRAINING_MIN_BATCH_SIZE=10

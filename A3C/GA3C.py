@@ -133,7 +133,13 @@ if Config.MODEL_SETTING == 21:
 if Config.MODEL_SETTING == 22:
     Config.DIRECTION = 10
     Config.REINFORCE = 1
+    Config.USE_BAHDANAU = 0
+    # Config.USE_BAHDANAU = 1
+    Config.TRAINING_MIN_BATCH_SIZE = 10
+    Config.LEARNING_RATE = 1e-3
+    Config.MAX_GRAD = 0
     Config.RUN_TIME = 43200
+    Config.MOVING_AVERAGE = 1
 if Config.MODEL_SETTING == 23:
     Config.DIRECTION = 10
     Config.REINFORCE = 1
@@ -196,6 +202,7 @@ if Config.MODEL_SETTING == 33:
 if Config.MODEL_SETTING == 34:
     Config.DIRECTION = 10
     Config.REINFORCE = 1
+    Config.NUM_OF_CUSTOMERS = 50
     Config.RUN_TIME = 259200
 if Config.MODEL_SETTING == 35:
     Config.DIRECTION = 10
@@ -284,7 +291,7 @@ if Config.MODEL_SETTING == 50:
     Config.FROM_FILE = 1
     Config.LOGIT_CLIP_SCALAR = 10
     Config.USE_BAHDANAU = 1
-    Config.RUN_TIME = 86400
+    Config.RUN_TIME = 259200
 if Config.MODEL_SETTING == 51:
     Config.DIRECTION = 10
     Config.REINFORCE = 1
@@ -509,31 +516,78 @@ if Config.MODEL_SETTING == 80:
     Config.FROM_FILE = 1
     Config.LOGIT_CLIP_SCALAR = 10
     Config.RNN_HIDDEN_DIM = 32
-    Config.LR_DECAY_OFF = 1
+    # Config.LR_DECAY_OFF = 1
     Config.RUN_TIME = 64800
     Config.USE_BAHDANAU = 1
     Config.SAMPLING = 1
-    Config.INVERSE_SOFTMAX_TEMP = 1.0
+    Config.INVERSE_SOFTMAX_TEMP = .8
 if Config.MODEL_SETTING == 81:
     Config.DIRECTION = 5
     Config.FROM_FILE = 1
     Config.LOGIT_CLIP_SCALAR = 10
     Config.RNN_HIDDEN_DIM = 32
-    Config.LR_DECAY_OFF = 1
+    # Config.LR_DECAY_OFF = 1
     Config.RUN_TIME = 64800
     Config.USE_BAHDANAU = 1
     Config.SAMPLING = 1
-    Config.INVERSE_SOFTMAX_TEMP = 5.0
+    Config.INVERSE_SOFTMAX_TEMP = 10.0
 if Config.MODEL_SETTING == 82:
     Config.DIRECTION = 5
     Config.FROM_FILE = 1
     Config.LOGIT_CLIP_SCALAR = 10
     Config.RNN_HIDDEN_DIM = 32
-    Config.LR_DECAY_OFF = 1
+    # Config.LR_DECAY_OFF = 1
     Config.RUN_TIME = 64800
     Config.USE_BAHDANAU = 1
     Config.SAMPLING = 1
+    Config.INVERSE_SOFTMAX_TEMP = 100.0
+if Config.MODEL_SETTING == 83:
+    Config.DIRECTION = 5
+    Config.FROM_FILE = 1
+    Config.LOGIT_CLIP_SCALAR = 10
+    Config.RNN_HIDDEN_DIM = 32
+    # Config.LR_DECAY_OFF = 1
+    Config.RUN_TIME = 64800
+    Config.USE_BAHDANAU = 1
+if Config.MODEL_SETTING == 84:
+    Config.DIRECTION = 5
+    Config.REINFORCE = 1
+    Config.STOCHASTIC = 1
+    Config.INVERSE_SOFTMAX_TEMP = 1.0
+    Config.RUN_TIME = 86400
+    Config.MOVING_AVERAGE = 1
+if Config.MODEL_SETTING == 85:
+    Config.DIRECTION = 5
+    Config.REINFORCE = 1
+    Config.STOCHASTIC = 1
+    Config.INVERSE_SOFTMAX_TEMP = 5.0
+    Config.RUN_TIME = 86400
+    Config.MOVING_AVERAGE = 1
+if Config.MODEL_SETTING == 86:
+    Config.DIRECTION = 5
+    Config.REINFORCE = 1
+    Config.STOCHASTIC = 1
     Config.INVERSE_SOFTMAX_TEMP = 10.0
+    Config.RUN_TIME = 86400
+if Config.MODEL_SETTING == 87:
+    Config.DIRECTION = 5
+    Config.REINFORCE = 1
+    Config.STOCHASTIC = 1
+    Config.INVERSE_SOFTMAX_TEMP = .8
+    Config.RUN_TIME = 86400
+if Config.MODEL_SETTING == 88:
+    Config.DIRECTION = 5
+    Config.REINFORCE = 1
+    Config.STOCHASTIC = 1
+    Config.INVERSE_SOFTMAX_TEMP = 5.0
+    Config.RUN_TIME = 86400
+if Config.MODEL_SETTING == 89:
+    Config.DIRECTION = 5
+    Config.REINFORCE = 1
+    Config.STOCHASTIC = 1
+    Config.INVERSE_SOFTMAX_TEMP = 10.0
+    Config.RUN_TIME = 86400
+
 
 # if Config.MODEL_SETTING ==
 ConfigParse = configparser.ConfigParser()

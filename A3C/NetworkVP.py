@@ -11,6 +11,7 @@ from Config import Config
 
 class NetworkVP:
     def __init__(self, device, DECODER_TYPE):
+        self.DECODER_TYPE = DECODER_TYPE
         if DECODER_TYPE == 0:
             self.graph = tf.Graph()
             if Config.GPU == 1:
@@ -87,6 +88,8 @@ class NetworkVP:
         # self.current_location = tf.placeholder(tf.float32, shape=[None, 2], name='Current_Location')
         self.current_location = self.raw_state[:, -1]
         self.sampled_cost = tf.placeholder(tf.float32, [None, 1], name='Sampled_Cost')
+        if Config.SEQUENCE_COST == 1:
+            self.sampled_cost = tf.placeholder(tf.float32, [None, Config.NUM_OF_CUSTOMERS], name='Sampled_Cost')
         self.batch_size = tf.shape(self.raw_state)[0]
         self.keep_prob = tf.placeholder(tf.float32)
         self.global_step = tf.Variable(0, trainable=False, name='step')
@@ -98,11 +101,12 @@ class NetworkVP:
         self.relative_length = tf.reduce_mean(self.sampled_cost/self.or_cost)
         self.start_tokens = tf.placeholder(tf.int32, shape=[None])
         self.end_token = -1
-        self.MA_baseline = tf.Variable(10.0, dtype=tf.float32, trainable=False)
-
+        self.MA_baseline = tf.Variable(0.0, dtype=tf.float32, trainable=False)
+        if Config.SEQUENCE_COST == 1:
+            self.MA_baseline = tf.Variable(tf.tile([0.0], [Config.NUM_OF_CUSTOMERS]), dtype=tf.float32, trainable=False)
         if Config.STATE_EMBED == 1:
             self.with_depot_state = self.raw_state
-            for i in range(2):
+            for i in range(0):
                 self.with_depot_state = tf.layers.conv1d(self.with_depot_state, Config.RNN_HIDDEN_DIM, 1,
                                                          padding="SAME", activation=tf.nn.relu)
             self.with_depot_state = tf.layers.conv1d(self.with_depot_state, Config.RNN_HIDDEN_DIM, 1,
@@ -153,6 +157,7 @@ class NetworkVP:
                 self.batch_size, self.encoder_state, self.encoder_outputs,
                 train_helper, pred_helper, self.with_depot_state, self.start_tokens,
                 self.end_token, self.keep_prob, self.raw_state, DECODER_TYPE)
+            # self.pred_final_action = tf.squeeze(self.pred_final_action)
 
         if Config.DIRECTION == 9:
             self.train_final_action, self.pred_final_action, self.base_line_est, self.logits = Reza_Model(self.batch_size,
@@ -171,8 +176,10 @@ class NetworkVP:
             #     y = [tf.random_shuffle(y)]
             #     x = tf.concat((x, y), axis=0)
             # self.pred_final_action = x[:self.batch_size, :]
-
-            self.critic_loss = tf.losses.mean_squared_error(self.sampled_cost, self.base_line_est)
+            if Config.SEQUENCE_COST == 0:
+                self.critic_loss = tf.losses.mean_squared_error(self.sampled_cost, self.base_line_est)
+            else:
+                self.critic_loss = tf.losses.mean_squared_error(tf.reshape(self.sampled_cost[:, 0], [-1, 1]), self.base_line_est)
 
             if Config.DIRECTION < 6:
                 self.logits = self.train_final_output.rnn_output
@@ -194,7 +201,12 @@ class NetworkVP:
                 self.neg_log_prob = -1*tf.nn.sparse_softmax_cross_entropy_with_logits(logits=self.logits,
                                                                                       labels=self.train_final_action)
                 self.R = tf.stop_gradient(self.sampled_cost)
-                if Config.MOVING_AVERAGE == 1:
+                if Config.SEQUENCE_COST == 1:
+                    assign = tf.assign(self.MA_baseline, self.MA_baseline*.999 + tf.reduce_mean(self.R, axis=0)*.001)
+                    with tf.control_dependencies([assign]):
+                        V = self.MA_baseline
+                        self.actor_loss = tf.reduce_mean(tf.multiply(self.neg_log_prob, self.R-V))
+                elif Config.MOVING_AVERAGE == 1:
                     assign = tf.assign(self.MA_baseline, self.MA_baseline*.999 + tf.reduce_mean(self.R)*.001)
                     with tf.control_dependencies([assign]):
                         V = self.MA_baseline
@@ -256,8 +268,6 @@ class NetworkVP:
                 tf.summary.scalar("RNN_HIDDEN_DIM", Config.RNN_HIDDEN_DIM)
                 tf.summary.scalar("RUN_TIME", Config.RUN_TIME)
                 tf.summary.scalar("LOGIT_CLIP_SCALAR", Config.LOGIT_CLIP_SCALAR)
-                tf.summary.scalar("EncEmb", tf.cast(Config.ENC_EMB, tf.int32))
-                tf.summary.scalar("DecEmb", tf.cast(Config.DEC_EMB, tf.int32))
                 tf.summary.scalar("Droput", tf.cast(Config.DROPOUT, tf.int32))
                 tf.summary.scalar("GPU", Config.GPU)
 
@@ -282,6 +292,9 @@ class NetworkVP:
                 pred_cost[j] = np.vstack((pred_cost[j], sampled_pred_cost_i[j]))
         pred_route = np.asarray(pred_route)
         pred_cost = np.asarray(pred_cost)
+        if self.DECODER_TYPE == 1:
+            pred_route = sampled_pred_route
+            pred_cost = sampled_pred_cost
         return pred_route, pred_cost
 
     def train(self, state, depot_location, or_action=0, sampled_cost=0, or_cost=0):
@@ -305,7 +318,9 @@ class NetworkVP:
             self.train_final_action, self.MA_baseline], feed_dict=feed_dict)
         self.log_writer.add_summary(summary, step)
         print("step_loss_diff:")
-        print(step, loss, diff, MA)
+        print(step, loss, diff)
+        print("MA:")
+        print(MA)
         print()
 
     # def beam_search_evaluation(self, state, depot_idx):

@@ -590,8 +590,9 @@ if Config.MODEL_SETTING == 90:
 if Config.MODEL_SETTING == 91:
     Config.DIRECTION = 10
     Config.REINFORCE = 1
-    Config.RUN_TIME = 43200
-    Config.SAME_BATCH = 1
+    Config.RUN_TIME = 86400
+    Config.SEQUENCE_COST = 1
+
 
 # if Config.MODEL_SETTING ==
 ConfigParse = configparser.ConfigParser()

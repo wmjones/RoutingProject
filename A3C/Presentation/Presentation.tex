@@ -1,0 +1,285 @@
+\documentclass{beamer}
+
+\usepackage{geometry}
+
+\usepackage{amsmath}
+\usepackage{algorithm}
+\usepackage{algpseudocode}
+\usepackage{graphicx}
+\graphicspath{{../}}
+\pdfimageresolution=300
+
+\usepackage{accents}
+\DeclareMathOperator*{\argmin}{arg\,min}
+\newcommand{\ubar}[1]{\underaccent{\bar}{#1}}
+\newcommand{\norm}[1]{\left\lVert#1\right\rVert}
+
+\usepackage{amssymb}
+\usepackage{flexisym}
+
+\usepackage{mathtools}
+\DeclarePairedDelimiter\floor{\lfloor}{\rfloor}
+
+\usepackage{hyperref}
+\hypersetup{
+  colorlinks = true,
+  allcolors = blue
+}
+
+\title{Learning to Solve the Traveling Salesman Problem}
+\author{Wyatt Jones\\University of Iowa}
+\date{\today}
+
+\begin{document}
+
+\frame{\titlepage}
+
+\begin{frame}
+  \frametitle{The Traveling Salesman Problem}
+  The problems objective is to find the shortest route that starts at the depot, goes through all the points and returns to the depot.
+
+  \begin{figure}[H]
+    \centering
+    \makebox[\textwidth]{\includegraphics[width=\textwidth,height=0.5\textheight, keepaspectratio]{fig1}}
+  \end{figure}
+
+  The Traveling Salesman Problem (TSP) is a NP-hard combinatorial optimization problem since the number of possible routes explodes as the number of points increases.
+\end{frame}
+
+
+\begin{frame}
+  \frametitle{The Traveling Salesman Problem}
+  \framesubtitle{Linear Programming Formulation}
+  One way to mathematically describe the problem is with its linear programming formulation.
+    \begin{align*}
+    \sum_{i=1}^n{\sum_{i \neq j, j=1}^n {c_{ij} x_{ij}}}&&\\
+    0 \leq x_{ij} \leq 1 && i, j = 1, \dots, n \\
+    u_i \in \mathbb{Z} && \\
+    \sum_{i=1, i \neq j}^n{x_{ij}} = 1 && j = 1, \dots, n\\
+    \sum_{j=1, j \neq i}^n{x_{ij}} = 1 && i = 1, \dots, n\\
+    u_i-u_j+nx_{ij}\leq n-1 && 2 \leq i \neq j \leq n
+  \end{align*}
+\end{frame}
+
+
+\begin{frame}
+  \frametitle{The Traveling Salesman Problem}
+  \framesubtitle{Solution}
+  This solution was found using Google's software library OR-Tools. This was found using a heuristic approach called Tabu search.
+  \begin{figure}[H]
+    \centering
+    \makebox[\textwidth]{\includegraphics[width=\textwidth,height=0.6\textheight, keepaspectratio]{fig2}}
+  \end{figure}
+\end{frame}
+
+
+\begin{frame}
+  \frametitle{The Traveling Salesman Problem}
+  \framesubtitle{Dynamic Programming Formulation: Value Function Iteration}
+  The problem can rewritten as a dynamic programming problem where the decisions are made sequentially instead of all at the same time
+  \begin{align*}
+    &V(s) = \min_{j \in \Gamma(s)}{\{c(s, j) + V(s')\}}\\
+    &s'=f(s, j)
+  \end{align*}
+  where the $\Gamma(s)$ represents the set of available points to travel from state $s$, $s'$ is the set of available locations after point $j$ is visited and $c(s, j)$ is the cost to travel from the current location to point $j$.
+\end{frame}
+
+
+\begin{frame}
+  \frametitle{The Traveling Salesman Problem}
+  \framesubtitle{Dynamic Programming Formulation: Policy Function Iteration}
+
+  First evaluate policy (by iterating until convergence)
+  \begin{equation*}
+    V^{k+1}_{\pi}(s) = \sum_{j \in \Gamma(s)} \{\pi(s) c(s, j)+V^k_{\pi}(s')\}
+  \end{equation*}
+  Second improve the policy
+  \begin{equation*}
+    \pi^k(s) = \argmin_{j \in \Gamma(s)}{\{c(s, j) + V_{\pi}(s')\}}
+  \end{equation*}
+  Repeat until convergence
+\end{frame}
+
+
+\begin{frame}
+  \frametitle{Parameterizing the policy function}
+  \framesubtitle{Structure and constraints}
+  Let $\pi_\theta(s)$ be a policy function parameterized by $\theta$. In the TSP case let
+  \begin{equation*}
+    \pi_\theta:\{x_i, y_i\}_{i=1}^n \rightarrow \Delta^n
+  \end{equation*}
+  where n is the number of customers and $\Delta^n$ is a n-dimensional simplex which represents the probability of going to each customer. This is so that the function does not need to change as the number of available points changes. In order to enforce the feasibility constraint a large negative penalty is added to the probability of locations that have already been visited.
+\end{frame}
+
+
+\begin{frame}
+  \frametitle{Parameterizing the policy function}
+  \framesubtitle{Long Short Term Memory (LSTM) cells}
+  I tried several different paramterizations but the most core components are a Recurrent Neural Network with LSTM cells. A LSTM cell is composed of an input gate, an output gate and a forget gate which allows for the network to remember values over an arbitrary number of steps.
+  \begin{figure}[H]
+    \centering
+    \makebox[\textwidth]{\includegraphics[width=\textwidth,height=0.3\textheight, keepaspectratio]{lstm}}
+  \end{figure}
+\end{frame}
+
+
+\begin{frame}
+  \frametitle{Parameterizing the policy function}
+  \framesubtitle{Variations on the basic parameterization}
+  I also compared how efficiently different variations on the original parameterization learn and perform. A list of some of the variations are included below.
+  \begin{itemize}
+  \item Unidirectional Encoder Decoder\\
+  \item Bidirectional Encoder Decoder\\
+  \item Luong vs Bahdanau Attention Mechanism\\
+  \item Convolutional layers to embed locations\\
+  \item Beam Search Decoding and Sampling Decoding\\
+  \item Greedy vs Stochastic Decoder
+  \end{itemize}
+\end{frame}
+
+
+\begin{frame}
+  \frametitle{Parameterizing the policy function}
+  \framesubtitle{Recurrent Neural Networks}
+  A Recurrent Neural Network (RNN) is very useful for parameterizing the policy function in a dynamic programming problem since they behave very similarly. At each step given the previous iteration's state and this step's input the RNN determines an action and updates the state for the next iteration.
+  \begin{figure}[H]
+    \centering
+    \makebox[\textwidth]{\includegraphics[width=\textwidth,height=0.3\textheight, keepaspectratio]{rnn}}
+  \end{figure}
+\end{frame}
+
+
+\begin{frame}
+  \frametitle{Learning Approximate Policy Functions}
+  \framesubtitle{Supervised Learning}
+
+  One way to learn the parameters for this policy function is that if you have another policy function, $\psi(s)$ then you can use that policy function to learn the parameter vector $\theta$. In the TSP case this can be done by sampling the policy function $\psi(s)$ on many states $s$ and then minimizing the cross entropy loss between the policy function $\pi_\theta(s)$ and $\psi(s)$.
+  \begin{align*}
+    &\hat{\theta}=\argmin_{\theta}{\sum_{i=1}^K \psi(s_i)\cdot \log(\pi_\theta(s_i))}
+  \end{align*}
+\end{frame}
+
+
+\begin{frame}
+  \frametitle{Learning Approximate Policy Functions}
+  \framesubtitle{Policy Gradient Method}
+
+  First let
+  \begin{equation*}
+    J(\theta) = v_{\pi_{\theta}} (s_0)
+  \end{equation*}
+  where $\theta$ are the parameters that determine the policy, and $s_0$ is the initial state.\\
+  Then the policy gradient theorem states that
+  \begin{equation*}
+    \nabla J(\theta) = \sum_s \mu_{\pi}(s) \sum_a \nabla_\theta \pi(a|s)R_{\pi}(s, a)
+  \end{equation*}
+  where $\mu_\pi(s)$ is the expected number of times on which $S_t = s$ when starting in $s_0$ and following $\pi$ and $R_\pi(s, a)$ is the value of taking action $a$ in state $s$ under policy $\pi$.
+\end{frame}
+
+
+\begin{frame}
+  \frametitle{Learning Approximate Policy Functions}
+  \framesubtitle{Policy Gradient Method}
+  Since analytically deriving $\mu_\theta(s)$ is not feasible and since the action space can be large it is computationally beneficial to replace the expectations with their sample counterparts. Thus we end up with the equation
+  \begin{equation*}
+    \nabla J(\theta) = \mathbb{E}_\pi \Bigg[\beta^t R_t \frac{\nabla_\theta\pi(A_t|S_t, \theta)}{\pi(A_t|S_t, \theta)} \Bigg]
+  \end{equation*}
+  where $R_t$ is the return from period $t$ to the end. So now given this formula, we can find the optimal policy by using the gradient accent formula with step size $\alpha$.
+  \begin{equation*}
+    \theta_{t+1}=\theta_t+\alpha \beta^t R_t \frac{\nabla_\theta\pi(A_t|S_t, \theta)}{\pi(A_t|S_t, \theta)}
+  \end{equation*}
+\end{frame}
+
+
+\begin{frame}
+  \frametitle{Learning Approximate Policy Functions}
+  \framesubtitle{Actor Critic Method}
+
+  This method is a slight improvement on the policy gradient method. This is done by adding in a second parameterized function $V_{\phi}(S)$. Thus the new method is to update the parameter vector $\theta$ by using the formula
+  \begin{equation*}
+    \theta_{t+1}=\theta_t+\alpha \beta^t (R_t- V_{\phi}(S_t))\frac{\nabla_\theta\pi(A_t|S_t, \theta)}{\pi(A_t|S_t, \theta)}
+  \end{equation*}
+  and we can update the parameter vector $\phi$ by iteratively minimizing
+  \begin{equation*}
+    \min_\phi (R_t - V_{\phi}(S_t))^2
+  \end{equation*}
+
+  The equation $V_{\phi}(S)$ is similar to a parameterized value function but in this application it is used to estimate the expected value of the current policy in a given state $S_t$ so that if the sampled return $R_t$ is higher than that expected return $\theta$ is increased in order to increase the probability of that happening again.
+\end{frame}
+
+
+\begin{frame}
+  \frametitle{Learning Approximate Policy Functions}
+  \framesubtitle{A3C and GA3C}
+
+  In order to increase the computational efficiency of this method it is possible to parallelize the parameter updates. While this introduces a small theoretical discrepancy between the update and the policy that it was intended to update this is not an issue in practice.
+
+  \begin{figure}[H]
+    \centering
+    \makebox[\textwidth]{\includegraphics[width=\textwidth,height=0.5\textheight, keepaspectratio]{ga3c}}
+  \end{figure}
+\end{frame}
+
+
+\begin{frame}
+  \frametitle{Learning Approximate Policy Functions}
+  \framesubtitle{Results: Sampled Cost}
+
+  \begin{figure}[H]
+    \centering
+    \makebox[\textwidth]{\includegraphics[width=\textwidth,height=0.5\textheight, keepaspectratio]{results}}
+  \end{figure}
+
+\end{frame}
+
+\begin{frame}
+  \frametitle{Learning Approximate Policy Functions}
+  \framesubtitle{Results: Cross Entropy Loss}
+
+  \begin{figure}[H]
+    \centering
+    \makebox[\textwidth]{\includegraphics[width=\textwidth,height=0.5\textheight, keepaspectratio]{loss}}
+  \end{figure}
+
+\end{frame}
+
+
+\begin{frame}
+  \frametitle{Conclusion}
+
+  \begin{itemize}
+  \item Using an attention mechanism is vital for the network to train.
+  \item While beam search has been used to great success in NMT it is not applicable for TSP.
+  \item While the Encoder Decoder framework works well for NMT it does not perform well for TSP. It can be trained using SL, and Bidirectional encoding works better than Unidirectional encoding but it will not train using RL.
+  \item Using a sampling decoder can be used to improve the performance of a given network
+  \item Using a convolutional embedding does not seem to either help or hurt performance for TSP when using SL but it greatly decreases or prevents networks from training using RL.
+  \item Using a gradient computed using backpropagation that is incorrect doesn't seem to be an issue in this context.
+  \end{itemize}
+
+\end{frame}
+
+
+\begin{frame}
+  \frametitle{Conclusion}
+
+  Not all neural net architectures that work for supervised learning work for reinforcement learning. A decent initial solution is vital for reinforcement learning to work.
+
+  \begin{figure}[H]
+    \centering
+    \makebox[\textwidth]{\includegraphics[width=\textwidth,height=0.3\textheight, keepaspectratio]{attention_0}}
+  \end{figure}
+
+  \begin{figure}[H]
+    \centering
+    \makebox[\textwidth]{\includegraphics[width=\textwidth,height=0.3\textheight, keepaspectratio]{fc_0}}
+  \end{figure}
+
+\end{frame}
+
+
+\end{document}
+
+%%% Local Variables:
+%%% mode: latex
+%%% TeX-master: t
+%%% End:

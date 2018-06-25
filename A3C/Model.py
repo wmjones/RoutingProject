@@ -542,6 +542,9 @@ def Beam_Search(batch_size, encoder_state, encoder_outputs, train_helper, pred_h
                                                  pred_decoder.output_dtype)
             for i in range(Config.NUM_OF_CUSTOMERS):
                 beam_outputs, beam_state, beam_next_inputs, beam_finished = pred_decoder.step(i, beam_inputs, beam_next_state)
+                # tmp = tf.Print(tf.identity(beam_outputs[0]), [beam_outputs[0]], summarize=100)
+                # beam_outputs = tf.contrib.seq2seq.BeamSearchDecoderOutput(tmp,
+                #                                                           beam_outputs[1], beam_outputs[2])
                 beam_next_state = tf.contrib.seq2seq.BeamSearchDecoderState(
                     cell_state=MaskWrapperAttnState(beam_state.cell_state.AttnState,
                                                     mask=beam_state.cell_state.mask +
@@ -552,10 +555,11 @@ def Beam_Search(batch_size, encoder_state, encoder_outputs, train_helper, pred_h
                     log_probs=beam_state.log_probs)
                 beam_outputs_ta = nest.map_structure(lambda ta, out: ta.write(i, out), beam_outputs_ta, beam_outputs)
             beam_final_outputs = nest.map_structure(lambda ta: ta.stack(), beam_outputs_ta)
-            tmp = tf.constant(0, shape=[Config.TRAINING_MIN_BATCH_SIZE, Config.BEAM_WIDTH], dtype=tf.int64)
+            seq_len = tf.constant(0, shape=[Config.TRAINING_MIN_BATCH_SIZE, Config.BEAM_WIDTH], dtype=tf.int64)
             beam_search_final_outputs, beam_search_final_state = pred_decoder.finalize(
-                beam_final_outputs, beam_next_state, sequence_lengths=tmp)
+                beam_final_outputs, beam_next_state, sequence_lengths=seq_len)
             pred_final_action = tf.transpose(tf.transpose(beam_search_final_outputs.predicted_ids, [2, 1, 0]), [1, 0, 2])
+            # pred_final_action = tf.Print(pred_final_action, [beam_outputs[0]], summarize=1000)
             # pred_final_action = beam_search_final_outputs.predicted_ids
 
     with tf.variable_scope("Conv_Critic"):

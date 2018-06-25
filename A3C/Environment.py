@@ -78,15 +78,37 @@ class Environment:
 
     def cost(self, raw_state, action):
         costs = []
-        for i in range(action.shape[0]):
-            best_cost = 1e10
-            for j in range(action.shape[1]):
-                state = np.take(raw_state[i], action[i][j], axis=0)
-                cost = np.sum(np.sqrt(np.sum(np.square(state[1:]-state[:-1]), axis=1)))
-                cost += np.sum(np.sqrt(np.sum(np.square(state[0], np.array([0, 0], dtype=np.float32)))))
-                cost += np.sum(np.sqrt(np.sum(np.square(state[-1], np.array([0, 0], dtype=np.float32)))))
-                if cost < best_cost:
-                    best_cost = cost
-            costs.append(best_cost)
-        costs = np.asarray(costs)
-        return(costs.reshape(-1, 1))
+        if action.shape[1] == 1 and Config.SEQUENCE_COST == 1:  # action.shape[1] == 1 so can still do batch_eval in server
+            for i in range(raw_state.shape[0]):
+                cost = np.zeros([action.shape[2]+1])
+                state = np.take(raw_state[i], action[i][0], axis=0)
+                cost[0] = np.sum(np.sqrt(np.sum(np.square(state[0] - np.array([0, 0], dtype=np.float32)))))
+                for j in range(1, action.shape[2]):
+                    cost[j] = np.sum(np.sqrt(np.sum(np.square(state[j-1] - state[j]))))
+                cost[-1] = np.sum(np.sqrt(np.sum(np.square(state[-1] - np.array([0, 0], dtype=np.float32)))))
+                for k in range(action.shape[2]-1, -1, -1):
+                    cost[k] += cost[k+1]
+                costs.append(cost[:-1])  # take off last one since i dont have network choosing to go back to depot
+            costs = np.asarray(costs)
+            return(costs)
+        else:
+            for i in range(raw_state.shape[0]):
+                best_cost = 1e10
+                for j in range(action.shape[1]):
+                    state = np.take(raw_state[i], action[i][j], axis=0)
+                    cost = np.sum(np.sqrt(np.sum(np.square(state[1:] - state[:-1]), axis=1)))
+                    cost += np.sum(np.sqrt(np.sum(np.square(state[0] - np.array([0, 0], dtype=np.float32)))))
+                    cost += np.sum(np.sqrt(np.sum(np.square(state[-1] - np.array([0, 0], dtype=np.float32)))))
+                    if cost < best_cost:
+                        best_cost = cost
+                costs.append(best_cost)
+            costs = np.asarray(costs)
+            return(costs.reshape(-1, 1))
+
+
+# env = Environment()
+# batch_state, batch_or_cost, batch_or_route, batch_depot_location = env.next_batch(10)
+# print("or_cost:")
+# print(batch_or_cost)
+# print("evn_cost:")
+# print(env.cost(batch_state, np.expand_dims(batch_or_route[:, :-1], 1)))

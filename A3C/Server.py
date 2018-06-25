@@ -66,7 +66,7 @@ class Server:
                 self.model.train(state=batch_state, depot_location=batch_depot_location,
                                  sampled_cost=batch_sampled_cost, or_cost=batch_or_cost)
 
-            if step % 20000 == 0:
+            if step % 1000 == 0:
                 test_pred_route, _ = self.model.predict(test_state, [test_depot_location])
                 self.plot(test_state[0], test_pred_route[0][0], self.model.get_global_step())
                 print("Saving Model...")
@@ -74,16 +74,24 @@ class Server:
                 print("Done Saving Model")
                 batch_state, batch_or_cost, batch_or_route, batch_depot_location = self.env.next_batch(10)
                 batch_pred_route, batch_pred_cost = self.model.predict(batch_state, batch_depot_location)
-                batch_sampled_cost = self.env.cost(batch_state, batch_pred_route)
                 if Config.DIRECTION == 6:
                     self.eval_model = NetworkVP(Config.DEVICE, DECODER_TYPE=1)
                     batch_eval_pred_route, batch_eval_pred_cost = self.eval_model.predict(batch_state, batch_depot_location)
                 elif Config.SAMPLING == 1:
                     self.eval_model = NetworkVP(Config.DEVICE, DECODER_TYPE=2)
-                    batch_eval_pred_route, batch_eval_pred_cost = self.eval_model.predict(batch_state, batch_depot_location, 100)
+                    batch_eval_pred_route, batch_eval_pred_cost = self.eval_model.predict(batch_state, batch_depot_location, 2)
                 else:
                     batch_eval_pred_route = batch_pred_route
                 batch_eval_sampled_cost = self.env.cost(batch_state, batch_eval_pred_route)
+                batch_sampled_cost = self.env.cost(batch_state, batch_pred_route)
+                if Config.SAMPLING == 1 or Config.DIRECTION == 6:
+                    batch_sampled_cost = batch_eval_sampled_cost
+                self.model.summary(batch_state, batch_or_cost, batch_or_route, batch_depot_location,
+                                   batch_pred_cost, batch_sampled_cost)
+                if Config.SEQUENCE_COST == 1:
+                    batch_eval_sampled_cost = batch_eval_sampled_cost[:, 0]
+                    batch_sampled_cost = batch_sampled_cost[:, 0]
+                # self.plot(batch_state[0], batch_pred_route[0][0], self.model.get_global_step())
 
                 print("batch_or_route:")
                 print(batch_or_route)
@@ -97,10 +105,6 @@ class Server:
                 print(np.mean(batch_sampled_cost))
                 print("avg_batch_eval_sampled_cost:")
                 print(np.mean(batch_eval_sampled_cost))
-                if Config.SAMPLING == 1 or Config.DIRECTION == 6:
-                    batch_sampled_cost = batch_eval_sampled_cost
-                self.model.summary(batch_state, batch_or_cost, batch_or_route, batch_depot_location,
-                                   batch_pred_cost, batch_sampled_cost)
 
             # for i in range(len(batch_pred_route)):
             #     if len(batch_pred_route[i]) > len(np.unique(batch_pred_route[i])):

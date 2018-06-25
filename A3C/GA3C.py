@@ -591,7 +591,33 @@ if Config.MODEL_SETTING == 91:
     Config.DIRECTION = 10
     Config.REINFORCE = 1
     Config.RUN_TIME = 86400
+if Config.MODEL_SETTING == 92:
+    Config.DIRECTION = 10
+    Config.REINFORCE = 1
+    Config.RUN_TIME = 86400
     Config.SEQUENCE_COST = 1
+if Config.MODEL_SETTING == 93:
+    Config.DIRECTION = 2
+    Config.REINFORCE = 1
+    Config.RUN_TIME = 86400
+    Config.SEQUENCE_COST = 1
+if Config.MODEL_SETTING == 94:
+    Config.DIRECTION = 10
+    Config.REINFORCE = 1
+    Config.USE_BAHDANAU = 1
+    Config.RUN_TIME = 86400
+if Config.MODEL_SETTING == 95:
+    Config.DIRECTION = 10
+    Config.REINFORCE = 1
+    Config.USE_BAHDANAU = 1
+    Config.SEQUENCE_COST = 1
+    Config.RUN_TIME = 86400
+if Config.MODEL_SETTING == 96:
+    Config.DIRECTION = 2
+    Config.REINFORCE = 1
+    Config.USE_BAHDANAU = 1
+    Config.SEQUENCE_COST = 1
+    Config.RUN_TIME = 86400
 
 
 # if Config.MODEL_SETTING ==

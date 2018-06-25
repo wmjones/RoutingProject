@@ -99,6 +99,8 @@ class NetworkVP:
         self.or_cost = tf.placeholder(tf.float32, shape=[None, 1])
         self.difference_in_length = tf.reduce_mean(self.sampled_cost - self.or_cost)
         self.relative_length = tf.reduce_mean(self.sampled_cost/self.or_cost)
+        if Config.SEQUENCE_COST == 1:
+            self.relative_length = tf.reduce_mean(self.sampled_cost[:, 0]/self.or_cost)
         self.start_tokens = tf.placeholder(tf.int32, shape=[None])
         self.end_token = -1
         self.MA_baseline = tf.Variable(0.0, dtype=tf.float32, trainable=False)

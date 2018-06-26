@@ -1,5 +1,6 @@
 import numpy as np
 from Config import Config
+from sklearn.decomposition import PCA
 import sys
 
 
@@ -57,7 +58,7 @@ class Environment:
             batch_idx = [i for i in range(batch_size)]
         else:
             batch_idx = [np.random.randint(10000) for i in range(batch_size)]
-            batch_idx.insert(0, 0)
+            # batch_idx.insert(0, 0)
         state_batch = []
         for i in range(batch_size):
             state_i = self.file_state[batch_idx[i], :]
@@ -74,6 +75,12 @@ class Environment:
             cost_batch.append(cost_i)
         cost_batch = np.asarray(cost_batch).reshape(-1, 1)
         depot_location_batch = np.tile([Config.NUM_OF_CUSTOMERS], batch_size)
+        pca = PCA(2)
+        for i in range(len(state_batch)):
+            state_batch[i] = pca.fit_transform(state_batch[i])
+        # sequence = pca.fit_transform(state_batch)
+        # print(sequence)
+        # print(state_batch)
         return(state_batch, cost_batch, route_batch, depot_location_batch)
 
     def cost(self, raw_state, action):
@@ -110,5 +117,5 @@ class Environment:
 # batch_state, batch_or_cost, batch_or_route, batch_depot_location = env.next_batch(10)
 # print("or_cost:")
 # print(batch_or_cost)
-# print("evn_cost:")
+# print("env_cost:")
 # print(env.cost(batch_state, np.expand_dims(batch_or_route[:, :-1], 1)))

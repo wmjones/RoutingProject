@@ -255,7 +255,10 @@ class NetworkVP:
                 tf.summary.scalar("difference_in_length", self.difference_in_length)
                 tf.summary.scalar("relative_length", self.relative_length)
                 tf.summary.scalar("Avg_or_cost", tf.reduce_mean(self.or_cost))
-                tf.summary.scalar("Avg_sampled_cost", tf.reduce_mean(self.sampled_cost))
+                if Config.SEQUENCE_COST == 0:
+                    tf.summary.scalar("Avg_sampled_cost", tf.reduce_mean(self.sampled_cost))
+                else:
+                    tf.summary.scalar("Avg_sampled_cost", tf.reduce_mean(self.sampled_cost[:, 0]))
                 # tf.summary.histogram("LocationStartDist", tf.transpose(self.pred_final_action, [1, 0])[0])
                 # tf.summary.histogram("LocationEndDist", tf.transpose(self.pred_final_action, [1, 0])[-1])
             with tf.name_scope("Config"):

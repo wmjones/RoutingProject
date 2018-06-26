@@ -35,4 +35,4 @@ class Config:                   # default settings for all config options
     INPUT_ALL = 0
     SAMPLING = 0
     SAME_BATCH = 0
-    SEQUENCE_COST = 0
+    SEQUENCE_COST = 1

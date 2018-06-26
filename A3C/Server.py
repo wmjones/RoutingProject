@@ -28,8 +28,8 @@ class Server:
         lc = LineCollection(points[edges])
         fig = plt.figure()
         plt.gca().add_collection(lc)
-        plt.xlim(0, 1)
-        plt.ylim(0, 1)
+        plt.xlim(-1, 1)
+        plt.ylim(-1, 1)
         plt.plot(points[:, 0], points[:, 1], 'ro')
         plt.title('Total Steps=' + str(step-1))
         fig.savefig(str(Config.PATH) + 'figs/TSP_' + str((Config.NUM_OF_CUSTOMERS+1)) + '_MODEL_NAME_' + str(Config.MODEL_NAME) +
@@ -66,7 +66,7 @@ class Server:
                 self.model.train(state=batch_state, depot_location=batch_depot_location,
                                  sampled_cost=batch_sampled_cost, or_cost=batch_or_cost)
 
-            if step % 20000 == 0:
+            if step % 2000 == 0:
                 test_pred_route, _ = self.model.predict(test_state, [test_depot_location])
                 self.plot(test_state[0], test_pred_route[0][0], self.model.get_global_step())
                 print("Saving Model...")

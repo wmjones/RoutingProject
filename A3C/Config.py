@@ -35,4 +35,7 @@ class Config:                   # default settings for all config options
     INPUT_ALL = 0
     SAMPLING = 0
     SAME_BATCH = 0
-    SEQUENCE_COST = 1
+    SEQUENCE_COST = 0
+    USE_PCA = 0
+    USE_PPO = 1
+    NUM_PPO_EPOCH = 10

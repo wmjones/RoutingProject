@@ -13,7 +13,7 @@ from matplotlib.collections import LineCollection
 
 class Server:
     def __init__(self):
-        self.model = NetworkVP(Config.DEVICE, DECODER_TYPE=0)
+
         self.training_step = 0
 
     def plot(self, state, action, step):
@@ -28,8 +28,12 @@ class Server:
         lc = LineCollection(points[edges])
         fig = plt.figure()
         plt.gca().add_collection(lc)
-        plt.xlim(-1, 1)
-        plt.ylim(-1, 1)
+        if Config.USE_PCA == 1:
+            lower_bound = -1
+        else:
+            lower_bound = 0
+        plt.xlim(lower_bound, 1)
+        plt.ylim(lower_bound, 1)
         plt.plot(points[:, 0], points[:, 1], 'ro')
         plt.title('Total Steps=' + str(step-1))
         fig.savefig(str(Config.PATH) + 'figs/TSP_' + str((Config.NUM_OF_CUSTOMERS+1)) + '_MODEL_NAME_' + str(Config.MODEL_NAME) +
@@ -50,21 +54,40 @@ class Server:
         #     plt.close(fig)
 
     def main(self):
+        if Config.USE_PPO == 1:
+            Config.SEQUENCE_COST = 1
+            self.model_old = NetworkVP(Config.DEVICE, DECODER_TYPE=0)
         self.env = Environment()
+        self.model = NetworkVP(Config.DEVICE, DECODER_TYPE=0)
         batch_state, batch_or_cost, batch_or_route, batch_depot_location = self.env.next_batch(Config.TRAINING_MIN_BATCH_SIZE)
         test_state = np.asarray([batch_state[0]], dtype=np.float32)
         test_depot_location = batch_depot_location[0]
         t_end = time.time() + Config.RUN_TIME
+        step = -1
         while time.time() < t_end:
-            step = self.model.get_global_step()
+            step += 1
             batch_state, batch_or_cost, batch_or_route, batch_depot_location = self.env.next_batch(Config.TRAINING_MIN_BATCH_SIZE)
             if Config.REINFORCE == 0:
                 self.model.train(state=batch_state, depot_location=batch_depot_location, or_action=batch_or_route)
             else:
+                if Config.USE_PPO == 1:
+                    self.model._model_save()
+                    self.model_old._model_restore()
+                    old_probs = self.model_old.PPO(state=batch_state, depot_location=batch_depot_location)
+                else:
+                    old_probs = np.zeros((batch_state.shape[0], batch_state.shape[1], batch_state.shape[1]))
                 batch_pred_route, batch_pred_cost = self.model.predict(batch_state, batch_depot_location)
                 batch_sampled_cost = self.env.cost(batch_state, batch_pred_route)
-                self.model.train(state=batch_state, depot_location=batch_depot_location,
-                                 sampled_cost=batch_sampled_cost, or_cost=batch_or_cost)
+                if Config.USE_PPO == 0:
+                    self.model.train(state=batch_state, depot_location=batch_depot_location,
+                                     sampled_cost=batch_sampled_cost, or_cost=batch_or_cost)
+                else:
+                    for i in range(Config.NUM_PPO_EPOCH):
+                        self.model.train(state=batch_state, depot_location=batch_depot_location,
+                                         sampled_cost=batch_sampled_cost, or_cost=batch_or_cost, old_probs=old_probs)
+                    # self.model_old._model_restore()
+                    # self.model.train(state=batch_state, depot_location=batch_depot_location,
+                    #                  sampled_cost=batch_sampled_cost, or_cost=batch_or_cost, old_probs=old_probs)
 
             if step % 2000 == 0:
                 test_pred_route, _ = self.model.predict(test_state, [test_depot_location])
@@ -87,7 +110,7 @@ class Server:
                 if Config.SAMPLING == 1 or Config.DIRECTION == 6:
                     batch_sampled_cost = batch_eval_sampled_cost
                 self.model.summary(batch_state, batch_or_cost, batch_or_route, batch_depot_location,
-                                   batch_pred_cost, batch_sampled_cost)
+                                   batch_pred_cost, batch_sampled_cost, old_probs)
                 if Config.SEQUENCE_COST == 1:
                     batch_eval_sampled_cost = batch_eval_sampled_cost[:, 0]
                     batch_sampled_cost = batch_sampled_cost[:, 0]

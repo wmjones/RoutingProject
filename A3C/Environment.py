@@ -6,18 +6,26 @@ import sys
 
 class Environment:
     def __init__(self):
+        if Config.USE_PCA == 1:
+            self.file_state = np.load('data_state_20_00_pca.npy', 'r')
+            self.file_or_route = np.load('data_or_route_20_00_pca.npy', 'r')
+            self.file_or_cost = np.load('data_or_cost_20_00_pca.npy', 'r')
+            self.file_size = 1000
         if Config.NUM_OF_CUSTOMERS == 50:
             self.file_state = np.load('data_state_50_00.npy', 'r')
             self.file_or_route = np.load('data_or_route_50_00.npy', 'r')
             self.file_or_cost = np.load('data_or_cost_50_00.npy', 'r')
+            self.file_size = 10000
         if Config.NUM_OF_CUSTOMERS == 19:
             self.file_state = np.load('data_state_00.npy', 'r')
             self.file_or_route = np.load('data_or_route_00.npy', 'r')
             self.file_or_cost = np.load('data_or_cost_00.npy', 'r')
+            self.file_size = 10000
         if Config.NUM_OF_CUSTOMERS == 100:
             self.file_state = np.load('data_state_100_00.npy', 'r')
             self.file_or_route = np.load('data_or_route_100_00.npy', 'r')
             self.file_or_cost = np.load('data_or_cost_100_00.npy', 'r')
+            self.file_size = 10000
 
     def next_batch(self, batch_size):
         # if Config.REINFORCE == 0:
@@ -57,7 +65,7 @@ class Environment:
         if Config.SAME_BATCH:
             batch_idx = [i for i in range(batch_size)]
         else:
-            batch_idx = [np.random.randint(10000) for i in range(batch_size)]
+            batch_idx = [np.random.randint(self.file_size) for i in range(batch_size)]
             # batch_idx.insert(0, 0)
         state_batch = []
         for i in range(batch_size):
@@ -75,12 +83,9 @@ class Environment:
             cost_batch.append(cost_i)
         cost_batch = np.asarray(cost_batch).reshape(-1, 1)
         depot_location_batch = np.tile([Config.NUM_OF_CUSTOMERS], batch_size)
-        pca = PCA(2)
-        for i in range(len(state_batch)):
-            state_batch[i] = pca.fit_transform(state_batch[i])
-        # sequence = pca.fit_transform(state_batch)
-        # print(sequence)
-        # print(state_batch)
+        # pca = PCA(2)
+        # for i in range(len(state_batch)):
+        #     state_batch[i] = pca.fit_transform(state_batch[i])
         return(state_batch, cost_batch, route_batch, depot_location_batch)
 
     def cost(self, raw_state, action):

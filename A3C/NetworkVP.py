@@ -72,6 +72,10 @@ class NetworkVP:
     def _model_save(self):
         self.saver.save(self.sess, str(Config.PATH) + 'checkpoint/' + self.name + '/model.ckpt')
 
+    def _model_restore(self):
+        latest_checkpoint = tf.train.latest_checkpoint(str(Config.PATH) + 'checkpoint/' + Config.MODEL_NAME + '/')
+        self.saver.restore(self.sess, latest_checkpoint)
+
     def _create_tensor_board(self):
         # for added metadata https://www.tensorflow.org/programmers_guide/graph_viz
         log_name = str(Config.PATH) + "logs/" + self.name
@@ -116,6 +120,7 @@ class NetworkVP:
         else:
             self.with_depot_state = self.raw_state
         self.state = self.with_depot_state[:, :-1, :]
+        self.old_probs = tf.placeholder(tf.float32, shape=[None, Config.NUM_OF_CUSTOMERS, Config.NUM_OF_CUSTOMERS])
 
         # ENCODER
         if Config.DIRECTION == 4 or Config.DIRECTION == 5 or Config.DIRECTION == 6:
@@ -168,6 +173,16 @@ class NetworkVP:
             self.train_final_action, self.pred_final_action, self.base_line_est, self.logits = Wyatt_Model(self.batch_size,
                                                                                                            self.state,
                                                                                                            self.raw_state)
+        self.probs = self.logits
+        self.probs = self.probs + tf.to_float(tf.less(self.probs, -.8*Config.LOGIT_PENALTY))*Config.LOGIT_PENALTY
+        self.probs = tf.nn.softmax(self.probs)
+        gather_ind = tf.concat([
+            tf.reshape(tf.tile(tf.reshape(tf.range(0, self.batch_size), [-1, 1]), [1, Config.NUM_OF_CUSTOMERS]), [-1, 1]),
+            tf.tile(tf.reshape(tf.range(0, Config.NUM_OF_CUSTOMERS), [-1, 1]), [self.batch_size, 1]),
+            tf.reshape(self.pred_final_action, [-1, 1])], axis=1)
+        self.new_probs_with_pi = tf.reshape(tf.gather_nd(self.probs, gather_ind), [self.batch_size, Config.NUM_OF_CUSTOMERS])
+        self.old_probs_with_pi = tf.reshape(tf.gather_nd(self.old_probs, gather_ind), [self.batch_size, Config.NUM_OF_CUSTOMERS])
+        self.ratio = tf.divide(self.new_probs_with_pi, self.old_probs_with_pi)
 
         if DECODER_TYPE == 0:
             # x = tf.range(0, 19, dtype=tf.int32)
@@ -203,11 +218,19 @@ class NetworkVP:
                 self.neg_log_prob = -1*tf.nn.sparse_softmax_cross_entropy_with_logits(logits=self.logits,
                                                                                       labels=self.train_final_action)
                 self.R = tf.stop_gradient(self.sampled_cost)
-                if Config.SEQUENCE_COST == 1:
+                if Config.SEQUENCE_COST == 1 and Config.USE_PPO == 0:
                     assign = tf.assign(self.MA_baseline, self.MA_baseline*.999 + tf.reduce_mean(self.R, axis=0)*.001)
                     with tf.control_dependencies([assign]):
                         V = self.MA_baseline
                         self.actor_loss = tf.reduce_mean(tf.multiply(self.neg_log_prob, self.R-V))
+                elif Config.USE_PPO == 1:
+                    assign = tf.assign(self.MA_baseline, self.MA_baseline*.999 + tf.reduce_mean(self.R, axis=0)*.001)
+                    with tf.control_dependencies([assign]):
+                        V = self.MA_baseline
+                        adv = self.R - V
+                        surr = tf.multiply(self.ratio, adv)
+                        self.actor_loss = tf.reduce_mean(
+                            tf.minimum(surr, tf.clip_by_value(self.ratio, 1.-.2, 1+.2)*adv))
                 elif Config.MOVING_AVERAGE == 1:
                     assign = tf.assign(self.MA_baseline, self.MA_baseline*.999 + tf.reduce_mean(self.R)*.001)
                     with tf.control_dependencies([assign]):
@@ -302,21 +325,26 @@ class NetworkVP:
             pred_cost = sampled_pred_cost
         return pred_route, pred_cost
 
-    def train(self, state, depot_location, or_action=0, sampled_cost=0, or_cost=0):
+    def train(self, state, depot_location, or_action=0, sampled_cost=0, or_cost=0, old_probs=0):
         if Config.REINFORCE == 0:
             feed_dict = {self.raw_state: state, self.or_route: or_action,
                          self.start_tokens: depot_location, self.keep_prob: 1}
             self.sess.run([self.train_actor_op], feed_dict=feed_dict)
         else:
-            feed_dict = {self.raw_state: state, self.sampled_cost: sampled_cost,
-                         self.start_tokens: depot_location, self.keep_prob: 1, self.or_cost: or_cost}
+            if Config.USE_PPO == 0:
+                feed_dict = {self.raw_state: state, self.sampled_cost: sampled_cost,
+                             self.start_tokens: depot_location, self.keep_prob: 1, self.or_cost: or_cost}
+            else:
+                feed_dict = {self.raw_state: state, self.sampled_cost: sampled_cost,
+                             self.start_tokens: depot_location, self.keep_prob: 1, self.old_probs: old_probs}
             self.sess.run([self.train_actor_op, self.train_critic_op], feed_dict=feed_dict)
 
-    def summary(self, state, or_cost, or_route, depot_location, pred_cost, sampled_cost):
+    def summary(self, state, or_cost, or_route, depot_location, pred_cost, sampled_cost, old_probs):
         step = self.get_global_step()
         feed_dict = {self.raw_state: state, self.or_cost: or_cost, self.or_route: or_route,
                      self.start_tokens: depot_location,
-                     self.sampled_cost: sampled_cost}
+                     self.sampled_cost: sampled_cost,
+                     self.old_probs: old_probs}
         _, _, summary, loss, diff, pred_route, train_route, MA = self.sess.run([
             self.train_actor_op, self.train_critic_op, self.merged,
             self.actor_loss, self.relative_length, self.pred_final_action,
@@ -327,6 +355,11 @@ class NetworkVP:
         print("MA:")
         print(MA)
         print()
+
+    def PPO(self, state, depot_location):
+        feed_dict = {self.raw_state: state, self.start_tokens: depot_location}
+        old_probs = self.sess.run(self.probs, feed_dict=feed_dict)
+        return(old_probs)
 
     # def beam_search_evaluation(self, state, depot_idx):
     #     latest_checkpoint = tf.train.latest_checkpoint(str(Config.PATH) + 'checkpoint/' + Config.MODEL_NAME + '/')

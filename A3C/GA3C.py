@@ -612,6 +612,18 @@ if Config.MODEL_SETTING == 95:
     Config.TRAINING_MIN_BATCH_SIZE = 64
     Config.USE_BAHDANAU = 1
     Config.RUN_TIME = 86400
+if Config.MODEL_SETTING == 96:
+    Config.DIRECTION = 2
+    Config.REINFORCE = 1
+    Config.SEQUENCE_COST = 1
+    Config.RUN_TIME = 86400
+if Config.MODEL_SETTING == 97:
+    Config.DIRECTION = 2
+    Config.REINFORCE = 1
+    Config.USE_BAHDANAU = 1
+    Config.SEQUENCE_COST = 1
+    Config.RUN_TIME = 86400
+
 
 
 

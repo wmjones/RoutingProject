@@ -159,6 +159,7 @@ class NetworkVP:
                 pred_decoder, impute_finished=False, maximum_iterations=tf.shape(self.state)[1])
             self.pred_final_action = self.pred_final_output.sample_id
             self.base_line_est = critic_network_pred
+            self.logits = self.train_final_output.rnn_output
 
         if Config.DIRECTION == 6:
             self.train_final_action, self.pred_final_action, self.base_line_est, self.logits = Beam_Search(
@@ -198,9 +199,6 @@ class NetworkVP:
                 self.critic_loss = tf.losses.mean_squared_error(self.sampled_cost, self.base_line_est)
             else:
                 self.critic_loss = tf.losses.mean_squared_error(tf.reshape(self.sampled_cost[:, 0], [-1, 1]), self.base_line_est)
-
-            if Config.DIRECTION < 6:
-                self.logits = self.train_final_output.rnn_output
 
             if Config.LOGIT_CLIP_SCALAR != 0:
                 self.logits = Config.LOGIT_CLIP_SCALAR*tf.nn.tanh(self.logits)

@@ -601,28 +601,52 @@ if Config.MODEL_SETTING == 92:
     Config.USE_PPO = 1
     Config.TYPE_1 = 0
     Config.RUN_TIME = 86400
-if Config.MODEL_SETTING == 94:
+if Config.MODEL_SETTING == 93:
     Config.DIRECTION = 10
     Config.REINFORCE = 1
     Config.TRAINING_MIN_BATCH_SIZE = 64
     Config.RUN_TIME = 86400
-if Config.MODEL_SETTING == 95:
+if Config.MODEL_SETTING == 94:
     Config.DIRECTION = 10
     Config.REINFORCE = 1
     Config.TRAINING_MIN_BATCH_SIZE = 64
     Config.USE_BAHDANAU = 1
     Config.RUN_TIME = 86400
+if Config.MODEL_SETTING == 95:
+    Config.DIRECTION = 2
+    Config.REINFORCE = 1
+    Config.SEQUENCE_COST = 1
+    Config.RUN_TIME = 86400
 if Config.MODEL_SETTING == 96:
     Config.DIRECTION = 2
     Config.REINFORCE = 1
+    Config.USE_BAHDANAU = 1
     Config.SEQUENCE_COST = 1
     Config.RUN_TIME = 86400
 if Config.MODEL_SETTING == 97:
     Config.DIRECTION = 2
     Config.REINFORCE = 1
+    Config.SEQUENCE_COST = 1
+    Config.USE_PPO = 1
+    Config.RUN_TIME = 86400
+if Config.MODEL_SETTING == 98:
+    Config.DIRECTION = 2
+    Config.REINFORCE = 1
     Config.USE_BAHDANAU = 1
     Config.SEQUENCE_COST = 1
+    Config.USE_PPO = 1
+    Config.MOVING_AVERAGE = 1
     Config.RUN_TIME = 86400
+if Config.MODEL_SETTING == 99:
+    Config.DIRECTION = 10
+    Config.REINFORCE = 1
+    Config.USE_BAHDANAU = 1
+    Config.SEQUENCE_COST = 1
+    # Config.USE_PPO = 1
+    Config.MOVING_AVERAGE = 1
+    Config.USE_PCA = 1
+    Config.RUN_TIME = 86400
+
 
 
 

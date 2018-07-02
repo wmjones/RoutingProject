@@ -110,6 +110,7 @@ class NetworkVP:
         self.MA_baseline = tf.Variable(0.0, dtype=tf.float32, trainable=False)
         if Config.SEQUENCE_COST == 1:
             self.MA_baseline = tf.Variable(tf.tile([0.0], [Config.NUM_OF_CUSTOMERS]), dtype=tf.float32, trainable=False)
+        self.assign_init_MA = tf.assign(self.MA_baseline, tf.reduce_mean(self.sampled_cost, axis=0))
         if Config.STATE_EMBED == 1:
             self.with_depot_state = self.raw_state
             for i in range(0):
@@ -229,8 +230,13 @@ class NetworkVP:
                         V = self.MA_baseline
                         adv = self.R - V
                         surr = tf.multiply(self.ratio, adv)
-                        self.actor_loss = tf.reduce_mean(
-                            tf.minimum(surr, tf.clip_by_value(self.ratio, 1.-.2, 1+.2)*adv))
+                        epsilon = 0.2
+                        if Config.TYPE_1 == 1:
+                            self.actor_loss = tf.reduce_mean(tf.reduce_sum(
+                                tf.minimum(surr, tf.clip_by_value(self.ratio, 1.-epsilon, 1+epsilon)*adv), axis=1))
+                        else:
+                            self.actor_loss = -1*tf.reduce_mean(tf.reduce_sum(
+                                tf.minimum(surr, tf.clip_by_value(self.ratio, 1.0-epsilon, 1.0+epsilon)*adv), axis=1))
                 elif Config.MOVING_AVERAGE == 1:
                     assign = tf.assign(self.MA_baseline, self.MA_baseline*.999 + tf.reduce_mean(self.R)*.001)
                     with tf.control_dependencies([assign]):
@@ -352,6 +358,8 @@ class NetworkVP:
         self.log_writer.add_summary(summary, step)
         print("step_loss_diff:")
         print(step, loss, diff)
+        if loss == np.nan:
+            print("error")
         print("MA:")
         print(MA)
         print()
@@ -360,6 +368,9 @@ class NetworkVP:
         feed_dict = {self.raw_state: state, self.start_tokens: depot_location}
         old_probs = self.sess.run(self.probs, feed_dict=feed_dict)
         return(old_probs)
+
+    def init_MA(self, sampled_cost):
+        self.sess.run(self.assign_init_MA, {self.sampled_cost: sampled_cost})
 
     # def beam_search_evaluation(self, state, depot_idx):
     #     latest_checkpoint = tf.train.latest_checkpoint(str(Config.PATH) + 'checkpoint/' + Config.MODEL_NAME + '/')

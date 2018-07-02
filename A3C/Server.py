@@ -56,7 +56,7 @@ class Server:
     def main(self):
         if Config.USE_PPO == 1:
             Config.SEQUENCE_COST = 1
-            self.model_old = NetworkVP(Config.DEVICE, DECODER_TYPE=0)
+            # self.model_old = NetworkVP(Config.DEVICE, DECODER_TYPE=0)
         self.env = Environment()
         self.model = NetworkVP(Config.DEVICE, DECODER_TYPE=0)
         batch_state, batch_or_cost, batch_or_route, batch_depot_location = self.env.next_batch(Config.TRAINING_MIN_BATCH_SIZE)
@@ -66,18 +66,22 @@ class Server:
         step = -1
         while time.time() < t_end:
             step += 1
+            # print(step)
             batch_state, batch_or_cost, batch_or_route, batch_depot_location = self.env.next_batch(Config.TRAINING_MIN_BATCH_SIZE)
             if Config.REINFORCE == 0:
                 self.model.train(state=batch_state, depot_location=batch_depot_location, or_action=batch_or_route)
             else:
                 if Config.USE_PPO == 1:
-                    self.model._model_save()
-                    self.model_old._model_restore()
-                    old_probs = self.model_old.PPO(state=batch_state, depot_location=batch_depot_location)
+                    # self.model._model_save()
+                    # self.model_old._model_restore()
+                    old_probs = self.model.PPO(state=batch_state, depot_location=batch_depot_location)
+                    old_probs = np.clip(old_probs, 1e-6, 1)
                 else:
                     old_probs = np.zeros((batch_state.shape[0], batch_state.shape[1], batch_state.shape[1]))
                 batch_pred_route, batch_pred_cost = self.model.predict(batch_state, batch_depot_location)
                 batch_sampled_cost = self.env.cost(batch_state, batch_pred_route)
+                if step == 0:
+                    self.model.init_MA(batch_sampled_cost)
                 if Config.USE_PPO == 0:
                     self.model.train(state=batch_state, depot_location=batch_depot_location,
                                      sampled_cost=batch_sampled_cost, or_cost=batch_or_cost)
@@ -89,7 +93,8 @@ class Server:
                     # self.model.train(state=batch_state, depot_location=batch_depot_location,
                     #                  sampled_cost=batch_sampled_cost, or_cost=batch_or_cost, old_probs=old_probs)
 
-            if step % 2000 == 0:
+            if step % 100 == 0:
+            # if True:
                 test_pred_route, _ = self.model.predict(test_state, [test_depot_location])
                 self.plot(test_state[0], test_pred_route[0][0], self.model.get_global_step())
                 print("Saving Model...")
@@ -116,12 +121,12 @@ class Server:
                     batch_sampled_cost = batch_sampled_cost[:, 0]
                 # self.plot(batch_state[0], batch_pred_route[0][0], self.model.get_global_step())
 
-                print("batch_or_route:")
-                print(batch_or_route)
-                print("batch_pred_route:")
-                print(batch_pred_route)
-                print("batch_eval_pred_route:")
-                print(batch_eval_pred_route)
+                # print("batch_or_route:")
+                # print(batch_or_route)
+                # print("batch_pred_route:")
+                # print(batch_pred_route)
+                # print("batch_eval_pred_route:")
+                # print(batch_eval_pred_route)
                 print("avg_batch_or_cost:")
                 print(np.mean(batch_or_cost))
                 print("avg_batch_pred_cost:")

@@ -635,21 +635,40 @@ if Config.MODEL_SETTING == 98:
     Config.USE_BAHDANAU = 1
     Config.SEQUENCE_COST = 1
     Config.USE_PPO = 1
-    Config.MOVING_AVERAGE = 1
     Config.RUN_TIME = 86400
 if Config.MODEL_SETTING == 99:
     Config.DIRECTION = 10
     Config.REINFORCE = 1
     Config.USE_BAHDANAU = 1
     Config.SEQUENCE_COST = 1
-    # Config.USE_PPO = 1
-    Config.MOVING_AVERAGE = 1
     Config.USE_PCA = 1
     Config.RUN_TIME = 86400
-
-
-
-
+if Config.MODEL_SETTING == 100:
+    Config.DIRECTION = 10
+    Config.REINFORCE = 1
+    Config.SEQUENCE_COST = 1
+    Config.RUN_TIME = 86400
+if Config.MODEL_SETTING == 101:
+    Config.DIRECTION = 10
+    Config.REINFORCE = 1
+    Config.SEQUENCE_COST = 1
+    Config.USE_PCA = 1
+    Config.RUN_TIME = 86400
+if Config.MODEL_SETTING == 102:
+    Config.DIRECTION = 10
+    Config.REINFORCE = 1
+    Config.USE_PCA = 1
+    Config.RUN_TIME = 86400
+if Config.MODEL_SETTING == 103:
+    Config.DIRECTION = 10
+    Config.REINFORCE = 1
+    Config.RUN_TIME = 86400
+if Config.MODEL_SETTING == 104:
+    Config.DIRECTION = 10
+    Config.REINFORCE = 1
+    Config.USE_PPO = 1
+    Config.TYPE_1 = 1
+    Config.RUN_TIME = 86400
 
 # if Config.MODEL_SETTING ==
 ConfigParse = configparser.ConfigParser()

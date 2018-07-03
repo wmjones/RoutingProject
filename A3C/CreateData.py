@@ -5,7 +5,7 @@ from sklearn.decomposition import PCA
 file_state = open('data_state_20_00_pca.npy', 'wb')
 file_or_route = open('data_or_route_20_00_pca.npy', 'wb')
 file_or_cost = open('data_or_cost_20_00_pca.npy', 'wb')
-for i in range(1000):
+for i in range(10):
     print(i)
     # depot_location = np.array([.5, .5])
     # data_state = np.vstack((np.random.rand(19, 2), np.array([.5, .5])))

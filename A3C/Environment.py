@@ -10,18 +10,18 @@ class Environment:
             self.file_state = np.load('data_state_20_00_pca.npy', 'r')
             self.file_or_route = np.load('data_or_route_20_00_pca.npy', 'r')
             self.file_or_cost = np.load('data_or_cost_20_00_pca.npy', 'r')
-            self.file_size = 1000
-        if Config.NUM_OF_CUSTOMERS == 50:
+            self.file_size = 10
+        elif Config.NUM_OF_CUSTOMERS == 50:
             self.file_state = np.load('data_state_50_00.npy', 'r')
             self.file_or_route = np.load('data_or_route_50_00.npy', 'r')
             self.file_or_cost = np.load('data_or_cost_50_00.npy', 'r')
             self.file_size = 10000
-        if Config.NUM_OF_CUSTOMERS == 19:
+        elif Config.NUM_OF_CUSTOMERS == 19:
             self.file_state = np.load('data_state_00.npy', 'r')
             self.file_or_route = np.load('data_or_route_00.npy', 'r')
             self.file_or_cost = np.load('data_or_cost_00.npy', 'r')
             self.file_size = 10000
-        if Config.NUM_OF_CUSTOMERS == 100:
+        elif Config.NUM_OF_CUSTOMERS == 100:
             self.file_state = np.load('data_state_100_00.npy', 'r')
             self.file_or_route = np.load('data_or_route_100_00.npy', 'r')
             self.file_or_cost = np.load('data_or_cost_100_00.npy', 'r')
@@ -120,6 +120,7 @@ class Environment:
 
 # env = Environment()
 # batch_state, batch_or_cost, batch_or_route, batch_depot_location = env.next_batch(10)
+# print(batch_state)
 # print("or_cost:")
 # print(batch_or_cost)
 # print("env_cost:")

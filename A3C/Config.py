@@ -22,7 +22,7 @@ class Config:                   # default settings for all config options
     PREDICTORS = 1
     REINFORCE = 0
     RESTORE = 0
-    RNN_HIDDEN_DIM = 128
+    RNN_HIDDEN_DIM = 64
     RUN_TIME = 30
     REZA = 0
     STOCHASTIC = 0
@@ -36,7 +36,7 @@ class Config:                   # default settings for all config options
     SAMPLING = 0
     SAME_BATCH = 0
     SEQUENCE_COST = 0
-    USE_PCA = 0
+    USE_PCA = 1
     USE_PPO = 0
     NUM_PPO_EPOCH = 15
     TYPE_1 = 0

@@ -117,7 +117,7 @@ class Environment:
             costs = np.asarray(costs)
             return(costs.reshape(-1, 1))
 
-
+# Config.USE_PCA = 1
 # env = Environment()
 # batch_state, batch_or_cost, batch_or_route, batch_depot_location = env.next_batch(10)
 # print(batch_state)

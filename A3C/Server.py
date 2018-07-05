@@ -22,9 +22,10 @@ class Server:
         # action, _ = self.model.predict([batch_state[0]], [batch_depot_location[0]])
         # action = action[0]
         points = state
-        edges = np.array([[19, action[0]]], dtype=np.int32)
+        edges = np.array([[Config.NUM_OF_CUSTOMERS, action[0]]], dtype=np.int32)
         edges = np.append(edges, np.concatenate((action[:-1].reshape(-1, 1), action[1:].reshape(-1, 1)), axis=1), axis=0)
-        # edges = np.append(edges, np.array([[action[0][-1], 19]], dtype=np.int32), axis=0) # taken out so i can see direction
+        # edges = np.append(edges, np.array([[action[0][-1], Config.NUM_OF_CUSTOMERS]], dtype=np.int32), axis=0)
+        # taken out so i can see direction
         lc = LineCollection(points[edges])
         fig = plt.figure()
         plt.gca().add_collection(lc)
@@ -39,17 +40,19 @@ class Server:
         fig.savefig(str(Config.PATH) + 'figs/TSP_' + str((Config.NUM_OF_CUSTOMERS+1)) + '_MODEL_NAME_' + str(Config.MODEL_NAME) +
                     '_STEP_' + str(step-1) + '.png')
         plt.close(fig)
-        # if step > 0:
-        #     or_route = batch_or_route[0]
+        # if True:
         #     edges = np.array([[19, or_route[0]]], dtype=np.int32)
         #     edges = np.append(edges, np.concatenate((or_route[:-2].reshape(-1, 1), or_route[1:-1].reshape(-1, 1)), axis=1), axis=0)
+        #     edges = np.concatenate((np.arange(0, 20).reshape(-1, 1), np.arange(1, 21).reshape(-1, 1)), axis=1)
+        #     print(edges)
         #     lc = LineCollection(points[edges])
         #     fig = plt.figure()
         #     plt.gca().add_collection(lc)
-        #     plt.xlim(0, 1)
-        #     plt.ylim(0, 1)
+        #     plt.xlim(-1, 1)
+        #     plt.ylim(-1, 1)
         #     plt.plot(points[:, 0], points[:, 1], 'ro')
-        #     fig.savefig(str(Config.PATH) + 'figs/TSP_' + str((Config.NUM_OF_CUSTOMERS+1)) + '_MODEL_NAME_' + str(Config.MODEL_NAME) +
+        #     fig.savefig(str(Config.PATH) + 'figs/TSP_' + str((Config.NUM_OF_CUSTOMERS+1)) +
+        #                 '_MODEL_NAME_' + str(Config.MODEL_NAME) +
         #                 '_OPTIMAL' + '.png')
         #     plt.close(fig)
 

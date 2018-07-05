@@ -4,10 +4,10 @@ from MyWrapper import MaskWrapper, MaskWrapperAttnState
 from tensorflow.python.ops.distributions import categorical
 from tensorflow.python.framework import tensor_shape
 from tensorflow.python.framework import tensor_util
-from tensorflow.python.ops import array_ops
 from tensorflow.python.util import nest
 from tensorflow.python.framework import ops
 from tensorflow.python.ops import tensor_array_ops
+
 
 def _build_rnn_cell(keep_prob):
     cell = tf.nn.rnn_cell.LSTMCell(Config.RNN_HIDDEN_DIM)

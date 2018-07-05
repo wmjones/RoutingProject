@@ -1,25 +1,15 @@
 import numpy as np
 from OR_Tool import OR_Tool
-from sklearn.decomposition import PCA
 NUM_OF_CUSTOMERS = 20
 
-# file_state = open('data_state_20_00_pca.npy', 'wb')
-# file_or_route = open('data_or_route_20_00_pca.npy', 'wb')
-# file_or_cost = open('data_or_cost_20_00_pca.npy', 'wb')
 file_state = open('data_state_20_00.npy', 'wb')
 file_or_route = open('data_or_route_20_00.npy', 'wb')
 file_or_cost = open('data_or_cost_20_00.npy', 'wb')
 for i in range(1000):
     print(i)
-    # depot_location = np.array([.5, .5])
-    # data_state = np.vstack((np.random.rand(19, 2), np.array([.5, .5])))
-    # depot_idx = int(np.where(data_state[:, 0] == .5)[0][0])
     depot_location = np.array([0, 0])
     data_state = np.random.rand(NUM_OF_CUSTOMERS, 2)
-    # pca = PCA(2)
-    # data_state = pca.fit_transform(data_state)
     data_state = np.vstack((data_state, np.array([0, 0])))
-    # depot_idx = int(np.where(data_state[:, 0] == 0)[0][0])
     depot_idx = NUM_OF_CUSTOMERS
     or_model = OR_Tool(data_state, depot_location, depot_idx)
     or_route, or_cost = or_model.solve()

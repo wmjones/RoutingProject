@@ -1,31 +1,24 @@
 import numpy as np
-np.set_printoptions(threshold=np.nan)
 import time
 from Config import Config
 from Environment import Environment
 from NetworkVP import NetworkVP
-import sys
+# import sys
 import matplotlib
 matplotlib.use('Agg')
 from matplotlib import pyplot as plt
 from matplotlib.collections import LineCollection
+np.set_printoptions(threshold=np.nan)
 
 
 class Server:
     def __init__(self):
-
         self.training_step = 0
 
     def plot(self, state, action, step):
-        # env = Environment()
-        # batch_state, batch_or_cost, batch_or_route, batch_depot_location = env.next_batch(1)
-        # action, _ = self.model.predict([batch_state[0]], [batch_depot_location[0]])
-        # action = action[0]
         points = state
         edges = np.array([[Config.NUM_OF_CUSTOMERS, action[0]]], dtype=np.int32)
         edges = np.append(edges, np.concatenate((action[:-1].reshape(-1, 1), action[1:].reshape(-1, 1)), axis=1), axis=0)
-        # edges = np.append(edges, np.array([[action[0][-1], Config.NUM_OF_CUSTOMERS]], dtype=np.int32), axis=0)
-        # taken out so i can see direction
         lc = LineCollection(points[edges])
         fig = plt.figure()
         plt.gca().add_collection(lc)
@@ -89,8 +82,7 @@ class Server:
                         self.model.train(state=batch_state, depot_location=batch_depot_location,
                                          sampled_cost=batch_sampled_cost, or_cost=batch_or_cost, old_probs=old_probs)
 
-            if step % 5000 == 0:
-            # if True:
+            if step % 10000 == 0:
                 test_pred_route, _ = self.model.predict(test_state, [test_depot_location])
                 self.plot(test_state[0], test_pred_route[0][0], self.model.get_global_step())
                 print("Saving Model...")
@@ -117,12 +109,12 @@ class Server:
                     batch_sampled_cost = batch_sampled_cost[:, 0]
                 # self.plot(batch_state[0], batch_pred_route[0][0], self.model.get_global_step())
 
-                # print("batch_or_route:")
-                # print(batch_or_route)
-                # print("batch_pred_route:")
-                # print(batch_pred_route)
-                # print("batch_eval_pred_route:")
-                # print(batch_eval_pred_route)
+                print("batch_or_route:")
+                print(batch_or_route)
+                print("batch_pred_route:")
+                print(batch_pred_route)
+                print("batch_eval_pred_route:")
+                print(batch_eval_pred_route)
                 print("avg_batch_or_cost:")
                 print(np.mean(batch_or_cost))
                 print("avg_batch_pred_cost:")
@@ -136,6 +128,5 @@ class Server:
             #         print(step)
             #         sys.exit("Error same location chosen twice")
 
-        # self.plot(self.model.get_global_step())
         self.model.finish()
         print("total steps:", self.model.get_global_step())

@@ -1,11 +1,6 @@
 import tensorflow as tf
-# import time
-# from MaskWrapper import MaskWrapper
-# from MaskWrapper import MaskWrapperAttnState
 from Model import Encoder, Helper, Decoder, Reza_Model, Wyatt_Model, Beam_Search
-# from MaskWrapper import MaskWrapperState
 import numpy as np
-# from Environment import Environment
 from Config import Config
 
 
@@ -88,10 +83,7 @@ class NetworkVP:
         self.log_writer.close()
 
     def _create_graph(self, DECODER_TYPE):
-        if Config.USE_PCA == 1 and Config.NUM_OF_CUSTOMERS == 19:
-            Config.NUM_OF_CUSTOMERS = Config.NUM_OF_CUSTOMERS+1
         self.raw_state = tf.placeholder(tf.float32, shape=[None, Config.NUM_OF_CUSTOMERS+1, 2], name='State')
-        # self.current_location = tf.placeholder(tf.float32, shape=[None, 2], name='Current_Location')
         self.current_location = self.raw_state[:, -1]
         self.sampled_cost = tf.placeholder(tf.float32, [None, 1], name='Sampled_Cost')
         if Config.SEQUENCE_COST == 1:
@@ -101,7 +93,6 @@ class NetworkVP:
         self.global_step = tf.Variable(0, trainable=False, name='step')
         self.input_lengths = tf.convert_to_tensor([Config.NUM_OF_CUSTOMERS]*(self.batch_size))
         self.or_route = tf.placeholder(tf.int32, shape=[None, Config.NUM_OF_CUSTOMERS+1])
-        # self.last_pred_route = tf.placeholder(tf.int32, shape=[None, Config.BEAM_WIDTH, Config.NUM_OF_CUSTOMERS])
         self.or_cost = tf.placeholder(tf.float32, shape=[None, 1])
         self.difference_in_length = tf.reduce_mean(self.sampled_cost - self.or_cost)
         self.relative_length = tf.reduce_mean(self.sampled_cost/self.or_cost)

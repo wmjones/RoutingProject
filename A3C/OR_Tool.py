@@ -14,14 +14,9 @@ class gen_matrix(object):
 
 class OR_Tool:
     def __init__(self, env_current_state, env_current_location, depot_idx):
-        # print(env_current_location)
-        # print(env_current_state)
-        # self.data = np.vstack([env_current_location, env_current_state])
         self.data = env_current_state
         self.size = self.data.shape[0]
         self.depot_idx = depot_idx
-        # print("self.size", self.size)
-        # print("self.data", self.data)
 
     def objective(self, route):
         out = 0

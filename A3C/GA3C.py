@@ -593,6 +593,7 @@ if Config.MODEL_SETTING == 91:
     Config.TRAINING_MIN_BATCH_SIZE = 64
     Config.USE_PPO = 1
     Config.TYPE_1 = 1
+    Config.LR_DECAY_OFF = 1
     Config.RUN_TIME = 86400
 if Config.MODEL_SETTING == 92:
     Config.DIRECTION = 10
@@ -600,34 +601,40 @@ if Config.MODEL_SETTING == 92:
     Config.TRAINING_MIN_BATCH_SIZE = 64
     Config.USE_PPO = 1
     Config.TYPE_1 = 0
+    Config.LR_DECAY_OFF = 1
     Config.RUN_TIME = 86400
 if Config.MODEL_SETTING == 93:
     Config.DIRECTION = 10
     Config.REINFORCE = 1
     Config.TRAINING_MIN_BATCH_SIZE = 64
+    Config.LR_DECAY_OFF = 1
     Config.RUN_TIME = 86400
 if Config.MODEL_SETTING == 94:
     Config.DIRECTION = 10
     Config.REINFORCE = 1
     Config.TRAINING_MIN_BATCH_SIZE = 64
     Config.USE_BAHDANAU = 1
+    Config.LR_DECAY_OFF = 1
     Config.RUN_TIME = 86400
 if Config.MODEL_SETTING == 95:
     Config.DIRECTION = 2
     Config.REINFORCE = 1
     Config.SEQUENCE_COST = 1
+    Config.LR_DECAY_OFF = 1
     Config.RUN_TIME = 86400
 if Config.MODEL_SETTING == 96:
     Config.DIRECTION = 2
     Config.REINFORCE = 1
     Config.USE_BAHDANAU = 1
     Config.SEQUENCE_COST = 1
+    Config.LR_DECAY_OFF = 1
     Config.RUN_TIME = 86400
 if Config.MODEL_SETTING == 97:
     Config.DIRECTION = 2
     Config.REINFORCE = 1
     Config.SEQUENCE_COST = 1
     Config.USE_PPO = 1
+    Config.LR_DECAY_OFF = 1
     Config.RUN_TIME = 86400
 if Config.MODEL_SETTING == 98:
     Config.DIRECTION = 2
@@ -635,6 +642,7 @@ if Config.MODEL_SETTING == 98:
     Config.USE_BAHDANAU = 1
     Config.SEQUENCE_COST = 1
     Config.USE_PPO = 1
+    Config.LR_DECAY_OFF = 1
     Config.RUN_TIME = 86400
 if Config.MODEL_SETTING == 99:
     Config.DIRECTION = 10
@@ -642,35 +650,41 @@ if Config.MODEL_SETTING == 99:
     Config.USE_BAHDANAU = 1
     Config.SEQUENCE_COST = 1
     Config.USE_PCA = 1
+    Config.LR_DECAY_OFF = 1
     Config.RUN_TIME = 86400
 if Config.MODEL_SETTING == 100:
     Config.DIRECTION = 10
     Config.REINFORCE = 1
     Config.SEQUENCE_COST = 1
+    Config.LR_DECAY_OFF = 1
     Config.RUN_TIME = 86400
 if Config.MODEL_SETTING == 101:
     Config.DIRECTION = 10
     Config.REINFORCE = 1
     Config.SEQUENCE_COST = 1
     Config.USE_PCA = 1
+    Config.LR_DECAY_OFF = 1
     Config.RUN_TIME = 86400
 if Config.MODEL_SETTING == 102:
     Config.DIRECTION = 10
     Config.REINFORCE = 1
     Config.USE_PCA = 1
+    Config.LR_DECAY_OFF = 1
     Config.RUN_TIME = 86400
 if Config.MODEL_SETTING == 103:
     Config.DIRECTION = 10
+    Config.SAME_BATCH = 1
     Config.REINFORCE = 1
+    Config.LR_DECAY_OFF = 1
     Config.RUN_TIME = 86400
 if Config.MODEL_SETTING == 104:
     Config.DIRECTION = 10
     Config.REINFORCE = 1
     Config.USE_PPO = 1
     Config.TYPE_1 = 1
+    Config.LR_DECAY_OFF = 1
     Config.RUN_TIME = 86400
 
-# if Config.MODEL_SETTING ==
 ConfigParse = configparser.ConfigParser()
 ConfigParse.optionxform = str
 variables = [attr for attr in dir(Config) if not callable(getattr(Config, attr)) and not attr.startswith("__")]

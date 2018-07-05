@@ -62,14 +62,13 @@ class Server:
         while time.time() < t_end:
             step += 1
             batch_state, batch_or_cost, batch_or_route, batch_depot_location = self.env.next_batch(Config.TRAINING_MIN_BATCH_SIZE)
+            old_probs = np.zeros((batch_state.shape[0], batch_state.shape[1]-1, batch_state.shape[1]-1))
             if Config.REINFORCE == 0:
                 self.model.train(state=batch_state, depot_location=batch_depot_location, or_action=batch_or_route)
             else:
                 if Config.USE_PPO == 1:
                     old_probs = self.model.PPO(state=batch_state, depot_location=batch_depot_location)
                     old_probs = np.clip(old_probs, 1e-6, 1)
-                else:
-                    old_probs = np.zeros((batch_state.shape[0], batch_state.shape[1]-1, batch_state.shape[1]-1))
                 batch_pred_route, batch_pred_cost = self.model.predict(batch_state, batch_depot_location)
                 batch_sampled_cost = self.env.cost(batch_state, batch_pred_route)
                 if step == 0:

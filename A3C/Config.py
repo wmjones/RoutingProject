@@ -39,4 +39,3 @@ class Config:                   # default settings for all config options
     USE_PCA = 0
     USE_PPO = 0
     NUM_PPO_EPOCH = 15
-    TYPE_1 = 0

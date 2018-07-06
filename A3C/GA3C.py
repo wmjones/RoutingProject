@@ -645,7 +645,7 @@ if Config.MODEL_SETTING == 98:
     Config.LR_DECAY_OFF = 1
     Config.RUN_TIME = 86400
 if Config.MODEL_SETTING == 99:
-    Config.DIRECTION = 10
+    Config.DIRECTION = 5
     Config.REINFORCE = 1
     Config.USE_BAHDANAU = 1
     Config.SEQUENCE_COST = 1
@@ -653,35 +653,38 @@ if Config.MODEL_SETTING == 99:
     Config.LR_DECAY_OFF = 1
     Config.RUN_TIME = 86400
 if Config.MODEL_SETTING == 100:
-    Config.DIRECTION = 10
+    Config.DIRECTION = 5
     Config.REINFORCE = 1
     Config.SEQUENCE_COST = 1
     Config.LR_DECAY_OFF = 1
     Config.RUN_TIME = 86400
 if Config.MODEL_SETTING == 101:
-    Config.DIRECTION = 10
+    Config.DIRECTION = 5
     Config.REINFORCE = 1
     Config.SEQUENCE_COST = 1
     Config.USE_PCA = 1
     Config.LR_DECAY_OFF = 1
     Config.RUN_TIME = 86400
 if Config.MODEL_SETTING == 102:
-    Config.DIRECTION = 10
+    Config.DIRECTION = 5
     Config.REINFORCE = 1
     Config.USE_PCA = 1
     Config.LR_DECAY_OFF = 1
     Config.RUN_TIME = 86400
 if Config.MODEL_SETTING == 103:
-    Config.DIRECTION = 10
-    Config.SAME_BATCH = 1
+    Config.DIRECTION = 5
+    # Config.SAME_BATCH = 1
+    # Config.USE_PPO = 1
+    # Config.NUM_PPO_EPOCH = 5
+    Config.SEQUENCE_COST = 1
+    Config.STOCHASTIC = 1
     Config.REINFORCE = 1
     Config.LR_DECAY_OFF = 1
     Config.RUN_TIME = 86400
 if Config.MODEL_SETTING == 104:
-    Config.DIRECTION = 10
+    Config.DIRECTION = 5
     Config.REINFORCE = 1
     Config.USE_PPO = 1
-    Config.TYPE_1 = 1
     Config.LR_DECAY_OFF = 1
     Config.RUN_TIME = 86400
 

@@ -223,14 +223,9 @@ class NetworkVP:
                         V = self.MA_baseline
                         adv = self.R - V
                         epsilon = 0.1
-                        if Config.TYPE_1 == 1:
-                            self.actor_loss = tf.reduce_mean(tf.reduce_sum(
-                                tf.minimum(tf.multiply(self.ratio, adv),
-                                           tf.clip_by_value(self.ratio, 1.-epsilon, 1+epsilon)*adv), axis=1))
-                        else:
-                            self.actor_loss = -1*tf.reduce_mean(tf.reduce_sum(
-                                tf.minimum(tf.multiply(self.ratio, adv),
-                                           tf.clip_by_value(self.ratio, 1.0-epsilon, 1.0+epsilon)*adv), axis=1))
+                        self.actor_loss = -tf.reduce_mean(tf.reduce_sum(
+                            tf.minimum(tf.multiply(self.ratio, adv),
+                                       tf.clip_by_value(self.ratio, 1.0-epsilon, 1.0+epsilon)*adv), axis=1))
                 elif Config.MOVING_AVERAGE == 1:
                     assign = tf.assign(self.MA_baseline, self.MA_baseline*.999 + tf.reduce_mean(self.R)*.001)
                     with tf.control_dependencies([assign]):

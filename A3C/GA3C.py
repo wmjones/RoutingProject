@@ -8,295 +8,378 @@ for i in range(1, len(sys.argv)):
     setattr(Config, x, type(getattr(Config, x))(y))
 
 if Config.MODEL_SETTING == 1:
+    # working needs longer i doubled time
     Config.DIRECTION = 1
     Config.USE_BAHDANAU = 1
     Config.FROM_FILE = 1
     Config.LOGIT_CLIP_SCALAR = 10
     Config.LR_DECAY_OFF = 1
-    Config.RUN_TIME = 64800
-if Config.MODEL_SETTING == 2:
-    Config.DIRECTION = 1
-    Config.USE_BAHDANAU = 1
-    Config.REINFORCE = 1
-    Config.RNN_HIDDEN_DIM = 16
-    Config.LR_DECAY_OFF = 1
-    Config.RUN_TIME = 64800
+    # Config.RUN_TIME = 64800
+    Config.RUN_TIME = 129600
+# if Config.MODEL_SETTING == 2:
+#     # not working
+#     Config.DIRECTION = 1
+#     Config.USE_BAHDANAU = 1
+#     Config.REINFORCE = 1
+#     Config.RNN_HIDDEN_DIM = 16
+#     Config.LR_DECAY_OFF = 1
+#     Config.RUN_TIME = 64800
 if Config.MODEL_SETTING == 3:
+    # working needs longer i doubled time
     Config.DIRECTION = 2
     Config.USE_BAHDANAU = 1
     Config.FROM_FILE = 1
     Config.LOGIT_CLIP_SCALAR = 10
     Config.LR_DECAY_OFF = 1
-    Config.RUN_TIME = 64800
-if Config.MODEL_SETTING == 4:
-    Config.DIRECTION = 2
-    Config.USE_BAHDANAU = 1
-    Config.REINFORCE = 1
-    Config.RNN_HIDDEN_DIM = 16
-    Config.LR_DECAY_OFF = 1
-    Config.RUN_TIME = 64800
+    # Config.RUN_TIME = 64800
+    Config.RUN_TIME = 129600
+# if Config.MODEL_SETTING == 4:
+#     # not working
+#     Config.DIRECTION = 2
+#     Config.USE_BAHDANAU = 1
+#     Config.REINFORCE = 1
+#     Config.RNN_HIDDEN_DIM = 16
+#     Config.LR_DECAY_OFF = 1
+#     Config.RUN_TIME = 64800
 if Config.MODEL_SETTING == 5:
+    # maybe working
     Config.DIRECTION = 3
     Config.USE_BAHDANAU = 1
     Config.FROM_FILE = 1
     Config.LOGIT_CLIP_SCALAR = 10
-    Config.RUN_TIME = 64800
-if Config.MODEL_SETTING == 6:
-    Config.DIRECTION = 3
-    Config.USE_BAHDANAU = 1
-    Config.REINFORCE = 1
-    Config.RUN_TIME = 64800
+    # Config.RUN_TIME = 64800
+    Config.RUN_TIME = 129600
+# if Config.MODEL_SETTING == 6:
+#     # not working
+#     Config.DIRECTION = 3
+#     Config.USE_BAHDANAU = 1
+#     Config.REINFORCE = 1
+#     Config.RUN_TIME = 64800
 if Config.MODEL_SETTING == 7:
+    # maybe working
     Config.DIRECTION = 4
     Config.USE_BAHDANAU = 1
     Config.FROM_FILE = 1
     Config.LOGIT_CLIP_SCALAR = 10
-    Config.RUN_TIME = 64800
+    # Config.RUN_TIME = 64800
+    Config.RUN_TIME = 129600
 if Config.MODEL_SETTING == 8:
+    # not working
     Config.DIRECTION = 4
     Config.USE_BAHDANAU = 1
     Config.REINFORCE = 1
     Config.RUN_TIME = 64800
 if Config.MODEL_SETTING == 9:
+    # working but needs more time
     Config.DIRECTION = 10
     Config.STATE_EMBED = 1
     Config.FROM_FILE = 1
     Config.LOGIT_CLIP_SCALAR = 10
-    Config.RUN_TIME = 43200
-if Config.MODEL_SETTING == 10:
-    Config.DIRECTION = 10
-    Config.STATE_EMBED = 1
-    Config.REINFORCE = 1
-    Config.RUN_TIME = 43200
-if Config.MODEL_SETTING == 11:
-    Config.DIRECTION = 10
-    Config.STATE_EMBED = 1
-    Config.REINFORCE = 1
-    Config.TRAINING_MIN_BATCH_SIZE = 30
-    Config.USE_OR_COST = 1
-    Config.RUN_TIME = 43200
+    # Config.RUN_TIME = 43200
+    Config.RUN_TIME = 129600
+# if Config.MODEL_SETTING == 10:
+#     # not working
+#     Config.DIRECTION = 10
+#     Config.STATE_EMBED = 1
+#     Config.REINFORCE = 1
+#     Config.RUN_TIME = 43200
+# if Config.MODEL_SETTING == 11:
+#     # not working
+#     Config.DIRECTION = 10
+#     Config.STATE_EMBED = 1
+#     Config.REINFORCE = 1
+#     Config.TRAINING_MIN_BATCH_SIZE = 30
+#     Config.USE_OR_COST = 1
+#     Config.RUN_TIME = 43200
 if Config.MODEL_SETTING == 12:
+    # maybe working
     Config.DIRECTION = 1
     Config.STATE_EMBED = 1
     Config.FROM_FILE = 1
     Config.LOGIT_CLIP_SCALAR = 10
-    Config.RUN_TIME = 43200
+    # Config.RUN_TIME = 43200
+    Config.RUN_TIME = 129600
 if Config.MODEL_SETTING == 13:
+    # maybe working
     Config.DIRECTION = 1
     Config.FROM_FILE = 1
     Config.LOGIT_CLIP_SCALAR = 10
     Config.STOCHASTIC = 1
-    Config.RUN_TIME = 43200
-if Config.MODEL_SETTING == 14:
-    Config.DIRECTION = 1
-    Config.REINFORCE = 1
-    Config.USE_OR_COST = 1
-    Config.RUN_TIME = 43200
+    # Config.RUN_TIME = 43200
+    Config.RUN_TIME = 129600
+# if Config.MODEL_SETTING == 14:
+#     # not working
+#     Config.DIRECTION = 1
+#     Config.REINFORCE = 1
+#     Config.USE_OR_COST = 1
+#     Config.RUN_TIME = 43200
 if Config.MODEL_SETTING == 15:
+    # maybe working
     Config.DIRECTION = 2
     Config.FROM_FILE = 1
     Config.LOGIT_CLIP_SCALAR = 10
     Config.STOCHASTIC = 1
-    Config.RUN_TIME = 43200
-if Config.MODEL_SETTING == 16:
-    Config.DIRECTION = 2
-    Config.REINFORCE = 1
-    Config.USE_OR_COST = 1
-    Config.RUN_TIME = 43200
+    # Config.RUN_TIME = 43200
+    Config.RUN_TIME = 129600
+# if Config.MODEL_SETTING == 16:
+#     # not working
+#     Config.DIRECTION = 2
+#     Config.REINFORCE = 1
+#     Config.USE_OR_COST = 1
+#     Config.RUN_TIME = 43200
 if Config.MODEL_SETTING == 17:
+    # maybe working
     Config.DIRECTION = 3
     Config.FROM_FILE = 1
     Config.LOGIT_CLIP_SCALAR = 10
     Config.STOCHASTIC = 1
-    Config.RUN_TIME = 43200
-if Config.MODEL_SETTING == 18:
-    Config.DIRECTION = 3
-    Config.REINFORCE = 1
-    Config.USE_OR_COST = 1
-    Config.RUN_TIME = 43200
-if Config.MODEL_SETTING == 19:
-    Config.DIRECTION = 4
-    Config.FROM_FILE = 1
-    Config.LOGIT_CLIP_SCALAR = 10
-    Config.STOCHASTIC = 1
-    Config.RUN_TIME = 43200
-if Config.MODEL_SETTING == 20:
-    Config.DIRECTION = 4
-    Config.REINFORCE = 1
-    Config.USE_OR_COST = 1
-    Config.RUN_TIME = 43200
+    # Config.RUN_TIME = 43200
+    Config.RUN_TIME = 129600
+# if Config.MODEL_SETTING == 18:
+#     # not working
+#     Config.DIRECTION = 3
+#     Config.REINFORCE = 1
+#     Config.USE_OR_COST = 1
+#     Config.RUN_TIME = 43200
+# if Config.MODEL_SETTING == 19:
+#     # not working
+#     Config.DIRECTION = 4
+#     Config.FROM_FILE = 1
+#     Config.LOGIT_CLIP_SCALAR = 10
+#     Config.STOCHASTIC = 1
+#     Config.RUN_TIME = 43200
+# if Config.MODEL_SETTING == 20:
+#     # not working
+#     Config.DIRECTION = 4
+#     Config.REINFORCE = 1
+#     Config.USE_OR_COST = 1
+#     Config.RUN_TIME = 43200
 if Config.MODEL_SETTING == 21:
+    # maybe working
     Config.DIRECTION = 10
     Config.FROM_FILE = 1
     Config.LOGIT_CLIP_SCALAR = 10
-    Config.RUN_TIME = 43200
+    # Config.RUN_TIME = 43200
+    Config.RUN_TIME = 129600
 if Config.MODEL_SETTING == 22:
+    # not working but used to work
     Config.DIRECTION = 10
     Config.REINFORCE = 1
-    Config.RUN_TIME = 43200
+    Config.LR_DECAY_OFF = 1
+    Config.RUN_TIME = 129600
+    # Config.RUN_TIME = 43200
 if Config.MODEL_SETTING == 23:
+    # not working
     Config.DIRECTION = 10
     Config.REINFORCE = 1
     Config.MOVING_AVERAGE = 1
-    Config.RUN_TIME = 43200
-if Config.MODEL_SETTING == 24:
-    Config.DIRECTION = 10
-    Config.REINFORCE = 1
-    Config.USE_OR_COST = 1
-    Config.RUN_TIME = 43200
-if Config.MODEL_SETTING == 25:
-    Config.DIRECTION = 10
-    Config.REINFORCE = 1
-    Config.STATE_EMBED = 1
-    Config.RUN_TIME = 43200
-if Config.MODEL_SETTING == 26:
-    Config.DIRECTION = 10
-    Config.REINFORCE = 1
-    Config.STATE_EMBED = 1
-    Config.MOVING_AVERAGE = 1
-    Config.RUN_TIME = 43200
-if Config.MODEL_SETTING == 27:
-    Config.DIRECTION = 10
-    Config.REINFORCE = 1
-    Config.STATE_EMBED = 1
-    Config.USE_OR_COST = 1
-    Config.RUN_TIME = 43200
-if Config.MODEL_SETTING == 28:
-    Config.DIRECTION = 1
-    Config.FROM_FILE = 1
-    Config.LOGIT_CLIP_SCALAR = 10
-    Config.RUN_TIME = 259200
-if Config.MODEL_SETTING == 29:
-    Config.DIRECTION = 2
-    Config.FROM_FILE = 1
-    Config.LOGIT_CLIP_SCALAR = 10
-    Config.RUN_TIME = 259200
+    Config.LR_DECAY_OFF = 1
+    Config.RUN_TIME = 129600
+    # Config.RUN_TIME = 43200
+# if Config.MODEL_SETTING == 24:
+#     # not working
+#     Config.DIRECTION = 10
+#     Config.REINFORCE = 1
+#     Config.USE_OR_COST = 1
+#     Config.RUN_TIME = 43200
+# if Config.MODEL_SETTING == 25:
+#     # not working
+#     Config.DIRECTION = 10
+#     Config.REINFORCE = 1
+#     Config.STATE_EMBED = 1
+#     Config.RUN_TIME = 43200
+# if Config.MODEL_SETTING == 26:
+#     # not working
+#     Config.DIRECTION = 10
+#     Config.REINFORCE = 1
+#     Config.STATE_EMBED = 1
+#     Config.MOVING_AVERAGE = 1
+#     Config.RUN_TIME = 43200
+# if Config.MODEL_SETTING == 27:
+#     # not working
+#     Config.DIRECTION = 10
+#     Config.REINFORCE = 1
+#     Config.STATE_EMBED = 1
+#     Config.USE_OR_COST = 1
+#     Config.RUN_TIME = 43200
+# if Config.MODEL_SETTING == 28:
+#     # repeat
+#     Config.DIRECTION = 1
+#     Config.FROM_FILE = 1
+#     Config.LOGIT_CLIP_SCALAR = 10
+#     Config.RUN_TIME = 259200
+# if Config.MODEL_SETTING == 29:
+#     # repeat
+#     Config.DIRECTION = 2
+#     Config.FROM_FILE = 1
+#     Config.LOGIT_CLIP_SCALAR = 10
+#     Config.RUN_TIME = 259200
 if Config.MODEL_SETTING == 30:
+    # worked very well
     Config.DIRECTION = 3
     Config.FROM_FILE = 1
     Config.LOGIT_CLIP_SCALAR = 10
     Config.RUN_TIME = 259200
-if Config.MODEL_SETTING == 31:
-    Config.DIRECTION = 4
-    Config.FROM_FILE = 1
-    Config.LOGIT_CLIP_SCALAR = 10
-    Config.RUN_TIME = 259200
-if Config.MODEL_SETTING == 32:
-    Config.DIRECTION = 1
-    Config.FROM_FILE = 1
-    Config.LOGIT_CLIP_SCALAR = 10
-    Config.STOCHASTIC = 1
-    Config.RUN_TIME = 259200
-if Config.MODEL_SETTING == 33:
-    Config.DIRECTION = 4
-    Config.FROM_FILE = 1
-    Config.LOGIT_CLIP_SCALAR = 10
-    Config.STOCHASTIC = 1
-    Config.RUN_TIME = 259200
-if Config.MODEL_SETTING == 34:
-    Config.DIRECTION = 10
-    Config.REINFORCE = 1
-    Config.RUN_TIME = 259200
+# if Config.MODEL_SETTING == 31:
+#     # not working
+#     Config.DIRECTION = 4
+#     Config.FROM_FILE = 1
+#     Config.LOGIT_CLIP_SCALAR = 10
+#     Config.RUN_TIME = 259200
+# if Config.MODEL_SETTING == 32:
+#     # not working
+#     Config.DIRECTION = 1
+#     Config.FROM_FILE = 1
+#     Config.LOGIT_CLIP_SCALAR = 10
+#     Config.STOCHASTIC = 1
+#     Config.RUN_TIME = 259200
+# if Config.MODEL_SETTING == 33:
+#     # not working
+#     Config.DIRECTION = 4
+#     Config.FROM_FILE = 1
+#     Config.LOGIT_CLIP_SCALAR = 10
+#     Config.STOCHASTIC = 1
+#     Config.RUN_TIME = 259200
+# if Config.MODEL_SETTING == 34:
+#     # repeat but didnt work
+#     Config.DIRECTION = 10
+#     Config.REINFORCE = 1
+#     Config.RUN_TIME = 259200
 if Config.MODEL_SETTING == 35:
+    # maybe working
     Config.DIRECTION = 10
     Config.REINFORCE = 1
     Config.RNN_HIDDEN_DIM = 32
-    Config.RUN_TIME = 43200
-if Config.MODEL_SETTING == 36:
-    Config.DIRECTION = 10
-    Config.REINFORCE = 1
-    Config.RNN_HIDDEN_DIM = 64
-    Config.RUN_TIME = 43200
+    # Config.RUN_TIME = 43200
+    Config.RUN_TIME = 129600
+# if Config.MODEL_SETTING == 36:
+#     Config.DIRECTION = 10
+#     Config.REINFORCE = 1
+#     Config.RNN_HIDDEN_DIM = 64
+#     Config.RUN_TIME = 43200
 if Config.MODEL_SETTING == 37:
+    # maybe working
     Config.DIRECTION = 10
     Config.REINFORCE = 1
     Config.MAX_GRAD = 0
-    Config.RUN_TIME = 43200
+    # Config.RUN_TIME = 43200
+    Config.RUN_TIME = 129600
 if Config.MODEL_SETTING == 38:
+    # maybe working
     Config.DIRECTION = 10
     Config.REINFORCE = 1
     Config.LEARNING_RATE = 1e-2
-    Config.RUN_TIME = 43200
-if Config.MODEL_SETTING == 39:
-    Config.DIRECTION = 10
-    Config.REINFORCE = 1
-    Config.STATE_EMBED = 1
-    Config.RUN_TIME = 259200
+    # Config.RUN_TIME = 43200
+    Config.RUN_TIME = 129600
+# if Config.MODEL_SETTING == 39:
+#     # not working
+#     Config.DIRECTION = 10
+#     Config.REINFORCE = 1
+#     Config.STATE_EMBED = 1
+#     Config.RUN_TIME = 259200
 if Config.MODEL_SETTING == 40:
+    # not working
     Config.DIRECTION = 10
     Config.REINFORCE = 1
     Config.STATE_EMBED = 1
     Config.MOVING_AVERAGE = 1
     Config.RUN_TIME = 259200
 if Config.MODEL_SETTING == 41:
+    # maybe working
     Config.DIRECTION = 5
     Config.FROM_FILE = 1
     Config.LOGIT_CLIP_SCALAR = 10
-    Config.RUN_TIME = 43200
+    # Config.RUN_TIME = 43200
+    Config.RUN_TIME = 129600
 if Config.MODEL_SETTING == 42:
+    # maybe working
     Config.DIRECTION = 5
     Config.REINFORCE = 1
-    Config.RUN_TIME = 43200
+    # Config.RUN_TIME = 43200
+    Config.LR_DECAY_OFF = 1
+    Config.RUN_TIME = 129600
 if Config.MODEL_SETTING == 43:
+    # maybe working
     Config.DIRECTION = 5
     Config.REINFORCE = 1
     Config.STATE_EMBED = 1
-    Config.RUN_TIME = 43200
+    # Config.RUN_TIME = 43200
+    Config.LR_DECAY_OFF = 1
+    Config.RUN_TIME = 129600
 if Config.MODEL_SETTING == 44:
+    # maybe working
     Config.DIRECTION = 10
     Config.REINFORCE = 1
     Config.USE_BAHDANAU = 1
     Config.RUN_TIME = 43200
-if Config.MODEL_SETTING == 45:
-    Config.DIRECTION = 10
-    Config.REINFORCE = 1
-    Config.STATE_EMBED = 1
-    Config.USE_BAHDANAU = 1
-    Config.RUN_TIME = 43200
+    Config.LR_DECAY_OFF = 1
+    Config.RUN_TIME = 129600
+# if Config.MODEL_SETTING == 45:
+#     # not working
+#     Config.DIRECTION = 10
+#     Config.REINFORCE = 1
+#     Config.STATE_EMBED = 1
+#     Config.USE_BAHDANAU = 1
+#     Config.RUN_TIME = 43200
 if Config.MODEL_SETTING == 46:
+    # working
     Config.DIRECTION = 10
     Config.FROM_FILE = 1
     Config.LOGIT_CLIP_SCALAR = 10
     Config.STATE_EMBED = 1
     Config.USE_BAHDANAU = 1
-    Config.RUN_TIME = 43200
+    # Config.RUN_TIME = 43200
+    Config.LR_DECAY_OFF = 1
+    Config.RUN_TIME = 129600
 if Config.MODEL_SETTING == 47:
+    # repeat?
     Config.DIRECTION = 10
     Config.FROM_FILE = 1
     Config.LOGIT_CLIP_SCALAR = 10
     Config.USE_BAHDANAU = 1
-    Config.RUN_TIME = 43200
-if Config.MODEL_SETTING == 48:
-    Config.DIRECTION = 4
-    Config.FROM_FILE = 1
-    Config.LOGIT_CLIP_SCALAR = 10
-    Config.STATE_EMBED = 1
-    Config.USE_BAHDANAU = 1
-    Config.RUN_TIME = 43200
+    # Config.RUN_TIME = 43200
+    Config.LR_DECAY_OFF = 1
+    Config.RUN_TIME = 129600
+# if Config.MODEL_SETTING == 48:
+#     # not working
+#     Config.DIRECTION = 4
+#     Config.FROM_FILE = 1
+#     Config.LOGIT_CLIP_SCALAR = 10
+#     Config.STATE_EMBED = 1
+#     Config.USE_BAHDANAU = 1
+#     Config.RUN_TIME = 43200
 if Config.MODEL_SETTING == 49:
+    # maybe working
     Config.DIRECTION = 4
     Config.FROM_FILE = 1
     Config.LOGIT_CLIP_SCALAR = 10
     Config.USE_BAHDANAU = 1
-    Config.RUN_TIME = 43200
+    # Config.RUN_TIME = 43200
+    Config.LR_DECAY_OFF = 1
+    Config.RUN_TIME = 129600
 if Config.MODEL_SETTING == 50:
+    # not working but has in the past?
     Config.DIRECTION = 2
     Config.FROM_FILE = 1
     Config.LOGIT_CLIP_SCALAR = 10
     Config.USE_BAHDANAU = 1
     Config.RUN_TIME = 259200
 if Config.MODEL_SETTING == 51:
+    # maybe working
     Config.DIRECTION = 10
     Config.REINFORCE = 1
     Config.RNN_HIDDEN_DIM = 16
+    # Config.RUN_TIME = 86400
     Config.LR_DECAY_OFF = 1
-    Config.RUN_TIME = 86400
+    Config.RUN_TIME = 129600
 if Config.MODEL_SETTING == 52:
+    # not working but should
     Config.DIRECTION = 10
     Config.REINFORCE = 1
     Config.RNN_HIDDEN_DIM = 32
+    # Config.RUN_TIME = 86400
     Config.LR_DECAY_OFF = 1
-    Config.RUN_TIME = 86400
+    Config.RUN_TIME = 129600
 if Config.MODEL_SETTING == 53:
     Config.DIRECTION = 10
     Config.REINFORCE = 1
@@ -304,14 +387,16 @@ if Config.MODEL_SETTING == 53:
     Config.MAX_GRAD = 0
     Config.LR_DECAY_OFF = 1
     Config.RUN_TIME = 86400
-if Config.MODEL_SETTING == 54:
-    Config.DIRECTION = 10
-    Config.REINFORCE = 1
-    Config.RNN_HIDDEN_DIM = 32
-    Config.STATE_EMBED = 1
-    Config.LR_DECAY_OFF = 1
-    Config.RUN_TIME = 86400
+# if Config.MODEL_SETTING == 54:
+#     # not working
+#     Config.DIRECTION = 10
+#     Config.REINFORCE = 1
+#     Config.RNN_HIDDEN_DIM = 32
+#     Config.STATE_EMBED = 1
+#     Config.LR_DECAY_OFF = 1
+#     Config.RUN_TIME = 86400
 if Config.MODEL_SETTING == 55:
+    # not working
     Config.DIRECTION = 10
     Config.REINFORCE = 1
     Config.RNN_HIDDEN_DIM = 32
@@ -320,182 +405,212 @@ if Config.MODEL_SETTING == 55:
     Config.MOVING_AVERAGE = 1
     Config.RUN_TIME = 86400
 if Config.MODEL_SETTING == 56:
+    # maybe working
     Config.DIRECTION = 5
     Config.FROM_FILE = 1
     Config.LOGIT_CLIP_SCALAR = 10
     Config.RNN_HIDDEN_DIM = 32
     Config.USE_BAHDANAU = 1
+    # Config.RUN_TIME = 86400
     Config.LR_DECAY_OFF = 1
-    Config.RUN_TIME = 86400
-if Config.MODEL_SETTING == 57:
-    Config.DIRECTION = 5
-    Config.REINFORCE = 1
-    Config.RNN_HIDDEN_DIM = 32
-    Config.LR_DECAY_OFF = 1
-    Config.USE_BAHDANAU = 1
-    Config.MOVING_AVERAGE = 1
-    Config.RUN_TIME = 86400
+    Config.RUN_TIME = 129600
+# if Config.MODEL_SETTING == 57:
+#     # not working
+#     Config.DIRECTION = 5
+#     Config.REINFORCE = 1
+#     Config.RNN_HIDDEN_DIM = 32
+#     Config.LR_DECAY_OFF = 1
+#     Config.USE_BAHDANAU = 1
+#     Config.MOVING_AVERAGE = 1
+#     Config.RUN_TIME = 86400
 if Config.MODEL_SETTING == 58:
+    # maybe working
     Config.DIRECTION = 5
     Config.FROM_FILE = 1
     Config.LOGIT_CLIP_SCALAR = 10
     Config.RNN_HIDDEN_DIM = 32
-    Config.LR_DECAY_OFF = 1
     Config.STATE_EMBED = 1
-    Config.RUN_TIME = 86400
-if Config.MODEL_SETTING == 59:
-    Config.DIRECTION = 2
-    Config.REINFORCE = 1
-    Config.USE_BAHDANAU = 1
-    Config.MOVING_AVERAGE = 1
-    Config.RUN_TIME = 86400
-if Config.MODEL_SETTING == 60:
-    Config.DIRECTION = 10
-    Config.FROM_FILE = 1
-    Config.LOGIT_CLIP_SCALAR = 10
-    Config.RNN_HIDDEN_DIM = 32
+    # Config.RUN_TIME = 86400
     Config.LR_DECAY_OFF = 1
-    Config.MAX_GRAD = 0
-    Config.RUN_TIME = 86400
+    Config.RUN_TIME = 129600
+# if Config.MODEL_SETTING == 59:
+#     # not working
+#     Config.DIRECTION = 2
+#     Config.REINFORCE = 1
+#     Config.USE_BAHDANAU = 1
+#     Config.MOVING_AVERAGE = 1
+#     Config.RUN_TIME = 86400
+# if Config.MODEL_SETTING == 60:
+#     # not working
+#     Config.DIRECTION = 10
+#     Config.FROM_FILE = 1
+#     Config.LOGIT_CLIP_SCALAR = 10
+#     Config.RNN_HIDDEN_DIM = 32
+#     Config.LR_DECAY_OFF = 1
+#     Config.MAX_GRAD = 0
+#     Config.RUN_TIME = 86400
 if Config.MODEL_SETTING == 61:
+    # maybe working
     Config.DIRECTION = 5
     Config.REINFORCE = 1
     Config.RNN_HIDDEN_DIM = 32
+    # Config.RUN_TIME = 86400
     Config.LR_DECAY_OFF = 1
-    Config.RUN_TIME = 86400
-if Config.MODEL_SETTING == 62:
-    Config.DIRECTION = 10
-    Config.FROM_FILE = 1
-    Config.LOGIT_CLIP_SCALAR = 10
-    Config.RNN_HIDDEN_DIM = 32
-    Config.LR_DECAY_OFF = 1
-    Config.USE_BAHDANAU = 1
-    Config.RUN_TIME = 86400
+    Config.RUN_TIME = 129600
+# if Config.MODEL_SETTING == 62:
+#     # not working
+#     Config.DIRECTION = 10
+#     Config.FROM_FILE = 1
+#     Config.LOGIT_CLIP_SCALAR = 10
+#     Config.RNN_HIDDEN_DIM = 32
+#     Config.LR_DECAY_OFF = 1
+#     Config.USE_BAHDANAU = 1
+#     Config.RUN_TIME = 86400
 if Config.MODEL_SETTING == 63:
+    # maybe working
     Config.DIRECTION = 10
     Config.FROM_FILE = 1
     Config.LOGIT_CLIP_SCALAR = 10
-    Config.LR_DECAY_OFF = 1
     Config.USE_BAHDANAU = 1
-    Config.RUN_TIME = 86400
+    # Config.RUN_TIME = 86400
+    Config.LR_DECAY_OFF = 1
+    Config.RUN_TIME = 129600
 if Config.MODEL_SETTING == 64:
+    # maybe working
     Config.DIRECTION = 5
     Config.REINFORCE = 1
     Config.USE_BAHDANAU = 1
-    Config.LR_DECAY_OFF = 1
     Config.RNN_HIDDEN_DIM = 16
-    Config.RUN_TIME = 64800
-if Config.MODEL_SETTING == 65:
-    Config.DIRECTION = 5
-    Config.REINFORCE = 1
-    Config.USE_BAHDANAU = 1
-    Config.MOVING_AVERAGE = 1
+    # Config.RUN_TIME = 64800
     Config.LR_DECAY_OFF = 1
-    Config.RNN_HIDDEN_DIM = 16
-    Config.RUN_TIME = 64800
-if Config.MODEL_SETTING == 66:
-    Config.DIRECTION = 10
-    Config.STATE_EMBED = 1
-    Config.REINFORCE = 1
-    Config.RNN_HIDDEN_DIM = 32
-    Config.LR_DECAY_OFF = 1
-    Config.RUN_TIME = 64800
+    Config.RUN_TIME = 129600
+# if Config.MODEL_SETTING == 65:
+#     # not working
+#     Config.DIRECTION = 5
+#     Config.REINFORCE = 1
+#     Config.USE_BAHDANAU = 1
+#     Config.MOVING_AVERAGE = 1
+#     Config.LR_DECAY_OFF = 1
+#     Config.RNN_HIDDEN_DIM = 16
+#     Config.RUN_TIME = 64800
+# if Config.MODEL_SETTING == 66:
+#     # not working
+#     Config.DIRECTION = 10
+#     Config.STATE_EMBED = 1
+#     Config.REINFORCE = 1
+#     Config.RNN_HIDDEN_DIM = 32
+#     Config.LR_DECAY_OFF = 1
+#     Config.RUN_TIME = 64800
 if Config.MODEL_SETTING == 67:
+    # maybe working
     Config.DIRECTION = 6
     Config.FROM_FILE = 1
     Config.LOGIT_CLIP_SCALAR = 10
     Config.USE_BAHDANAU = 1
     Config.RNN_HIDDEN_DIM = 32
+    # Config.RUN_TIME = 64800
     Config.LR_DECAY_OFF = 1
-    Config.RUN_TIME = 64800
+    Config.RUN_TIME = 129600
 if Config.MODEL_SETTING == 68:
+    # maybe working
     Config.DIRECTION = 6
     Config.FROM_FILE = 1
     Config.LOGIT_CLIP_SCALAR = 10
     Config.USE_BAHDANAU = 1
     Config.RNN_HIDDEN_DIM = 32
     Config.STATE_EMBED = 1
+    # Config.RUN_TIME = 64800
     Config.LR_DECAY_OFF = 1
-    Config.RUN_TIME = 64800
-if Config.MODEL_SETTING == 69:
-    Config.DIRECTION = 6
-    Config.FROM_FILE = 1
-    Config.LOGIT_CLIP_SCALAR = 10
-    Config.RNN_HIDDEN_DIM = 32
-    Config.LR_DECAY_OFF = 1
-    Config.RUN_TIME = 64800
-if Config.MODEL_SETTING == 70:
-    Config.DIRECTION = 6
-    Config.FROM_FILE = 1
-    Config.LOGIT_CLIP_SCALAR = 10
-    Config.RNN_HIDDEN_DIM = 32
-    Config.STATE_EMBED = 1
-    Config.LR_DECAY_OFF = 1
-    Config.RUN_TIME = 64800
-if Config.MODEL_SETTING == 71:
-    Config.DIRECTION = 6
-    Config.FROM_FILE = 1
-    Config.LOGIT_CLIP_SCALAR = 10
-    Config.USE_BAHDANAU = 1
-    Config.RNN_HIDDEN_DIM = 16
-    Config.LR_DECAY_OFF = 1
-    Config.RUN_TIME = 64800
-if Config.MODEL_SETTING == 72:
-    Config.DIRECTION = 6
-    Config.FROM_FILE = 1
-    Config.LOGIT_CLIP_SCALAR = 10
-    Config.USE_BAHDANAU = 1
-    Config.RNN_HIDDEN_DIM = 16
-    Config.STATE_EMBED = 1
-    Config.LR_DECAY_OFF = 1
-    Config.RUN_TIME = 64800
-if Config.MODEL_SETTING == 73:
-    Config.DIRECTION = 6
-    Config.FROM_FILE = 1
-    Config.LOGIT_CLIP_SCALAR = 10
-    Config.RNN_HIDDEN_DIM = 16
-    Config.LR_DECAY_OFF = 1
-    Config.RUN_TIME = 64800
-if Config.MODEL_SETTING == 74:
-    Config.DIRECTION = 6
-    Config.FROM_FILE = 1
-    Config.LOGIT_CLIP_SCALAR = 10
-    Config.RNN_HIDDEN_DIM = 16
-    Config.STATE_EMBED = 1
-    Config.LR_DECAY_OFF = 1
-    Config.RUN_TIME = 64800
-if Config.MODEL_SETTING == 75:
-    Config.DIRECTION = 10
-    Config.FROM_FILE = 1
-    Config.LOGIT_CLIP_SCALAR = 10
-    Config.RNN_HIDDEN_DIM = 32
-    Config.LR_DECAY_OFF = 1
-    Config.RUN_TIME = 64800
-if Config.MODEL_SETTING == 76:
-    Config.DIRECTION = 10
-    Config.FROM_FILE = 1
-    Config.LOGIT_CLIP_SCALAR = 10
-    Config.RNN_HIDDEN_DIM = 32
-    Config.INPUT_TIME = 1
-    Config.LR_DECAY_OFF = 1
-    Config.RUN_TIME = 64800
-if Config.MODEL_SETTING == 77:
-    Config.DIRECTION = 10
-    Config.FROM_FILE = 1
-    Config.STATE_EMBED = 1
-    Config.LOGIT_CLIP_SCALAR = 10
-    Config.RNN_HIDDEN_DIM = 32
-    Config.LR_DECAY_OFF = 1
-    Config.RUN_TIME = 64800
-if Config.MODEL_SETTING == 78:
-    Config.DIRECTION = 10
-    Config.FROM_FILE = 1
-    Config.STATE_EMBED = 1
-    Config.LOGIT_CLIP_SCALAR = 10
-    Config.RNN_HIDDEN_DIM = 32
-    Config.INPUT_TIME = 1
-    Config.LR_DECAY_OFF = 1
-    Config.RUN_TIME = 64800
+    Config.RUN_TIME = 129600
+# if Config.MODEL_SETTING == 69:
+#     # not working
+#     Config.DIRECTION = 6
+#     Config.FROM_FILE = 1
+#     Config.LOGIT_CLIP_SCALAR = 10
+#     Config.RNN_HIDDEN_DIM = 32
+#     Config.LR_DECAY_OFF = 1
+#     Config.RUN_TIME = 64800
+# if Config.MODEL_SETTING == 70:
+#     # not working
+#     Config.DIRECTION = 6
+#     Config.FROM_FILE = 1
+#     Config.LOGIT_CLIP_SCALAR = 10
+#     Config.RNN_HIDDEN_DIM = 32
+#     Config.STATE_EMBED = 1
+#     Config.LR_DECAY_OFF = 1
+#     Config.RUN_TIME = 64800
+# if Config.MODEL_SETTING == 71:
+#     # not working
+#     Config.DIRECTION = 6
+#     Config.FROM_FILE = 1
+#     Config.LOGIT_CLIP_SCALAR = 10
+#     Config.USE_BAHDANAU = 1
+#     Config.RNN_HIDDEN_DIM = 16
+#     Config.LR_DECAY_OFF = 1
+#     Config.RUN_TIME = 64800
+# if Config.MODEL_SETTING == 72:
+#     # not working
+#     Config.DIRECTION = 6
+#     Config.FROM_FILE = 1
+#     Config.LOGIT_CLIP_SCALAR = 10
+#     Config.USE_BAHDANAU = 1
+#     Config.RNN_HIDDEN_DIM = 16
+#     Config.STATE_EMBED = 1
+#     Config.LR_DECAY_OFF = 1
+#     Config.RUN_TIME = 64800
+# if Config.MODEL_SETTING == 73:
+#     # not working
+#     Config.DIRECTION = 6
+#     Config.FROM_FILE = 1
+#     Config.LOGIT_CLIP_SCALAR = 10
+#     Config.RNN_HIDDEN_DIM = 16
+#     Config.LR_DECAY_OFF = 1
+#     Config.RUN_TIME = 64800
+# if Config.MODEL_SETTING == 74:
+#     # not working
+#     Config.DIRECTION = 6
+#     Config.FROM_FILE = 1
+#     Config.LOGIT_CLIP_SCALAR = 10
+#     Config.RNN_HIDDEN_DIM = 16
+#     Config.STATE_EMBED = 1
+#     Config.LR_DECAY_OFF = 1
+#     Config.RUN_TIME = 64800
+# if Config.MODEL_SETTING == 75:
+#     # repeat?
+#     Config.DIRECTION = 10
+#     Config.FROM_FILE = 1
+#     Config.LOGIT_CLIP_SCALAR = 10
+#     Config.RNN_HIDDEN_DIM = 32
+#     Config.LR_DECAY_OFF = 1
+#     Config.RUN_TIME = 64800
+# if Config.MODEL_SETTING == 76:
+#     # not working
+#     Config.DIRECTION = 10
+#     Config.FROM_FILE = 1
+#     Config.LOGIT_CLIP_SCALAR = 10
+#     Config.RNN_HIDDEN_DIM = 32
+#     Config.INPUT_TIME = 1
+#     Config.LR_DECAY_OFF = 1
+#     Config.RUN_TIME = 64800
+# if Config.MODEL_SETTING == 77:
+#     # repeat?
+#     Config.DIRECTION = 10
+#     Config.FROM_FILE = 1
+#     Config.STATE_EMBED = 1
+#     Config.LOGIT_CLIP_SCALAR = 10
+#     Config.RNN_HIDDEN_DIM = 32
+#     Config.LR_DECAY_OFF = 1
+#     Config.RUN_TIME = 64800
+# if Config.MODEL_SETTING == 78:
+#     # repeat?
+#     Config.DIRECTION = 10
+#     Config.FROM_FILE = 1
+#     Config.STATE_EMBED = 1
+#     Config.LOGIT_CLIP_SCALAR = 10
+#     Config.RNN_HIDDEN_DIM = 32
+#     Config.INPUT_TIME = 1
+#     Config.LR_DECAY_OFF = 1
+#     Config.RUN_TIME = 64800
 if Config.MODEL_SETTING == 79:
     Config.DIRECTION = 10
     Config.FROM_FILE = 1
@@ -505,188 +620,224 @@ if Config.MODEL_SETTING == 79:
     Config.LR_DECAY_OFF = 1
     Config.RUN_TIME = 64800
 if Config.MODEL_SETTING == 80:
+    # working for the loss but not sampled cost
     Config.DIRECTION = 5
     Config.FROM_FILE = 1
     Config.LOGIT_CLIP_SCALAR = 10
     Config.RNN_HIDDEN_DIM = 32
-    # Config.LR_DECAY_OFF = 1
-    Config.RUN_TIME = 64800
+    Config.INVERSE_SOFTMAX_TEMP = .8
     Config.USE_BAHDANAU = 1
     Config.SAMPLING = 1
-    Config.INVERSE_SOFTMAX_TEMP = .8
+    # Config.RUN_TIME = 64800
+    Config.LR_DECAY_OFF = 1
+    Config.RUN_TIME = 129600
 if Config.MODEL_SETTING == 81:
+    # working
     Config.DIRECTION = 5
     Config.FROM_FILE = 1
     Config.LOGIT_CLIP_SCALAR = 10
     Config.RNN_HIDDEN_DIM = 32
-    # Config.LR_DECAY_OFF = 1
-    Config.RUN_TIME = 64800
     Config.USE_BAHDANAU = 1
     Config.SAMPLING = 1
     Config.INVERSE_SOFTMAX_TEMP = 10.0
+    # Config.RUN_TIME = 64800
+    Config.LR_DECAY_OFF = 1
+    Config.RUN_TIME = 129600
 if Config.MODEL_SETTING == 82:
+    # working
     Config.DIRECTION = 5
     Config.FROM_FILE = 1
     Config.LOGIT_CLIP_SCALAR = 10
     Config.RNN_HIDDEN_DIM = 32
-    # Config.LR_DECAY_OFF = 1
-    Config.RUN_TIME = 64800
     Config.USE_BAHDANAU = 1
     Config.SAMPLING = 1
     Config.INVERSE_SOFTMAX_TEMP = 100.0
+    # Config.RUN_TIME = 64800
+    Config.LR_DECAY_OFF = 1
+    Config.RUN_TIME = 129600
 if Config.MODEL_SETTING == 83:
+    # working
     Config.DIRECTION = 5
     Config.FROM_FILE = 1
     Config.LOGIT_CLIP_SCALAR = 10
     Config.RNN_HIDDEN_DIM = 32
-    # Config.LR_DECAY_OFF = 1
-    Config.RUN_TIME = 64800
     Config.USE_BAHDANAU = 1
+    # Config.RUN_TIME = 64800
+    Config.LR_DECAY_OFF = 1
+    Config.RUN_TIME = 129600
 if Config.MODEL_SETTING == 84:
+    # maybe working
     Config.DIRECTION = 5
     Config.REINFORCE = 1
     Config.STOCHASTIC = 1
     Config.INVERSE_SOFTMAX_TEMP = 1.0
-    Config.RUN_TIME = 86400
     Config.MOVING_AVERAGE = 1
+    # Config.RUN_TIME = 86400
+    Config.LR_DECAY_OFF = 1
+    Config.RUN_TIME = 129600
 if Config.MODEL_SETTING == 85:
+    # maybe working
     Config.DIRECTION = 5
     Config.REINFORCE = 1
     Config.STOCHASTIC = 1
     Config.INVERSE_SOFTMAX_TEMP = 5.0
-    Config.RUN_TIME = 86400
     Config.MOVING_AVERAGE = 1
-if Config.MODEL_SETTING == 86:
-    Config.DIRECTION = 5
-    Config.REINFORCE = 1
-    Config.STOCHASTIC = 1
-    Config.INVERSE_SOFTMAX_TEMP = 10.0
-    Config.RUN_TIME = 86400
-if Config.MODEL_SETTING == 87:
-    Config.DIRECTION = 5
-    Config.REINFORCE = 1
-    Config.STOCHASTIC = 1
-    Config.INVERSE_SOFTMAX_TEMP = .8
-    Config.RUN_TIME = 86400
-if Config.MODEL_SETTING == 88:
-    Config.DIRECTION = 5
-    Config.REINFORCE = 1
-    Config.STOCHASTIC = 1
-    Config.INVERSE_SOFTMAX_TEMP = 5.0
-    Config.RUN_TIME = 86400
-if Config.MODEL_SETTING == 89:
-    Config.DIRECTION = 5
-    Config.REINFORCE = 1
-    Config.STOCHASTIC = 1
-    Config.INVERSE_SOFTMAX_TEMP = 10.0
-    Config.RUN_TIME = 86400
+    # Config.RUN_TIME = 86400
+    Config.LR_DECAY_OFF = 1
+    Config.RUN_TIME = 129600
+# if Config.MODEL_SETTING == 86:
+#     # not working
+#     Config.DIRECTION = 5
+#     Config.REINFORCE = 1
+#     Config.STOCHASTIC = 1
+#     Config.INVERSE_SOFTMAX_TEMP = 10.0
+#     Config.RUN_TIME = 86400
+# if Config.MODEL_SETTING == 87:
+#     # not working also somehow higher than 10 cost on average
+#     Config.DIRECTION = 5
+#     Config.REINFORCE = 1
+#     Config.STOCHASTIC = 1
+#     Config.INVERSE_SOFTMAX_TEMP = .8
+#     Config.RUN_TIME = 86400
+# if Config.MODEL_SETTING == 88:
+#     # not working
+#     Config.DIRECTION = 5
+#     Config.REINFORCE = 1
+#     Config.STOCHASTIC = 1
+#     Config.INVERSE_SOFTMAX_TEMP = 5.0
+#     Config.RUN_TIME = 86400
+# if Config.MODEL_SETTING == 89:
+#     # not working
+#     Config.DIRECTION = 5
+#     Config.REINFORCE = 1
+#     Config.STOCHASTIC = 1
+#     Config.INVERSE_SOFTMAX_TEMP = 10.0
+#     Config.RUN_TIME = 86400
 if Config.MODEL_SETTING == 90:
+    # not working
     Config.DIRECTION = 2
     Config.FROM_FILE = 1
     Config.LOGIT_CLIP_SCALAR = 10
     Config.USE_BAHDANAU = 1
     Config.SAME_BATCH = 1
     Config.RUN_TIME = 259200
-if Config.MODEL_SETTING == 91:
-    Config.DIRECTION = 10
-    Config.REINFORCE = 1
-    Config.TRAINING_MIN_BATCH_SIZE = 64
-    Config.USE_PPO = 1
-    Config.TYPE_1 = 1
-    Config.LR_DECAY_OFF = 1
-    Config.RUN_TIME = 86400
+# if Config.MODEL_SETTING == 91:
+#     # maybe working but prob not
+#     Config.DIRECTION = 10
+#     Config.REINFORCE = 1
+#     Config.TRAINING_MIN_BATCH_SIZE = 64
+#     Config.USE_PPO = 1
+#     Config.TYPE_1 = 1
+#     Config.LR_DECAY_OFF = 1
+#     Config.RUN_TIME = 86400
 if Config.MODEL_SETTING == 92:
+    # maybe working
     Config.DIRECTION = 10
     Config.REINFORCE = 1
     Config.TRAINING_MIN_BATCH_SIZE = 64
     Config.USE_PPO = 1
     Config.TYPE_1 = 0
+    # Config.RUN_TIME = 86400
     Config.LR_DECAY_OFF = 1
-    Config.RUN_TIME = 86400
-if Config.MODEL_SETTING == 93:
-    Config.DIRECTION = 10
-    Config.REINFORCE = 1
-    Config.TRAINING_MIN_BATCH_SIZE = 64
-    Config.LR_DECAY_OFF = 1
-    Config.RUN_TIME = 86400
-if Config.MODEL_SETTING == 94:
-    Config.DIRECTION = 10
-    Config.REINFORCE = 1
-    Config.TRAINING_MIN_BATCH_SIZE = 64
-    Config.USE_BAHDANAU = 1
-    Config.LR_DECAY_OFF = 1
-    Config.RUN_TIME = 86400
-if Config.MODEL_SETTING == 95:
-    Config.DIRECTION = 2
-    Config.REINFORCE = 1
-    Config.SEQUENCE_COST = 1
-    Config.LR_DECAY_OFF = 1
-    Config.RUN_TIME = 86400
-if Config.MODEL_SETTING == 96:
-    Config.DIRECTION = 2
-    Config.REINFORCE = 1
-    Config.USE_BAHDANAU = 1
-    Config.SEQUENCE_COST = 1
-    Config.LR_DECAY_OFF = 1
-    Config.RUN_TIME = 86400
-if Config.MODEL_SETTING == 97:
-    Config.DIRECTION = 2
-    Config.REINFORCE = 1
-    Config.SEQUENCE_COST = 1
-    Config.USE_PPO = 1
-    Config.LR_DECAY_OFF = 1
-    Config.RUN_TIME = 86400
-if Config.MODEL_SETTING == 98:
-    Config.DIRECTION = 2
-    Config.REINFORCE = 1
-    Config.USE_BAHDANAU = 1
-    Config.SEQUENCE_COST = 1
-    Config.USE_PPO = 1
-    Config.LR_DECAY_OFF = 1
-    Config.RUN_TIME = 86400
-if Config.MODEL_SETTING == 99:
-    Config.DIRECTION = 5
-    Config.REINFORCE = 1
-    Config.USE_BAHDANAU = 1
-    Config.SEQUENCE_COST = 1
-    Config.USE_PCA = 1
-    Config.LR_DECAY_OFF = 1
-    Config.RUN_TIME = 86400
-if Config.MODEL_SETTING == 100:
-    Config.DIRECTION = 5
-    Config.REINFORCE = 1
-    Config.SEQUENCE_COST = 1
-    Config.LR_DECAY_OFF = 1
-    Config.RUN_TIME = 86400
+    Config.RUN_TIME = 129600
+# if Config.MODEL_SETTING == 93:
+#     # not working
+#     Config.DIRECTION = 10
+#     Config.REINFORCE = 1
+#     Config.TRAINING_MIN_BATCH_SIZE = 64
+#     Config.LR_DECAY_OFF = 1
+#     Config.RUN_TIME = 86400
+# if Config.MODEL_SETTING == 94:
+#     # not working
+#     Config.DIRECTION = 10
+#     Config.REINFORCE = 1
+#     Config.TRAINING_MIN_BATCH_SIZE = 64
+#     Config.USE_BAHDANAU = 1
+#     Config.LR_DECAY_OFF = 1
+#     Config.RUN_TIME = 86400
+# if Config.MODEL_SETTING == 95:
+#     # not working
+#     Config.DIRECTION = 2
+#     Config.REINFORCE = 1
+#     Config.SEQUENCE_COST = 1
+#     Config.LR_DECAY_OFF = 1
+#     Config.RUN_TIME = 86400
+# if Config.MODEL_SETTING == 96:
+#     # not working
+#     Config.DIRECTION = 2
+#     Config.REINFORCE = 1
+#     Config.USE_BAHDANAU = 1
+#     Config.SEQUENCE_COST = 1
+#     Config.LR_DECAY_OFF = 1
+#     Config.RUN_TIME = 86400
+# if Config.MODEL_SETTING == 97:
+#     # not working
+#     Config.DIRECTION = 2
+#     Config.REINFORCE = 1
+#     Config.SEQUENCE_COST = 1
+#     Config.USE_PPO = 1
+#     Config.LR_DECAY_OFF = 1
+#     Config.RUN_TIME = 86400
+# if Config.MODEL_SETTING == 98:
+#     # not working
+#     Config.DIRECTION = 2
+#     Config.REINFORCE = 1
+#     Config.USE_BAHDANAU = 1
+#     Config.SEQUENCE_COST = 1
+#     Config.USE_PPO = 1
+#     Config.LR_DECAY_OFF = 1
+#     Config.RUN_TIME = 86400
+# if Config.MODEL_SETTING == 99:
+#     # not working
+#     Config.DIRECTION = 5
+#     Config.REINFORCE = 1
+#     Config.USE_BAHDANAU = 1
+#     Config.SEQUENCE_COST = 1
+#     Config.USE_PCA = 1
+#     Config.LR_DECAY_OFF = 1
+#     Config.RUN_TIME = 86400
+# if Config.MODEL_SETTING == 100:
+#     # not working
+#     Config.DIRECTION = 5
+#     Config.REINFORCE = 1
+#     Config.SEQUENCE_COST = 1
+#     Config.LR_DECAY_OFF = 1
+#     Config.RUN_TIME = 86400
 if Config.MODEL_SETTING == 101:
+    # maybe working
     Config.DIRECTION = 5
     Config.REINFORCE = 1
     Config.SEQUENCE_COST = 1
     Config.USE_PCA = 1
+    # Config.RUN_TIME = 86400
     Config.LR_DECAY_OFF = 1
-    Config.RUN_TIME = 86400
+    Config.RUN_TIME = 129600
 if Config.MODEL_SETTING == 102:
+    # maybe working
     Config.DIRECTION = 5
     Config.REINFORCE = 1
     Config.USE_PCA = 1
+    # Config.RUN_TIME = 86400
     Config.LR_DECAY_OFF = 1
-    Config.RUN_TIME = 86400
-if Config.MODEL_SETTING == 103:
-    Config.DIRECTION = 5
-    # Config.SAME_BATCH = 1
-    # Config.USE_PPO = 1
-    # Config.NUM_PPO_EPOCH = 5
-    Config.SEQUENCE_COST = 1
-    Config.STOCHASTIC = 1
-    Config.REINFORCE = 1
-    Config.LR_DECAY_OFF = 1
-    Config.RUN_TIME = 86400
-if Config.MODEL_SETTING == 104:
-    Config.DIRECTION = 5
-    Config.REINFORCE = 1
-    Config.USE_PPO = 1
-    Config.LR_DECAY_OFF = 1
-    Config.RUN_TIME = 86400
+    Config.RUN_TIME = 129600
+# if Config.MODEL_SETTING == 103:
+#     # not working
+#     Config.DIRECTION = 5
+#     # Config.SAME_BATCH = 1
+#     # Config.USE_PPO = 1
+#     # Config.NUM_PPO_EPOCH = 5
+#     Config.SEQUENCE_COST = 1
+#     Config.STOCHASTIC = 1
+#     Config.REINFORCE = 1
+#     Config.LR_DECAY_OFF = 1
+#     Config.RUN_TIME = 86400
+# if Config.MODEL_SETTING == 104:
+#     # not working
+#     Config.DIRECTION = 5
+#     Config.REINFORCE = 1
+#     Config.USE_PPO = 1
+#     Config.LR_DECAY_OFF = 1
+#     Config.RUN_TIME = 86400
 
 ConfigParse = configparser.ConfigParser()
 ConfigParse.optionxform = str

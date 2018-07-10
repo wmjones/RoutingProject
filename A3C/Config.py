@@ -38,4 +38,4 @@ class Config:                   # default settings for all config options
     SEQUENCE_COST = 0
     USE_PCA = 0
     USE_PPO = 0
-    NUM_PPO_EPOCH = 15
+    NUM_PPO_EPOCH = 10

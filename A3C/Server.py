@@ -68,7 +68,6 @@ class Server:
             else:
                 if Config.USE_PPO == 1:
                     old_probs = self.model.PPO(state=batch_state, depot_location=batch_depot_location)
-                    old_probs = np.clip(old_probs, 1e-6, 1)
                 batch_pred_route, batch_pred_cost = self.model.predict(batch_state, batch_depot_location)
                 batch_sampled_cost = self.env.cost(batch_state, batch_pred_route)
                 if step == 0:

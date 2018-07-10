@@ -172,7 +172,7 @@ class NetworkVP:
                                                                                                            self.raw_state)
         self.probs = self.logits
         self.probs = self.probs + tf.to_float(tf.less(self.probs, -.8*Config.LOGIT_PENALTY))*Config.LOGIT_PENALTY
-        self.probs = tf.nn.softmax(self.probs)
+        self.probs = tf.clip_by_value(tf.nn.softmax(self.probs), 1e-7, 1e7)
         gather_ind = tf.concat([
             tf.reshape(tf.tile(tf.reshape(tf.range(0, self.batch_size), [-1, 1]), [1, Config.NUM_OF_CUSTOMERS]), [-1, 1]),
             tf.tile(tf.reshape(tf.range(0, Config.NUM_OF_CUSTOMERS), [-1, 1]), [self.batch_size, 1]),

@@ -1,0 +1,84 @@
+\documentclass[12pt]{article}
+\usepackage[margin=1in]{geometry}
+
+\usepackage{amsmath}
+\usepackage{algorithm}
+\usepackage{algpseudocode}
+\usepackage{graphicx}
+\graphicspath{{../figs/}}
+\pdfimageresolution=300
+
+\usepackage{accents}
+\DeclareMathOperator*{\argmin}{arg\,min}
+\newcommand{\ubar}[1]{\underaccent{\bar}{#1}}
+\newcommand{\norm}[1]{\left\lVert#1\right\rVert}
+
+\usepackage{amssymb}
+\usepackage{flexisym}
+\usepackage{siunitx}
+
+\usepackage{mathtools}
+\DeclarePairedDelimiter\floor{\lfloor}{\rfloor}
+
+\usepackage{hyperref}
+\hypersetup{
+  colorlinks = true,
+  allcolors = blue
+}
+
+\usepackage[natbibapa]{apacite}
+
+\linespread{1.5}
+
+\title{Routing Paper}
+\author{Wyatt Jones\\University of Iowa}
+\date{\today}
+
+\begin{document}
+
+
+\maketitle
+
+
+\section{Introduction}
+\label{intro}
+
+Talk about how RL is very general method to solve DP problems, is really cool, and can do amazing things (GO, ATARI)
+Talk about application to OR with TSP and how it is a big problem, talk about how feas constraint is annoying, and large cont state space, very applicable to a lot of problems
+Why isnt it applied more?
+Discuss the problems that arise when doing RL research initial policy parameterization matters, many hyperparamters, hard to select network architecture, hard to evaluate if the architecture is capable of learning the policy (SR vs RL), local min, sensitive to random seed, many different RL algorithms with new advances happening frequently, training is computationally intensive and so cant try everything, people dont write about what didnt work.
+
+
+% number of elements in go state space is \num{2.082e170}
+
+% 160x192x128 number of elements for atari console
+
+% $\frac{(n-1)!}{2}$ number of possible routes and has continuous state space where each problem is drawn from $[0, 1]^n$
+% for tsp 20 there are \num{6.08e16} possible routes
+
+\section{RL Review}
+intro to RNN, REINFORCE, Actor-Critic, A3C, GA3C
+
+\section{Methods}
+describe all the different architectures i tired
+PPO
+my conv net for VFA
+
+
+\section{Results}
+describe what i learned comparing SR and RL and what i learned about how the different architectures behaved
+
+\section{Conclusion}
+
+
+\citet{2016_Mnih}
+
+\bibliographystyle{apacite}
+\bibliography{bibliography.bib}
+
+\end{document}
+
+%%% Local Variables:
+%%% mode: latex
+%%% TeX-master: t
+%%% End:

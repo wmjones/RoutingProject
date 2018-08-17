@@ -1,3 +1,4 @@
+VPATH = Presentation:Paper
 mod=1
 MODEL_NAME='test'
 path="/Users/wyatt/Documents/Github_Repositories/RoutingProject/A3C/"
@@ -28,6 +29,30 @@ tsp :
 	mkdir -p logs
 	mkdir -p checkpoint
 	python3 GA3C.py MODEL_SETTING=$(MODEL_SETTING) MODEL_NAME=$(MODEL_NAME)
+
+pdf : RoutingProjectPaper.tex
+	cd Paper;\
+	ls;\
+	pdflatex RoutingProjectPaper;\
+	bibtex RoutingProjectPaper;\
+	pdflatex RoutingProjectPaper;\
+	pdflatex RoutingProjectPaper;\
+	cd ../;
+
+pdfclean :
+	cd latex;\
+	rm *.bbl;\
+	rm *.blg;\
+	rm *.log;\
+	rm *.out;\
+	rm *.aux;\
+	cd ../;
+
+view : RoutingProjectPaper.pdf
+	cd Paper;\
+	open RoutingProjectPaper.pdf;\
+	cd ../;
+
 clean :
 	rm -rf ./logs/*
 	rm -rf ./checkpoint/*

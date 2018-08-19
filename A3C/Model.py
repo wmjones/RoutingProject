@@ -209,7 +209,7 @@ def Decoder(batch_size, encoder_state, encoder_outputs, train_helper, pred_helpe
         train_decoder = tf.contrib.seq2seq.BasicDecoder(out_cell, train_helper, initial_state)
         pred_decoder = tf.contrib.seq2seq.BasicDecoder(out_cell, pred_helper, initial_state)
         # critic_decoder = tf.contrib.seq2seq.BasicDecoder(critic_out_cell, pred_helper, critic_initial_state)
-    # if Config.DIRECTION == 5:
+    # if Config.DIRECTION == 5
     #     cell = tf.contrib.grid_rnn.Grid2LSTMCell(Config.RNN_HIDDEN_DIM,
     #                                              use_peepholes=True,
     #                                              output_is_tuple=False,

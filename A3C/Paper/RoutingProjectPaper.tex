@@ -68,6 +68,52 @@ my conv net for VFA
 \section{Results}
 describe what i learned comparing SR and RL and what i learned about how the different architectures behaved
 
+A major complication when trying to select the appropriate architecture for your neural network that will be trained using RL is that there is often not the necessary feedback to iteratively improve the architecture until the network is training optimally. This is due to the subset of architectures that will effectively train on a given problem is very small compared to the number of potential architectures and that when the architecture is not close enough the feedback that the research observes is that the network simply doesnt improve while training is taking place. This makes it difficult to evaluate the value of different changes to NNA when the NN is just not learning.
+
+The researcher can use SL to evaluate the value of a given NNA with the hope that if a given NNA can be trained using SL on a smaller problem then it will work using RL on the larger problem that is of importance. In order to study this I used SL to train several different NNA and then used RL to try and train the same NNA and compared the results.
+
+The first NNA that I studied was a unidirectional encoder/decoder framework for NMT. This method was able to train using SL but did not work when the state was embeded, bahanadu attention was used, or when the policy was not decoded using a greedy decoder.
+
+The second NNA that I studied was a variation of the first except with a bidirectional encoder. This method was able to train using SL but did not work when the state was embeded, bahanadu attention was used, or when the policy was not decoded using a greedy decoder.
+
+The third NNA that I studied was a variation of the second except with a stack bidirectional encoder. This method was able to train using SL but did not work when the state was embeded, bahanadu attention was used, or when the policy was not decoded using a greedy decoder.
+
+The fourth NNA that I studied is the current best for this framework taken from cite. It uses that attention mechanism as the output and was able to be trained using SL and worked with state embed, both Luong and Bah.
+
+Methods that work for SL 1, 2, 3, 5-10
+1)
+working 1,
+not working 12, 13, 32
+doesnt work with state embed, stochastic, (does it work with bah?)
+
+2)
+working 3, 50
+not working 15, 90
+doesnt work with stochastic, same batch, (does it work with bah?, state embed?)
+
+3)
+working 17, 30,
+not working 5
+
+5-10)
+working 9, 21, 22, 46, 47, 56, 58, 62, 63, 77, 78, 81, 82, 83
+not working 41, 60, 76, 79, 80
+check mod=9, does work with state embed, bah
+doesnt work with rnn 32, lr_decay_off, maxgrad 0, time_input
+working with bah 46, 47, 56, 62, 63, 81, 82, 83
+working with luong 9, 21, 58, 77 (not sure about 9, 21 but maybe only works with state embed)
+
+Methods that work for RL 5-10
+5-10)
+working 22, 34, 35, 37, 51, 52, 53?, 61, 64 (these are all identical architectures except for 64)
+not working 10, 11, 23, 24, 25, 26, 27, 36, 38, 39, 40, 42, 43, 44, 45, 54, 55, 57, 65, 66, 84, 85, 86, 87, 88, 89, 91, 92, 93, 94, 99, 100, 101, 102, 103, 104, 105, 106, 107, 108, 109, 110
+working with bah 64
+working with luong 22, 34, 35, 37, 51, 52, 53, 61, 64
+not working with bah 44, 45, 57, 65, 94, 99
+not working with luong 10, 11, 23, 24, 25, 26, 27, 36, 38, 39, 40, 42, 43, 54, 55, 66, 84, 85, 86, 87, 88, 89, 91, 92, 93, 100, 101, 102, 103, 104, 105, 106, 107, 108, 109, 110
+
+never worked ideas PPO, moving average, sequence cost, use time, direction 4 or 6, beam search, PCA
+
 \section{Conclusion}
 
 

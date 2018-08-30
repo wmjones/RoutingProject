@@ -30,7 +30,8 @@
     "apacite")
    (TeX-add-symbols
     '("norm" 1)
-    '("ubar" 1))
+    '("ubar" 1)
+    "argmin")
    (LaTeX-add-labels
     "intro")
    (LaTeX-add-bibliographies

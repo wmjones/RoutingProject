@@ -48,6 +48,9 @@ Talk about application to OR with TSP and how it is a big problem, talk about ho
 Why isnt it applied more?
 Discuss the problems that arise when doing RL research initial policy parameterization matters, many hyperparamters, hard to select network architecture, hard to evaluate if the architecture is capable of learning the policy (SR vs RL), local min, sensitive to random seed, many different RL algorithms with new advances happening frequently, training is computationally intensive and so cant try everything, people dont write about what didnt work.
 
+A major complication when trying to select the appropriate architecture for your neural network that will be trained using RL is that there is often not the necessary feedback to iteratively improve the architecture until the network is training optimally. This is due to the subset of architectures that will effectively train on a given problem is very small compared to the number of potential architectures and that when the architecture is not close enough the feedback that the researcher observes is that the network simply doesn't improve while training is taking place. This makes it difficult to evaluate the value of different changes to NNA when the NN is just not learning.
+
+The researcher can use SL to evaluate the value of a given NNA with the hope that if a given NNA can be trained using SL on a smaller problem then it will work using RL on the larger problem that is of importance. In order to study this I used SL to train several different NNA and then used RL to try and train the same NNA and compared the results.
 
 % number of elements in go state space is \num{2.082e170}
 
@@ -59,18 +62,83 @@ Discuss the problems that arise when doing RL research initial policy parameteri
 \section{RL Review}
 intro to RNN, REINFORCE, Actor-Critic, A3C, GA3C
 
-\section{Methods}
-describe all the different architectures i tired
-PPO
-my conv net for VFA
+\section{Experimental Design}
 
+add subsections
+cite bill cooks book for describing TSP
+
+\begin{equation*}
+  p(y_1,\dots,y_T |x_1,\dots, x_T)=\prod_{t=1}^{T}p(y_t|y_1,\dots,y_{t-1},c)
+\end{equation*}
+
+Let $x=(x_1,\dots,x_T)$ be a sequence where $x_i$ is the x-y coordinates for point $i$, $y_t$ is the id of the point traveled to at time $t$ and $c$ is a context vector.
+
+The encoder maps the input sequence $x$ into a context vector $c$. The approach used in this paper is to use a RNN composed of LSTM cells such that
+
+% Unidirectional cite https://arxiv.org/pdf/1409.3215.pdf for encoder/decoder framework
+\begin{equation*}
+  h_t=f(x_t,h_{t-1})
+\end{equation*}
+where $f$ is an LSTM and $c=h_T$.
+
+The decoder does is trained to predict the probability of choosing the next location
+\begin{equation*}
+  p(y_t|y_1,\dots,y_{t-1}, c)=g(y_{t-1},s_t, c)
+\end{equation*}
+
+\begin{equation*}
+  s_i=f(s_{i-1},y_{i-1},c_i)
+\end{equation*}
+
+% Bidirectional NEURAL MACHINE TRANSLATION BY JOINTLY LEARNING TO ALIGN AND TRANSLATE
+Bidirectional consists of forward and backward RNN's. The forward RNN reads the input sequence in order from $t=1$ to $T$ and the backward reads the input sequence from $T$ to $t=1$. The hidden state $h_j$ is then constructed by concatenating the two vectors $h_j=[\overrightarrow{h_j^\top};\overleftarrow{h_j^\top}]$
+
+% Stack Bidirectional https://arxiv.org/pdf/1303.5778.pdf
+
+The final architecture is from cite Pointer Networks, where there is no longer an encoder and the probability of moving to the next point is simplified to the following
+
+\begin{equation*}
+  p(y_t|y_1,\dots,y_{t-1}, c)=\text{softmax}(c)
+\end{equation*}
+
+where $h_t$ is the LSTM's hidden state at step $t$ and $c$ is the context vector. The context vector is calculated using the following formulas.
+
+% Attention
+\begin{equation*}
+  c_i=\sum_{j=1}^T \alpha_{ij}h_j
+\end{equation*}
+
+\begin{equation*}
+  \alpha_{ij}=\frac{\text{exp}(e_{ij})}{\sum_{k=1}^T\text{exp}(e_{ik})}
+\end{equation*}
+
+\begin{equation*}
+  e_{ij}=a(s_{i-1},h_j)
+\end{equation*}
+
+where $a$ is an attention mechanism. For this paper I study the affect that two different attention mechanisms have on the learning process. The first attention mechanism is the Bahanadu Attention Mechanism from cite https://arxiv.org/pdf/1409.0473.pdf
+
+\begin{equation*}
+  e_{ij}=v_\alpha^\top\text{tanh}(W_\alpha s_{i-1}+U_\alpha h_j)
+\end{equation*}
+where $v_\alpha \in \mathbb{R}^n, W_\alpha \in \mathbb{R}^{n \times n},U_alpha \in \mathbb{R}^{n \times 2n}$ are weight matricies.
+
+The second attention mechanism is the Luong Attention Mechanism from cite Effective Approaches to Attention-based Neural Machine Translation.
+
+\begin{equation*}
+  e_{ij}= s_{i-1}^\top W_\alpha h_j
+\end{equation*}
+
+The parameterized policy function is optimized using the ADAM optimizer which is common in this literature. To examine the sensitivity to hyperparameter choices I examine the affect that a learning rate of 1e-2, 1e-3, and 1e-4 has on the ability for each architecture to learn the optimal policy. I also examine how the number of LSTM cells affects the training process by training the neural networks with 32, 64, and 128 LSTM cells.
+
+% state embedding
+
+% PPO
 
 \section{Results}
-describe what i learned comparing SR and RL and what i learned about how the different architectures behaved
-
-A major complication when trying to select the appropriate architecture for your neural network that will be trained using RL is that there is often not the necessary feedback to iteratively improve the architecture until the network is training optimally. This is due to the subset of architectures that will effectively train on a given problem is very small compared to the number of potential architectures and that when the architecture is not close enough the feedback that the research observes is that the network simply doesnt improve while training is taking place. This makes it difficult to evaluate the value of different changes to NNA when the NN is just not learning.
-
-The researcher can use SL to evaluate the value of a given NNA with the hope that if a given NNA can be trained using SL on a smaller problem then it will work using RL on the larger problem that is of importance. In order to study this I used SL to train several different NNA and then used RL to try and train the same NNA and compared the results.
+(Main Idea is to show how it is necessary to build a specific architecture to solve specific problems)
+    while the method is general it's implementation is anything but general
+(Sub Ideas SL can be used to narrow subset but not all SL will work for RL)
 
 The first NNA that I studied was a unidirectional encoder/decoder framework for NMT. This method was able to train using SL but did not work when the state was embeded, bahanadu attention was used, or when the policy was not decoded using a greedy decoder.
 
@@ -78,7 +146,7 @@ The second NNA that I studied was a variation of the first except with a bidirec
 
 The third NNA that I studied was a variation of the second except with a stack bidirectional encoder. This method was able to train using SL but did not work when the state was embeded, bahanadu attention was used, or when the policy was not decoded using a greedy decoder.
 
-The fourth NNA that I studied is the current best for this framework taken from cite. It uses that attention mechanism as the output and was able to be trained using SL and worked with state embed, both Luong and Bah.
+The fourth NNA that I studied is the current best for this framework taken from NCO, PN. It uses that attention mechanism as the output and was able to be trained using SL and worked with state embed, both Luong and Bah. Talk about initial policy prediction between NNA 1, 2, 3 and 4. Talk about how state embed changes that. Talk about the difference between Luong and Bah.
 
 Methods that work for SL 1, 2, 3, 5-10
 1)

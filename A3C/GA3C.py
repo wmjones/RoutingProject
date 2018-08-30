@@ -928,7 +928,7 @@ elif Config.MODEL_SETTING == 203:
     Config.LEARNING_RATE = 1e-3
     Config.RNN_HIDDEN_DIM = 32
     Config.RUN_TIME = 129600
-elif Config.MODEL_SETTING == 204:
+elif Config.MODEL_SETTING == 204:  # optimal 1.002
     Config.DIRECTION = 1
     Config.FROM_FILE = 1
     Config.LOGIT_CLIP_SCALAR = 10
@@ -936,7 +936,7 @@ elif Config.MODEL_SETTING == 204:
     Config.LEARNING_RATE = 1e-3
     Config.RNN_HIDDEN_DIM = 64
     Config.RUN_TIME = 129600
-elif Config.MODEL_SETTING == 205:
+elif Config.MODEL_SETTING == 205:  # optimal 1.001
     Config.DIRECTION = 1
     Config.FROM_FILE = 1
     Config.LOGIT_CLIP_SCALAR = 10
@@ -1040,7 +1040,7 @@ elif Config.MODEL_SETTING == 217:
     Config.LEARNING_RATE = 1e-3
     Config.RNN_HIDDEN_DIM = 128
     Config.RUN_TIME = 129600
-elif Config.MODEL_SETTING == 218:
+elif Config.MODEL_SETTING == 218:  # optimal 1.232
     Config.DIRECTION = 5
     Config.FROM_FILE = 1
     Config.LOGIT_CLIP_SCALAR = 10
@@ -1048,7 +1048,7 @@ elif Config.MODEL_SETTING == 218:
     Config.LEARNING_RATE = 1e-2
     Config.USE_BAHDANAU = 1
     Config.RUN_TIME = 129600
-elif Config.MODEL_SETTING == 219:
+elif Config.MODEL_SETTING == 219:  # optimal 1.059
     Config.DIRECTION = 5
     Config.FROM_FILE = 1
     Config.LOGIT_CLIP_SCALAR = 10
@@ -1056,7 +1056,7 @@ elif Config.MODEL_SETTING == 219:
     Config.LEARNING_RATE = 1e-3
     Config.USE_BAHDANAU = 1
     Config.RUN_TIME = 129600
-elif Config.MODEL_SETTING == 220:
+elif Config.MODEL_SETTING == 220:  # optimal 1.053
     Config.DIRECTION = 5
     Config.FROM_FILE = 1
     Config.LOGIT_CLIP_SCALAR = 10
@@ -1064,7 +1064,7 @@ elif Config.MODEL_SETTING == 220:
     Config.LEARNING_RATE = 1e-4
     Config.USE_BAHDANAU = 1
     Config.RUN_TIME = 129600
-elif Config.MODEL_SETTING == 221:
+elif Config.MODEL_SETTING == 221:  # optimal 1.119
     Config.DIRECTION = 5
     Config.FROM_FILE = 1
     Config.LOGIT_CLIP_SCALAR = 10
@@ -1073,7 +1073,7 @@ elif Config.MODEL_SETTING == 221:
     Config.RNN_HIDDEN_DIM = 32
     Config.USE_BAHDANAU = 1
     Config.RUN_TIME = 129600
-elif Config.MODEL_SETTING == 222:
+elif Config.MODEL_SETTING == 222:  # optimal 1.073
     Config.DIRECTION = 5
     Config.FROM_FILE = 1
     Config.LOGIT_CLIP_SCALAR = 10
@@ -1082,7 +1082,7 @@ elif Config.MODEL_SETTING == 222:
     Config.RNN_HIDDEN_DIM = 64
     Config.USE_BAHDANAU = 1
     Config.RUN_TIME = 129600
-elif Config.MODEL_SETTING == 223:
+elif Config.MODEL_SETTING == 223:  # optimal 1.055
     Config.DIRECTION = 5
     Config.FROM_FILE = 1
     Config.LOGIT_CLIP_SCALAR = 10
@@ -1098,7 +1098,7 @@ elif Config.MODEL_SETTING == 224:
     Config.LR_DECAY_OFF = 1
     Config.LEARNING_RATE = 1e-2
     Config.RUN_TIME = 129600
-elif Config.MODEL_SETTING == 225:
+elif Config.MODEL_SETTING == 225:  # optimal 1.128
     Config.DIRECTION = 2
     Config.FROM_FILE = 1
     Config.LOGIT_CLIP_SCALAR = 10
@@ -1160,7 +1160,7 @@ elif Config.MODEL_SETTING == 232:
     Config.LEARNING_RATE = 1e-4
     Config.USE_BAHDANAU = 1
     Config.RUN_TIME = 129600
-elif Config.MODEL_SETTING == 233:
+elif Config.MODEL_SETTING == 233:  # optimal 1.0001
     Config.DIRECTION = 2
     Config.FROM_FILE = 1
     Config.LOGIT_CLIP_SCALAR = 10
@@ -1182,6 +1182,258 @@ elif Config.MODEL_SETTING == 235:
     Config.DIRECTION = 2
     Config.FROM_FILE = 1
     Config.LOGIT_CLIP_SCALAR = 10
+    Config.LR_DECAY_OFF = 1
+    Config.LEARNING_RATE = 1e-3
+    Config.RNN_HIDDEN_DIM = 128
+    Config.USE_BAHDANAU = 1
+    Config.RUN_TIME = 129600
+elif Config.MODEL_SETTING == 300:
+    Config.DIRECTION = 1
+    Config.REINFORCE = 1
+    Config.LR_DECAY_OFF = 1
+    Config.LEARNING_RATE = 1e-2
+    Config.RUN_TIME = 129600
+elif Config.MODEL_SETTING == 301:
+    Config.DIRECTION = 1
+    Config.REINFORCE = 1
+    Config.LR_DECAY_OFF = 1
+    Config.LEARNING_RATE = 1e-3
+    Config.RUN_TIME = 129600
+elif Config.MODEL_SETTING == 302:
+    Config.DIRECTION = 1
+    Config.REINFORCE = 1
+    Config.LR_DECAY_OFF = 1
+    Config.LEARNING_RATE = 1e-4
+    Config.RUN_TIME = 129600
+elif Config.MODEL_SETTING == 303:
+    Config.DIRECTION = 1
+    Config.REINFORCE = 1
+    Config.LR_DECAY_OFF = 1
+    Config.LEARNING_RATE = 1e-3
+    Config.RNN_HIDDEN_DIM = 32
+    Config.RUN_TIME = 129600
+elif Config.MODEL_SETTING == 304:  # optimal 1.002
+    Config.DIRECTION = 1
+    Config.REINFORCE = 1
+    Config.LR_DECAY_OFF = 1
+    Config.LEARNING_RATE = 1e-3
+    Config.RNN_HIDDEN_DIM = 64
+    Config.RUN_TIME = 129600
+elif Config.MODEL_SETTING == 305:  # optimal 1.001
+    Config.DIRECTION = 1
+    Config.REINFORCE = 1
+    Config.LR_DECAY_OFF = 1
+    Config.LEARNING_RATE = 1e-3
+    Config.RNN_HIDDEN_DIM = 128
+    Config.RUN_TIME = 129600
+elif Config.MODEL_SETTING == 306:
+    Config.DIRECTION = 1
+    Config.REINFORCE = 1
+    Config.LR_DECAY_OFF = 1
+    Config.LEARNING_RATE = 1e-2
+    Config.USE_BAHDANAU = 1
+    Config.RUN_TIME = 129600
+elif Config.MODEL_SETTING == 307:
+    Config.DIRECTION = 1
+    Config.REINFORCE = 1
+    Config.LR_DECAY_OFF = 1
+    Config.LEARNING_RATE = 1e-3
+    Config.USE_BAHDANAU = 1
+    Config.RUN_TIME = 129600
+elif Config.MODEL_SETTING == 308:
+    Config.DIRECTION = 1
+    Config.REINFORCE = 1
+    Config.LR_DECAY_OFF = 1
+    Config.LEARNING_RATE = 1e-4
+    Config.USE_BAHDANAU = 1
+    Config.RUN_TIME = 129600
+elif Config.MODEL_SETTING == 309:
+    Config.DIRECTION = 1
+    Config.REINFORCE = 1
+    Config.LR_DECAY_OFF = 1
+    Config.LEARNING_RATE = 1e-3
+    Config.RNN_HIDDEN_DIM = 32
+    Config.USE_BAHDANAU = 1
+    Config.RUN_TIME = 129600
+elif Config.MODEL_SETTING == 310:
+    Config.DIRECTION = 1
+    Config.REINFORCE = 1
+    Config.LR_DECAY_OFF = 1
+    Config.LEARNING_RATE = 1e-3
+    Config.RNN_HIDDEN_DIM = 64
+    Config.USE_BAHDANAU = 1
+    Config.RUN_TIME = 129600
+elif Config.MODEL_SETTING == 311:
+    Config.DIRECTION = 1
+    Config.REINFORCE = 1
+    Config.LR_DECAY_OFF = 1
+    Config.LEARNING_RATE = 1e-3
+    Config.RNN_HIDDEN_DIM = 128
+    Config.USE_BAHDANAU = 1
+    Config.RUN_TIME = 129600
+elif Config.MODEL_SETTING == 312:
+    Config.DIRECTION = 5
+    Config.REINFORCE = 1
+    Config.LR_DECAY_OFF = 1
+    Config.LEARNING_RATE = 1e-2
+    Config.RUN_TIME = 129600
+elif Config.MODEL_SETTING == 313:
+    Config.DIRECTION = 5
+    Config.REINFORCE = 1
+    Config.LR_DECAY_OFF = 1
+    Config.LEARNING_RATE = 1e-3
+    Config.RUN_TIME = 129600
+elif Config.MODEL_SETTING == 314:
+    Config.DIRECTION = 5
+    Config.REINFORCE = 1
+    Config.LR_DECAY_OFF = 1
+    Config.LEARNING_RATE = 1e-4
+    Config.RUN_TIME = 129600
+elif Config.MODEL_SETTING == 315:
+    Config.DIRECTION = 5
+    Config.REINFORCE = 1
+    Config.LR_DECAY_OFF = 1
+    Config.LEARNING_RATE = 1e-3
+    Config.RNN_HIDDEN_DIM = 32
+    Config.RUN_TIME = 129600
+elif Config.MODEL_SETTING == 316:
+    Config.DIRECTION = 5
+    Config.REINFORCE = 1
+    Config.LR_DECAY_OFF = 1
+    Config.LEARNING_RATE = 1e-3
+    Config.RNN_HIDDEN_DIM = 64
+    Config.RUN_TIME = 129600
+elif Config.MODEL_SETTING == 317:
+    Config.DIRECTION = 5
+    Config.REINFORCE = 1
+    Config.LR_DECAY_OFF = 1
+    Config.LEARNING_RATE = 1e-3
+    Config.RNN_HIDDEN_DIM = 128
+    Config.RUN_TIME = 129600
+elif Config.MODEL_SETTING == 318:
+    Config.DIRECTION = 5
+    Config.REINFORCE = 1
+    Config.LR_DECAY_OFF = 1
+    Config.LEARNING_RATE = 1e-2
+    Config.USE_BAHDANAU = 1
+    Config.RUN_TIME = 129600
+elif Config.MODEL_SETTING == 319:
+    Config.DIRECTION = 5
+    Config.REINFORCE = 1
+    Config.LR_DECAY_OFF = 1
+    Config.LEARNING_RATE = 1e-3
+    Config.USE_BAHDANAU = 1
+    Config.RUN_TIME = 129600
+elif Config.MODEL_SETTING == 320:
+    Config.DIRECTION = 5
+    Config.REINFORCE = 1
+    Config.LR_DECAY_OFF = 1
+    Config.LEARNING_RATE = 1e-4
+    Config.USE_BAHDANAU = 1
+    Config.RUN_TIME = 129600
+elif Config.MODEL_SETTING == 321:
+    Config.DIRECTION = 5
+    Config.REINFORCE = 1
+    Config.LR_DECAY_OFF = 1
+    Config.LEARNING_RATE = 1e-3
+    Config.RNN_HIDDEN_DIM = 32
+    Config.USE_BAHDANAU = 1
+    Config.RUN_TIME = 129600
+elif Config.MODEL_SETTING == 322:
+    Config.DIRECTION = 5
+    Config.REINFORCE = 1
+    Config.LR_DECAY_OFF = 1
+    Config.LEARNING_RATE = 1e-3
+    Config.RNN_HIDDEN_DIM = 64
+    Config.USE_BAHDANAU = 1
+    Config.RUN_TIME = 129600
+elif Config.MODEL_SETTING == 323:
+    Config.DIRECTION = 5
+    Config.REINFORCE = 1
+    Config.LR_DECAY_OFF = 1
+    Config.LEARNING_RATE = 1e-3
+    Config.RNN_HIDDEN_DIM = 128
+    Config.USE_BAHDANAU = 1
+    Config.RUN_TIME = 129600
+elif Config.MODEL_SETTING == 324:
+    Config.DIRECTION = 2
+    Config.REINFORCE = 1
+    Config.LR_DECAY_OFF = 1
+    Config.LEARNING_RATE = 1e-2
+    Config.RUN_TIME = 129600
+elif Config.MODEL_SETTING == 325:
+    Config.DIRECTION = 2
+    Config.REINFORCE = 1
+    Config.LR_DECAY_OFF = 1
+    Config.LEARNING_RATE = 1e-3
+    Config.RUN_TIME = 129600
+elif Config.MODEL_SETTING == 326:
+    Config.DIRECTION = 2
+    Config.REINFORCE = 1
+    Config.LR_DECAY_OFF = 1
+    Config.LEARNING_RATE = 1e-4
+    Config.RUN_TIME = 129600
+elif Config.MODEL_SETTING == 327:
+    Config.DIRECTION = 2
+    Config.REINFORCE = 1
+    Config.LR_DECAY_OFF = 1
+    Config.LEARNING_RATE = 1e-3
+    Config.RNN_HIDDEN_DIM = 32
+    Config.RUN_TIME = 129600
+elif Config.MODEL_SETTING == 328:
+    Config.DIRECTION = 2
+    Config.REINFORCE = 1
+    Config.LR_DECAY_OFF = 1
+    Config.LEARNING_RATE = 1e-3
+    Config.RNN_HIDDEN_DIM = 64
+    Config.RUN_TIME = 129600
+elif Config.MODEL_SETTING == 329:
+    Config.DIRECTION = 2
+    Config.REINFORCE = 1
+    Config.LR_DECAY_OFF = 1
+    Config.LEARNING_RATE = 1e-3
+    Config.RNN_HIDDEN_DIM = 128
+    Config.RUN_TIME = 129600
+elif Config.MODEL_SETTING == 330:
+    Config.DIRECTION = 2
+    Config.REINFORCE = 1
+    Config.LR_DECAY_OFF = 1
+    Config.LEARNING_RATE = 1e-2
+    Config.USE_BAHDANAU = 1
+    Config.RUN_TIME = 129600
+elif Config.MODEL_SETTING == 331:
+    Config.DIRECTION = 2
+    Config.REINFORCE = 1
+    Config.LR_DECAY_OFF = 1
+    Config.LEARNING_RATE = 1e-3
+    Config.USE_BAHDANAU = 1
+    Config.RUN_TIME = 129600
+elif Config.MODEL_SETTING == 332:
+    Config.DIRECTION = 2
+    Config.REINFORCE = 1
+    Config.LR_DECAY_OFF = 1
+    Config.LEARNING_RATE = 1e-4
+    Config.USE_BAHDANAU = 1
+    Config.RUN_TIME = 129600
+elif Config.MODEL_SETTING == 333:
+    Config.DIRECTION = 2
+    Config.REINFORCE = 1
+    Config.LR_DECAY_OFF = 1
+    Config.LEARNING_RATE = 1e-3
+    Config.RNN_HIDDEN_DIM = 32
+    Config.USE_BAHDANAU = 1
+    Config.RUN_TIME = 129600
+elif Config.MODEL_SETTING == 334:
+    Config.DIRECTION = 2
+    Config.REINFORCE = 1
+    Config.LR_DECAY_OFF = 1
+    Config.LEARNING_RATE = 1e-3
+    Config.RNN_HIDDEN_DIM = 64
+    Config.USE_BAHDANAU = 1
+    Config.RUN_TIME = 129600
+elif Config.MODEL_SETTING == 335:
+    Config.DIRECTION = 2
+    Config.REINFORCE = 1
     Config.LR_DECAY_OFF = 1
     Config.LEARNING_RATE = 1e-3
     Config.RNN_HIDDEN_DIM = 128

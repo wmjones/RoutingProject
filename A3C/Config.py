@@ -6,7 +6,7 @@ class Config:                   # default settings for all config options
     DNN_HIDDEN_DIM = 15
     DROPOUT = 0
     FROM_FILE = 0
-    GPU = 0
+    GPU = 1
     LAYERS_STACKED_COUNT = 2
     LEARNING_RATE = 1e-3
     LR_DECAY_OFF = 0

@@ -57,5 +57,5 @@ clean :
 	# rm -rf ./logs/*
 	# rm -rf ./checkpoint/*
 	# rm -rf ./ini_files/*
-	for f in ./figs/*; do rm "$f"; done
+	find . -name "./figs/*" -print0 | xargs -0 rm -f
 	# rm -rf ./figs/*

@@ -1,11 +1,12 @@
 \documentclass[12pt]{article}
 \usepackage[margin=1in]{geometry}
 
+\usepackage{titlesec}
 \usepackage{amsmath}
 \usepackage{algorithm}
 \usepackage{algpseudocode}
 \usepackage{graphicx}
-\graphicspath{{../figs/}}
+\graphicspath{{../Paper_figs/}}
 \pdfimageresolution=300
 
 \usepackage{accents}
@@ -63,126 +64,179 @@ The researcher can use SL to evaluate the value of a given NNA with the hope tha
 intro to RNN, REINFORCE, Actor-Critic, A3C, GA3C
 
 \section{Experimental Design}
-
-add subsections
-cite bill cooks book for describing TSP
+% cite bill cooks book for describing TSP
+In this section I propose an experimental design in order to study the affect that Neural Net architecture and hyperparameter choice has on both supervised and reinforcement learning. I will describe the set of Neural Net architectures and hyperparameters that will be evaluated and the methods used to evaluate the performance of each method. In order to parameterize the policy function I will use a Recurrent Neural Network with LSTM cells. This method is advantageous since it is able create the policy iteratively rather than determining the route in one step. This is done by letting the probability of a given route be determined by the following
 
 \begin{equation*}
   p(y_1,\dots,y_T |x_1,\dots, x_T)=\prod_{t=1}^{T}p(y_t|y_1,\dots,y_{t-1},c)
 \end{equation*}
 
-Let $x=(x_1,\dots,x_T)$ be a sequence where $x_i$ is the x-y coordinates for point $i$, $y_t$ is the id of the point traveled to at time $t$ and $c$ is a context vector.
+Let $x=(x_1,\dots,x_T)$ be a sequence where $x_i$ is the x-y coordinates for point $i$, $y_t$ is the id of the point traveled to at time $t$ and $c$ is a context vector. In order to prevent the policy from choosing a previously chosen location I store in memory a record of each location chosen and then penalize the probability of moving to that location so that it cannot be chosen.
 
-The encoder maps the input sequence $x$ into a context vector $c$. The approach used in this paper is to use a RNN composed of LSTM cells such that
+For each Neural Net architecture and each hyperparameter choice the method will be trained using both supervised and reinforcement learning. The loss for supervised learning will be the cross entropy loss between the parameterized policy and an near optimal policy provided by using the TABU search from Google's OR-Tools. Reinforcement learning will be done using the GA3C algorithm \citet{2016_ga3c}.
 
-% Unidirectional cite https://arxiv.org/pdf/1409.3215.pdf for encoder/decoder framework
+Each method will be optimized using the ADAM optimizer as is standard in the literature with $\alpha$ varying between 1e-2, 1e-3, and 1e-4, and fixing $\beta_1=0.9$, $\beta_2=0.999$ and $\epsilon=\text{1e-8}$. I also examine how the number of LSTM cells affects the training process by training the neural networks with 32, 64, and 128 LSTM cells.
+
+The methods will be evaluate by determining how many times longer the parameterized policies route is compared to the length of a route found using TABU search. I will use the average relative length for the last 10,000 problem instances that the method evaluated after training for 36 hours using parallelized using 16 cores from Intel's Haswell CPU architecture. Each method is also run three times using different initial RNG seeds.
+
+\subsection{Unidirectional Encoder/Decoder}
+
+The first major Neural Network architecture that I use is directly from the Neural Machine Translation (NMT) literature \citep{2014_sut}. This architecture which is designed to be trained using supervised learning to translate sentences from one language to another uses a paramterization that consists of an encoder and decoder. The encoder maps the input sequence $x$ into a context vector $c$ and then the decoder maps the context vector to the final output. To construct the context vector $c$ the following formula is used
+
 \begin{equation*}
   h_t=f(x_t,h_{t-1})
 \end{equation*}
-where $f$ is an LSTM and $c=h_T$.
 
-The decoder does is trained to predict the probability of choosing the next location
+where $f$ is an LSTM and $c=h_T$.
+Once the encoder has constructed the context vector $c$ the decoder then determines the output probability at each step using the formulas
+
 \begin{equation*}
   p(y_t|y_1,\dots,y_{t-1}, c)=g(y_{t-1},s_t, c)
 \end{equation*}
 
 \begin{equation*}
-  s_i=f(s_{i-1},y_{i-1},c_i)
+  s_t=f(s_{t-1},y_{t-1},c_t)
 \end{equation*}
 
-% Bidirectional NEURAL MACHINE TRANSLATION BY JOINTLY LEARNING TO ALIGN AND TRANSLATE
-Bidirectional consists of forward and backward RNN's. The forward RNN reads the input sequence in order from $t=1$ to $T$ and the backward reads the input sequence from $T$ to $t=1$. The hidden state $h_j$ is then constructed by concatenating the two vectors $h_j=[\overrightarrow{h_j^\top};\overleftarrow{h_j^\top}]$
+where $g(y_{t-1},s_t, c)$ is the softmax of the output of the decoder's LSTM cells and $f(s_{t-1},y_{t-1},c_t)$ is how the LSTM cell updates its hidden state. In this paper $p(y_t|y_1,\dots,y_{t-1}, c)$ is the probability that the route moves to the location $y$ in step $t$.
 
-% Stack Bidirectional https://arxiv.org/pdf/1303.5778.pdf
+\subsection{Bidirectional Encoder/Decoder}
 
-The final architecture is from cite Pointer Networks, where there is no longer an encoder and the probability of moving to the next point is simplified to the following
+The second major Neural Network architecture that I use the bidirectional Encoder/Decoder framework presented in \citet{2014_bah}. The Bidirectional encoder consists of forward and backward RNN's. The forward RNN reads the input sequence in order from $t=1$ to $T$ and the backward reads the input sequence from $T$ to $t=1$. The hidden state $h_j$ is then constructed by concatenating the two vectors $h_j=[\overrightarrow{h_j^\top};\overleftarrow{h_j^\top}]$
+
+\subsection{Pointer Network}
+
+The final architecture is from \citet{2015_Vinyals} where there is no longer an encoder and the probability of moving to the next point is simplified to the following
 
 \begin{equation*}
   p(y_t|y_1,\dots,y_{t-1}, c)=\text{softmax}(c)
 \end{equation*}
 
-where $h_t$ is the LSTM's hidden state at step $t$ and $c$ is the context vector. The context vector is calculated using the following formulas.
+where $h_t$ is the LSTM's hidden state at step $t$ and $c$ is the context vector. The context vector is calculated using an attention layer.
 
-% Attention
+\subsection{Attention Layer}
+
+The NMT literature found that introducing a mechanism that will focus on part of the input sequence while decoding would increase performance and \citet{2015_Vinyals} found that due to the spatial nature of the TSP that ... NOT SURE HOW TO INTRODUCE THIS
+
+In this paper I will study the two most common attention mechanisms and how the impact the performance of each method. The output of the attention mechanism is a new context vector $c$ that is then input into the decoder. Each attention mechanism is constructed with the following formulas
+
 \begin{equation*}
-  c_i=\sum_{j=1}^T \alpha_{ij}h_j
+  c_t=\sum_{j=1}^T \alpha_{tj}h_j
 \end{equation*}
 
 \begin{equation*}
-  \alpha_{ij}=\frac{\text{exp}(e_{ij})}{\sum_{k=1}^T\text{exp}(e_{ik})}
+  \alpha_{tj}=\frac{\text{exp}(e_{tj})}{\sum_{k=1}^T\text{exp}(e_{tk})}
 \end{equation*}
 
 \begin{equation*}
-  e_{ij}=a(s_{i-1},h_j)
+  e_{tj}=a(s_{t-1},h_j)
 \end{equation*}
 
-where $a$ is an attention mechanism. For this paper I study the affect that two different attention mechanisms have on the learning process. The first attention mechanism is the Bahanadu Attention Mechanism from cite https://arxiv.org/pdf/1409.0473.pdf
+where $t$ represents the current step during decoding, $k$ represents the location in the input sequence, and $a$ is a specific attention mechanism. The first specific attention mechanism that I use is the Bahanadu Attention Mechanism from \citet{2014_bah} where $e_{tj}$ is computed by
 
 \begin{equation*}
-  e_{ij}=v_\alpha^\top\text{tanh}(W_\alpha s_{i-1}+U_\alpha h_j)
+  e_{tj}=v_\alpha^\top\text{tanh}(W_\alpha s_{t-1}+U_\alpha h_j)
 \end{equation*}
-where $v_\alpha \in \mathbb{R}^n, W_\alpha \in \mathbb{R}^{n \times n},U_alpha \in \mathbb{R}^{n \times 2n}$ are weight matricies.
+where $v_\alpha \in \mathbb{R}^n, W_\alpha \in \mathbb{R}^{n \times n},U_\alpha \in \mathbb{R}^{n \times 2n}$ are weight matricies.
 
-The second attention mechanism is the Luong Attention Mechanism from cite Effective Approaches to Attention-based Neural Machine Translation.
+The second attention mechanism is the Luong Attention Mechanism from \citet{2015_luong} where $e_{tj}$ is computed by
 
 \begin{equation*}
-  e_{ij}= s_{i-1}^\top W_\alpha h_j
+  e_{tj}= s_{t-1}^\top W_\alpha h_j
 \end{equation*}
 
-The parameterized policy function is optimized using the ADAM optimizer which is common in this literature. To examine the sensitivity to hyperparameter choices I examine the affect that a learning rate of 1e-2, 1e-3, and 1e-4 has on the ability for each architecture to learn the optimal policy. I also examine how the number of LSTM cells affects the training process by training the neural networks with 32, 64, and 128 LSTM cells.
+where $W_\alpha \in \mathbb{R}^{n \times n}$ is a weight matrix.
 
 % state embedding
 
 % PPO
 
 \section{Results}
-(Main Idea is to show how it is necessary to build a specific architecture to solve specific problems)
-    while the method is general it's implementation is anything but general
-(Sub Ideas SL can be used to narrow subset but not all SL will work for RL)
 
-The first NNA that I studied was a unidirectional encoder/decoder framework for NMT. This method was able to train using SL but did not work when the state was embeded, bahanadu attention was used, or when the policy was not decoded using a greedy decoder.
+I this section I analyze the main experimental results. First I show that when training using supervised learning that as the Neural Network Architecture becomes more specialized to the problem of interest there is an increase in performance per hour holding all else constant. Then I show that the quicker that the method trained with supervised learning lead to an increase in performance when trained using reinforcement learning and that many methods that could be trained using supervised learning were not able to be trained using reinforcement learning.
 
-The second NNA that I studied was a variation of the first except with a bidirectional encoder. This method was able to train using SL but did not work when the state was embeded, bahanadu attention was used, or when the policy was not decoded using a greedy decoder.
+\subsection{Supervised Learning}
 
-The third NNA that I studied was a variation of the second except with a stack bidirectional encoder. This method was able to train using SL but did not work when the state was embeded, bahanadu attention was used, or when the policy was not decoded using a greedy decoder.
+\subsubsection{Hyperparameter and Architecture Choice}
 
-The fourth NNA that I studied is the current best for this framework taken from NCO, PN. It uses that attention mechanism as the output and was able to be trained using SL and worked with state embed, both Luong and Bah. Talk about initial policy prediction between NNA 1, 2, 3 and 4. Talk about how state embed changes that. Talk about the difference between Luong and Bah.
+\begin{figure}[H]
+  \centering
+  \caption{Table of Supervised Learning Experimental Results}
+  \label{fig_sl_table}
+\end{figure}
 
-Methods that work for SL 1, 2, 3, 5-10
-1)
-working 1,
-not working 12, 13, 32
-doesnt work with state embed, stochastic, (does it work with bah?)
+In \hyperref[fig_sl_table]{Figure 1} the results from training the 35 different methods is presented. It shows that while the methods that used a unidirectional and bidirectional encoder were able to achieve near optimal results on the TSP 20 that they had very inconsistent performance when hyperparameters were slightly changed. This can be seen by comparing 200, 202, and 205 where the learning rate was changed and the performance was changed significantly.
 
-2)
-working 3, 50
-not working 15, 90
-doesnt work with stochastic, same batch, (does it work with bah?, state embed?)
+\hyperref[fig_sl_table]{Figure 1} also shows that unidirectional encoder/decoder was only able to train using the Luong Attention mechanism, the bidirectional encoder/decoder was able to be trained with both attention mechanisms and the pointer network was only able to be trained using the Bahanadu attention mechanism. While the experimental evidence shows that the best run for the unidirectional and bidirectional encoder out performed the best run for the pointer network, the pointer network was more robust to changes in the hyper parameters and was more consistently able to achieve a performance within 10\% of the optimal route length.
 
-3)
-working 17, 30,
-not working 5
+\begin{figure}[H]
+  \centering
+  \caption{Plot of average rel len for 205 and 220}
+  \label{fig_sr_trainrate}
+\end{figure}
 
-5-10)
-working 9, 21, 22, 46, 47, 56, 58, 62, 63, 77, 78, 81, 82, 83
-not working 41, 60, 76, 79, 80
-check mod=9, does work with state embed, bah
-doesnt work with rnn 32, lr_decay_off, maxgrad 0, time_input
-working with bah 46, 47, 56, 62, 63, 81, 82, 83
-working with luong 9, 21, 58, 77 (not sure about 9, 21 but maybe only works with state embed)
+In \hyperref[fig_sr_trainrate]{Figure 2} we can see that while the best run that used a unidirectional encoder/decoder architecture was able to achieve optimal results the average performance improvement per hour of training time is less the average for methods that used a pointer network architecture. This suggests that the pointer network is more consistently able to achieve performance improvements to paramaterized policy during the course of training than the encoder/decoder framework is.
 
-Methods that work for RL 5-10
-5-10)
-working 22, 34, 35, 37, 51, 52, 53?, 61, 64 (these are all identical architectures except for 64)
-not working 10, 11, 23, 24, 25, 26, 27, 36, 38, 39, 40, 42, 43, 44, 45, 54, 55, 57, 65, 66, 84, 85, 86, 87, 88, 89, 91, 92, 93, 94, 99, 100, 101, 102, 103, 104, 105, 106, 107, 108, 109, 110
-working with bah 64
-working with luong 22, 34, 35, 37, 51, 52, 53, 61, 64
-not working with bah 44, 45, 57, 65, 94, 99
-not working with luong 10, 11, 23, 24, 25, 26, 27, 36, 38, 39, 40, 42, 43, 54, 55, 66, 84, 85, 86, 87, 88, 89, 91, 92, 93, 100, 101, 102, 103, 104, 105, 106, 107, 108, 109, 110
+\subsubsection{In Sample Variance}
+\begin{figure}[H]
+  \centering
+  \includegraphics[scale=2.5]{fig_samp_var}
+  \caption{Plot of relative length over training time for 205}
+  \label{fig_samp_var}
+\end{figure}
+
+
+The experiment also provided evidence of significant in sample variance. Identical runs of a method often yielded very different results when only the initial random seed was changed. This can be seen in  \hyperref[samp_var]{Figure 2} where the relative length of 3 different runs of 205 are plotted over the time the method was trained. This plot shows that a method that can yield optimal performance can have difficulty reproducing the same performance when rerun. This is a major problem for reproducibility since even if the architecture and hyperparameters are the same different seeds for the RNG can cause significant differences in performance for the method. The in sample variance also is a problem for further research in this field since the evaluation of a newly proposed architecture can be noisy which makes tuning hyperparameters difficult. These problems could be avoided by performing many sample runs and reporting both the best case and average case for the method however, this can be extremely computationally intensive and many researchers choose to not report the frequency for which their architecture trained successfully.
+
+
+\subsection{Reinforcement Learning}
+
+% The first NNA that I studied was a unidirectional encoder/decoder framework for NMT. This method was able to train using SL but did not work when the state was embeded, bahanadu attention was used, or when the policy was not decoded using a greedy decoder.
+
+% The second NNA that I studied was a variation of the first except with a bidirectional encoder. This method was able to train using SL but did not work when the state was embeded, bahanadu attention was used, or when the policy was not decoded using a greedy decoder.
+
+% The third NNA that I studied was a variation of the second except with a stack bidirectional encoder. This method was able to train using SL but did not work when the state was embeded, bahanadu attention was used, or when the policy was not decoded using a greedy decoder.
+
+% The fourth NNA that I studied is the current best for this framework taken from NCO, PN. It uses that attention mechanism as the output and was able to be trained using SL and worked with state embed, both Luong and Bah. Talk about initial policy prediction between NNA 1, 2, 3 and 4. Talk about how state embed changes that. Talk about the difference between Luong and Bah.
+
+% Methods that work for SL 1, 2, 3, 5-10
+% 1)
+% working 1,
+% not working 12, 13, 32
+% doesnt work with state embed, stochastic, (does it work with bah?)
+
+% 2)
+% working 3, 50
+% not working 15, 90
+% doesnt work with stochastic, same batch, (does it work with bah?, state embed?)
+
+% 3)
+% working 17, 30,
+% not working 5
+
+% 5-10)
+% working 9, 21, 22, 46, 47, 56, 58, 62, 63, 77, 78, 81, 82, 83
+% not working 41, 60, 76, 79, 80
+% check mod=9, does work with state embed, bah
+% doesnt work with rnn 32, lr_decay_off, maxgrad 0, time_input
+% working with bah 46, 47, 56, 62, 63, 81, 82, 83
+% working with luong 9, 21, 58, 77 (not sure about 9, 21 but maybe only works with state embed)
+
+% Methods that work for RL 5-10
+% 5-10)
+% working 22, 34, 35, 37, 51, 52, 53?, 61, 64 (these are all identical architectures except for 64)
+% not working 10, 11, 23, 24, 25, 26, 27, 36, 38, 39, 40, 42, 43, 44, 45, 54, 55, 57, 65, 66, 84, 85, 86, 87, 88, 89, 91, 92, 93, 94, 99, 100, 101, 102, 103, 104, 105, 106, 107, 108, 109, 110
+% working with bah 64
+% working with luong 22, 34, 35, 37, 51, 52, 53, 61, 64
+% not working with bah 44, 45, 57, 65, 94, 99
+% not working with luong 10, 11, 23, 24, 25, 26, 27, 36, 38, 39, 40, 42, 43, 54, 55, 66, 84, 85, 86, 87, 88, 89, 91, 92, 93, 100, 101, 102, 103, 104, 105, 106, 107, 108, 109, 110
 
 never worked ideas PPO, moving average, sequence cost, use time, direction 4 or 6, beam search, PCA
 
 \section{Conclusion}
+(Main Idea is to show how it is necessary to build a specific architecture to solve specific problems)
+    while the method is general it's implementation is anything but general
+(Sub Ideas SL can be used to narrow subset but not all SL will work for RL)
 
 
 \citet{2016_Mnih}

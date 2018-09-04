@@ -54,7 +54,8 @@ view : RoutingProjectPaper.pdf
 	cd ../;
 
 clean :
-	rm -rf ./logs/*
-	rm -rf ./checkpoint/*
-	rm -rf ./ini_files/*
-	rm -rf ./figs/*
+	# rm -rf ./logs/*
+	# rm -rf ./checkpoint/*
+	# rm -rf ./ini_files/*
+	for f in ./figs/*; do rm "$f"; done
+	# rm -rf ./figs/*

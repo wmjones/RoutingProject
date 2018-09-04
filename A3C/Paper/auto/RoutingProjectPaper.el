@@ -17,6 +17,7 @@
     "article"
     "art12"
     "geometry"
+    "titlesec"
     "amsmath"
     "algorithm"
     "algpseudocode"
@@ -33,7 +34,10 @@
     '("ubar" 1)
     "argmin")
    (LaTeX-add-labels
-    "intro")
+    "intro"
+    "fig_sl_table"
+    "fig_sr_trainrate"
+    "fig_samp_var")
    (LaTeX-add-bibliographies
     "bibliography.bib")
    (LaTeX-add-mathtools-DeclarePairedDelimiters

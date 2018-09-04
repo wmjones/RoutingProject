@@ -472,7 +472,6 @@ def Beam_Search(batch_size, encoder_state, encoder_outputs, train_helper, pred_h
         out_cell = _build_attention(out_cell, tiled_encoder_outputs, tf.identity)
         out_cell = MaskWrapper(out_cell, DECODER_TYPE)
         initial_state = out_cell.zero_state(dtype=tf.float32, batch_size=batch_size)
-        # initial_state = initial_state.clone(AttnState=initial_state.AttnState.clone(cell_state=encoder_state))
         train_decoder = tf.contrib.seq2seq.BasicDecoder(out_cell, train_helper, initial_state)
         pred_decoder = tf.contrib.seq2seq.BasicDecoder(out_cell, pred_helper, initial_state)
         pred_final_output, pred_final_state, pred_final_sequence_lengths = tf.contrib.seq2seq.dynamic_decode(
@@ -489,11 +488,6 @@ def Beam_Search(batch_size, encoder_state, encoder_outputs, train_helper, pred_h
         out_cell = _build_attention(out_cell, tiled_encoder_outputs, tf.identity)
         out_cell = MaskWrapper(out_cell, DECODER_TYPE)
         initial_state = out_cell.zero_state(dtype=tf.float32, batch_size=batch_size * beam_width)
-        # tiled_encoder_final_state = tf.contrib.seq2seq.tile_batch(
-        #     encoder_state, multiplier=beam_width)
-        # tiled_sequence_length = tf.contrib.seq2seq.tile_batch(
-        #     tf.tile([tf.shape(state)[1]], [batch_size]), multiplier=beam_width)
-        # pred_initial_state = initial_state.clone(AttnState=pred_initial_state.AttnState.clone(cell_state=tiled_encoder_final_state))
         if Config.STATE_EMBED == 1:
             def beam_embed(sample_ids):
                 return(tf.reshape(tf.gather_nd(

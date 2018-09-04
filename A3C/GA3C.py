@@ -1128,7 +1128,7 @@ elif Config.MODEL_SETTING == 228:
     Config.LEARNING_RATE = 1e-3
     Config.RNN_HIDDEN_DIM = 64
     Config.RUN_TIME = 129600
-elif Config.MODEL_SETTING == 229:
+elif Config.MODEL_SETTING == 229:  # optimal 1.010
     Config.DIRECTION = 2
     Config.FROM_FILE = 1
     Config.LOGIT_CLIP_SCALAR = 10
@@ -1439,8 +1439,6 @@ elif Config.MODEL_SETTING == 335:
     Config.RNN_HIDDEN_DIM = 128
     Config.USE_BAHDANAU = 1
     Config.RUN_TIME = 129600
-else:
-    sys.exit()
 
 ConfigParse = configparser.ConfigParser()
 ConfigParse.optionxform = str

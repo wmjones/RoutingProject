@@ -33,21 +33,6 @@ class Server:
         fig.savefig(str(Config.PATH) + 'figs/TSP_' + str((Config.NUM_OF_CUSTOMERS+1)) + '_MODEL_NAME_' + str(Config.MODEL_NAME) +
                     '_STEP_' + str(step-1) + '.png')
         plt.close(fig)
-        # if True:
-        #     edges = np.array([[19, or_route[0]]], dtype=np.int32)
-        #     edges = np.append(edges, np.concatenate((or_route[:-2].reshape(-1, 1), or_route[1:-1].reshape(-1, 1)), axis=1), axis=0)
-        #     edges = np.concatenate((np.arange(0, 20).reshape(-1, 1), np.arange(1, 21).reshape(-1, 1)), axis=1)
-        #     print(edges)
-        #     lc = LineCollection(points[edges])
-        #     fig = plt.figure()
-        #     plt.gca().add_collection(lc)
-        #     plt.xlim(-1, 1)
-        #     plt.ylim(-1, 1)
-        #     plt.plot(points[:, 0], points[:, 1], 'ro')
-        #     fig.savefig(str(Config.PATH) + 'figs/TSP_' + str((Config.NUM_OF_CUSTOMERS+1)) +
-        #                 '_MODEL_NAME_' + str(Config.MODEL_NAME) +
-        #                 '_OPTIMAL' + '.png')
-        #     plt.close(fig)
 
     def main(self):
         if Config.USE_PPO == 1:
@@ -57,6 +42,7 @@ class Server:
         batch_state, batch_or_cost, batch_or_route, batch_depot_location = self.env.next_batch(Config.TRAINING_MIN_BATCH_SIZE)
         test_state = np.asarray([batch_state[0]], dtype=np.float32)
         test_depot_location = batch_depot_location[0]
+        # test_or_route = batch_or_route[0]
         t_end = time.time() + Config.RUN_TIME
         step = -1
         while time.time() < t_end:
@@ -82,7 +68,7 @@ class Server:
 
             if step % 10000 == 0:
                 test_pred_route, _ = self.model.predict(test_state, [test_depot_location])
-                self.plot(test_state[0], test_pred_route[0][0], self.model.get_global_step())
+                # self.plot(test_state[0], test_pred_route[0][0], self.model.get_global_step())
                 print("Saving Model...")
                 self.model._model_save()
                 print("Done Saving Model")

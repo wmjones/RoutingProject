@@ -1,6 +1,93 @@
 \begin{thebibliography}{}
 
 \bibitem [\protect \citeauthoryear {%
+Babaeizadeh%
+, Frosio%
+, Tyree%
+, Clemons%
+\BCBL {}\ \BBA {} Kautz%
+}{%
+Babaeizadeh%
+\ \protect \BOthers {.}}{%
+{\protect \APACyear {2016}}%
+}]{%
+2016_ga3c}
+\APACinsertmetastar {%
+2016_ga3c}%
+\begin{APACrefauthors}%
+Babaeizadeh, M.%
+, Frosio, I.%
+, Tyree, S.%
+, Clemons, J.%
+\BCBL {}\ \BBA {} Kautz, J.%
+\end{APACrefauthors}%
+\unskip\
+\newblock
+\APACrefYearMonthDay{2016}{}{}.
+\newblock
+{\BBOQ}\APACrefatitle {GA3C: GPU-based A3C for deep reinforcement learning}
+  {Ga3c: Gpu-based a3c for deep reinforcement learning}.{\BBCQ}
+\newblock
+\APACjournalVolNumPages{CoRR abs/1611.06256}{}{}{}.
+\PrintBackRefs{\CurrentBib}
+
+\bibitem [\protect \citeauthoryear {%
+Bahdanau%
+, Cho%
+\BCBL {}\ \BBA {} Bengio%
+}{%
+Bahdanau%
+\ \protect \BOthers {.}}{%
+{\protect \APACyear {2014}}%
+}]{%
+2014_bah}
+\APACinsertmetastar {%
+2014_bah}%
+\begin{APACrefauthors}%
+Bahdanau, D.%
+, Cho, K.%
+\BCBL {}\ \BBA {} Bengio, Y.%
+\end{APACrefauthors}%
+\unskip\
+\newblock
+\APACrefYearMonthDay{2014}{}{}.
+\newblock
+{\BBOQ}\APACrefatitle {Neural machine translation by jointly learning to align
+  and translate} {Neural machine translation by jointly learning to align and
+  translate}.{\BBCQ}
+\newblock
+\APACjournalVolNumPages{arXiv preprint arXiv:1409.0473}{}{}{}.
+\PrintBackRefs{\CurrentBib}
+
+\bibitem [\protect \citeauthoryear {%
+Luong%
+, Pham%
+\BCBL {}\ \BBA {} Manning%
+}{%
+Luong%
+\ \protect \BOthers {.}}{%
+{\protect \APACyear {2015}}%
+}]{%
+2015_luong}
+\APACinsertmetastar {%
+2015_luong}%
+\begin{APACrefauthors}%
+Luong, M\BHBI T.%
+, Pham, H.%
+\BCBL {}\ \BBA {} Manning, C\BPBI D.%
+\end{APACrefauthors}%
+\unskip\
+\newblock
+\APACrefYearMonthDay{2015}{}{}.
+\newblock
+{\BBOQ}\APACrefatitle {Effective approaches to attention-based neural machine
+  translation} {Effective approaches to attention-based neural machine
+  translation}.{\BBCQ}
+\newblock
+\APACjournalVolNumPages{arXiv preprint arXiv:1508.04025}{}{}{}.
+\PrintBackRefs{\CurrentBib}
+
+\bibitem [\protect \citeauthoryear {%
 Mnih%
 \ \protect \BOthers {.}}{%
 Mnih%
@@ -28,6 +115,61 @@ Mnih, V.%
 \newblock
 \BIn{} \APACrefbtitle {International conference on machine learning}
   {International conference on machine learning}\ (\BPGS\ 1928--1937).
+\PrintBackRefs{\CurrentBib}
+
+\bibitem [\protect \citeauthoryear {%
+Sutskever%
+, Vinyals%
+\BCBL {}\ \BBA {} Le%
+}{%
+Sutskever%
+\ \protect \BOthers {.}}{%
+{\protect \APACyear {2014}}%
+}]{%
+2014_sut}
+\APACinsertmetastar {%
+2014_sut}%
+\begin{APACrefauthors}%
+Sutskever, I.%
+, Vinyals, O.%
+\BCBL {}\ \BBA {} Le, Q\BPBI V.%
+\end{APACrefauthors}%
+\unskip\
+\newblock
+\APACrefYearMonthDay{2014}{}{}.
+\newblock
+{\BBOQ}\APACrefatitle {Sequence to sequence learning with neural networks}
+  {Sequence to sequence learning with neural networks}.{\BBCQ}
+\newblock
+\BIn{} \APACrefbtitle {Advances in neural information processing systems}
+  {Advances in neural information processing systems}\ (\BPGS\ 3104--3112).
+\PrintBackRefs{\CurrentBib}
+
+\bibitem [\protect \citeauthoryear {%
+Vinyals%
+, Fortunato%
+\BCBL {}\ \BBA {} Jaitly%
+}{%
+Vinyals%
+\ \protect \BOthers {.}}{%
+{\protect \APACyear {2015}}%
+}]{%
+2015_Vinyals}
+\APACinsertmetastar {%
+2015_Vinyals}%
+\begin{APACrefauthors}%
+Vinyals, O.%
+, Fortunato, M.%
+\BCBL {}\ \BBA {} Jaitly, N.%
+\end{APACrefauthors}%
+\unskip\
+\newblock
+\APACrefYearMonthDay{2015}{}{}.
+\newblock
+{\BBOQ}\APACrefatitle {Pointer networks} {Pointer networks}.{\BBCQ}
+\newblock
+\BIn{} \APACrefbtitle {Advances in Neural Information Processing Systems}
+  {Advances in neural information processing systems}\ (\BPGS\ 2692--2700).
 \PrintBackRefs{\CurrentBib}
 
 \end{thebibliography}

@@ -1,5 +1,13 @@
 \BOOKMARK [1][-]{section.1}{Introduction}{}% 1
 \BOOKMARK [1][-]{section.2}{RL Review}{}% 2
 \BOOKMARK [1][-]{section.3}{Experimental Design}{}% 3
-\BOOKMARK [1][-]{section.4}{Results}{}% 4
-\BOOKMARK [1][-]{section.5}{Conclusion}{}% 5
+\BOOKMARK [2][-]{subsection.3.1}{Unidirectional Encoder/Decoder}{section.3}% 4
+\BOOKMARK [2][-]{subsection.3.2}{Bidirectional Encoder/Decoder}{section.3}% 5
+\BOOKMARK [2][-]{subsection.3.3}{Pointer Network}{section.3}% 6
+\BOOKMARK [2][-]{subsection.3.4}{Attention Layer}{section.3}% 7
+\BOOKMARK [1][-]{section.4}{Results}{}% 8
+\BOOKMARK [2][-]{subsection.4.1}{Supervised Learning}{section.4}% 9
+\BOOKMARK [3][-]{subsubsection.4.1.1}{Hyperparameter and Architecture Choice}{subsection.4.1}% 10
+\BOOKMARK [3][-]{subsubsection.4.1.2}{In Sample Variance}{subsection.4.1}% 11
+\BOOKMARK [2][-]{subsection.4.2}{Reinforcement Learning}{section.4}% 12
+\BOOKMARK [1][-]{section.5}{Conclusion}{}% 13

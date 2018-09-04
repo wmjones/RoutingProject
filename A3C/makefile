@@ -57,5 +57,6 @@ clean :
 	# rm -rf ./logs/*
 	# rm -rf ./checkpoint/*
 	# rm -rf ./ini_files/*
-	find . -name "./figs/*" -print0 | xargs -0 rm -f
+	cd ./figs
+	find . -name "*.png" -print0 | xargs -0 rm -f
 	# rm -rf ./figs/*

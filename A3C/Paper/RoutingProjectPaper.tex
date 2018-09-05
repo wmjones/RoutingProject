@@ -61,11 +61,42 @@ The researcher can use SL to evaluate the value of a given NNA with the hope tha
 % for tsp 20 there are \num{6.08e16} possible routes
 
 \section{RL Review}
+
+In this section I will review
+% http://colah.github.io/posts/2015-08-Understanding-LSTMs/
+
 intro to RNN, REINFORCE, Actor-Critic, A3C, GA3C
+
+
+The policy gradient theorem states that if we let
+\begin{equation*}
+  J(\theta)\dot{=}v_{\pi_{\theta}}(s_0)
+\end{equation*}
+
+denote the true value function for $\pi_\theta$, the policy determined by $\theta$. Then the policy gradient theorem states that
+\begin{equation*}
+  \nabla J(\theta)=\sum_s \mu_\pi(s)\sum_a \nabla \pi(a|s)r_\pi(s,a)
+\end{equation*}
+
+where $r_\pi(s,a)$ is the reward from taking action $a$ in state $s$, and $\mu_\pi(s)$ is the expected number of time steps $t$ on which $S_t=s$ given $s_0$ and following $\pi$. This theorem is valuable since we can sample this expected value which is done in the REINFORCE algorithm where
+
+\begin{equation*}
+  \nabla J(\theta)=\mathbb{E}_\pi\bigg[ \beta^tR_t\frac{\nabla_\theta\pi(A_t|S_t,\theta)}{\pi(A_t|S_t,\theta)}\bigg]
+\end{equation*}
+
+where $R_t$ is the observed reward from step $t$ to the end, $A_t$ is the sampled action in the sampled state $S_t$, and $\beta$ is the discount parameter. Since software implementations of neural networks use Autograd which will automatically analytically compute the gradient of the network with respect to its trainable parameters $\theta$ this equation is now easy to compute.
+
+\begin{equation*}
+  J(\theta|s)=\mathbb{E}_{\pi \sim p_\theta(.|s)}L(\pi|s)
+\end{equation*}
+
+\begin{equation*}
+  \nabla_\theta J(\theta|s)=\mathbb{E}_{\pi \sim p_\theta(.|s)}\bigg[ (L(\pi|s)-b(s))\nabla_\theta \log p_\theta(\pi|s) \bigg]
+\end{equation*}
 
 \section{Experimental Design}
 % cite bill cooks book for describing TSP
-In this section I propose an experimental design in order to study the affect that Neural Net architecture and hyperparameter choice has on both supervised and reinforcement learning. I will describe the set of Neural Net architectures and hyperparameters that will be evaluated and the methods used to evaluate the performance of each method. In order to parameterize the policy function I will use a Recurrent Neural Network with LSTM cells. This method is advantageous since it is able create the policy iteratively rather than determining the route in one step. This is done by letting the probability of a given route be determined by the following
+In this section I propose an experimental design in order to study the affect that Neural Net architecture and hyperparameter choice has on both supervised and reinforcement learning. I will describe the set of Neural Net architectures and hyperparameters that will be evaluated and the methods used to evaluate the performance of each method. In order to parameterize the policy function I will use a Recurrent Neural Network with LSTM cells. This method is advantageous since it is able construct the policy iteratively rather than determining the route in one step. This is done by letting the probability of a given route be determined by the following
 
 \begin{equation*}
   p(y_1,\dots,y_T |x_1,\dots, x_T)=\prod_{t=1}^{T}p(y_t|y_1,\dots,y_{t-1},c)
@@ -165,9 +196,9 @@ I this section I analyze the main experimental results. First I show that when t
   \label{fig_sl_table}
 \end{figure}
 
-In \hyperref[fig_sl_table]{Figure 1} the results from training the 35 different methods is presented. It shows that while the methods that used a unidirectional and bidirectional encoder were able to achieve near optimal results on the TSP 20 that they had very inconsistent performance when hyperparameters were slightly changed. This can be seen by comparing 200, 202, and 205 where the learning rate was changed and the performance was changed significantly.
+In \hyperref[fig_sl_table]{Figure ?} the results from training the 35 different methods is presented. It shows that while the methods that used a unidirectional and bidirectional encoder were able to achieve near optimal results on the TSP 20 that they had very inconsistent performance when hyperparameters were slightly changed. This can be seen by comparing 200, 202, and 205 where the learning rate was changed and the performance was changed significantly.
 
-\hyperref[fig_sl_table]{Figure 1} also shows that unidirectional encoder/decoder was only able to train using the Luong Attention mechanism, the bidirectional encoder/decoder was able to be trained with both attention mechanisms and the pointer network was only able to be trained using the Bahanadu attention mechanism. While the experimental evidence shows that the best run for the unidirectional and bidirectional encoder out performed the best run for the pointer network, the pointer network was more robust to changes in the hyper parameters and was more consistently able to achieve a performance within 10\% of the optimal route length.
+\hyperref[fig_sl_table]{Figure ?} also shows that unidirectional encoder/decoder was only able to train using the Luong Attention mechanism, the bidirectional encoder/decoder was able to be trained with both attention mechanisms and the pointer network was only able to be trained using the Bahanadu attention mechanism. While the experimental evidence shows that the best run for the unidirectional and bidirectional encoder out performed the best run for the pointer network, the pointer network was more robust to changes in the hyper parameters and was more consistently able to achieve a performance within 10\% of the optimal route length.
 
 \begin{figure}[H]
   \centering
@@ -175,7 +206,7 @@ In \hyperref[fig_sl_table]{Figure 1} the results from training the 35 different 
   \label{fig_sr_trainrate}
 \end{figure}
 
-In \hyperref[fig_sr_trainrate]{Figure 2} we can see that while the best run that used a unidirectional encoder/decoder architecture was able to achieve optimal results the average performance improvement per hour of training time is less the average for methods that used a pointer network architecture. This suggests that the pointer network is more consistently able to achieve performance improvements to paramaterized policy during the course of training than the encoder/decoder framework is.
+In \hyperref[fig_sr_trainrate]{Figure ?} we can see that while the best run that used a unidirectional encoder/decoder architecture was able to achieve optimal results the average performance improvement per hour of training time is less the average for methods that used a pointer network architecture. This suggests that the pointer network is more consistently able to achieve performance improvements to paramaterized policy during the course of training than the encoder/decoder framework is.
 
 \subsubsection{In Sample Variance}
 \begin{figure}[H]
@@ -186,7 +217,7 @@ In \hyperref[fig_sr_trainrate]{Figure 2} we can see that while the best run that
 \end{figure}
 
 
-The experiment also provided evidence of significant in sample variance. Identical runs of a method often yielded very different results when only the initial random seed was changed. This can be seen in  \hyperref[samp_var]{Figure 2} where the relative length of 3 different runs of 205 are plotted over the time the method was trained. This plot shows that a method that can yield optimal performance can have difficulty reproducing the same performance when rerun. This is a major problem for reproducibility since even if the architecture and hyperparameters are the same different seeds for the RNG can cause significant differences in performance for the method. The in sample variance also is a problem for further research in this field since the evaluation of a newly proposed architecture can be noisy which makes tuning hyperparameters difficult. These problems could be avoided by performing many sample runs and reporting both the best case and average case for the method however, this can be extremely computationally intensive and many researchers choose to not report the frequency for which their architecture trained successfully.
+The experiment also provided evidence of significant in sample variance. Identical runs of a method often yielded very different results when only the initial random seed was changed. This can be seen in  \hyperref[samp_var]{Figure ?} where the relative length of 3 different runs of 205 are plotted over the time the method was trained. This plot shows that a method that can yield optimal performance can have difficulty reproducing the same performance when rerun. This is a major problem for reproducibility since even if the architecture and hyperparameters are the same different seeds for the RNG can cause significant differences in performance for the method. The in sample variance also is a problem for further research in this field since the evaluation of a newly proposed architecture can be noisy which makes tuning hyperparameters difficult. These problems could be avoided by performing many sample runs and reporting both the best case and average case for the method however, this can be extremely computationally intensive and many researchers choose to not report the frequency for which their architecture trained successfully.
 
 
 \subsection{Reinforcement Learning}

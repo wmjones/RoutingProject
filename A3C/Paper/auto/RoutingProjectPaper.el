@@ -31,8 +31,7 @@
     "apacite")
    (TeX-add-symbols
     '("norm" 1)
-    '("ubar" 1)
-    "argmin")
+    '("ubar" 1))
    (LaTeX-add-labels
     "intro"
     "fig_sl_table"

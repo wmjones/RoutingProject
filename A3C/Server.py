@@ -66,10 +66,10 @@ class Server:
                         self.model.train(state=batch_state, depot_location=batch_depot_location,
                                          sampled_cost=batch_sampled_cost, or_cost=batch_or_cost, old_probs=old_probs)
 
-            # if step % 10000 == 0:
-            if True:
+            if step % 100000 == 0:
+            # if True:
                 test_pred_route, _ = self.model.predict(test_state, [test_depot_location])
-                self.plot(test_state[0], test_pred_route[0][0], self.model.get_global_step())
+                # self.plot(test_state[0], test_pred_route[0][0], self.model.get_global_step())
                 # self.plot(test_state[0], test_or_route, 1)
                 print("Saving Model...")
                 self.model._model_save()

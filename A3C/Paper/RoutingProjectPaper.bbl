@@ -146,6 +146,31 @@ Sutskever, I.%
 \PrintBackRefs{\CurrentBib}
 
 \bibitem [\protect \citeauthoryear {%
+Sutton%
+, Barto%
+\BCBL {}\ \protect \BOthers {.}}{%
+Sutton%
+\ \protect \BOthers {.}}{%
+{\protect \APACyear {1998}}%
+}]{%
+1998_Sutton}
+\APACinsertmetastar {%
+1998_Sutton}%
+\begin{APACrefauthors}%
+Sutton, R\BPBI S.%
+, Barto, A\BPBI G.%
+\BCBL {}\ \BOthersPeriod {.}\end{APACrefauthors}%
+\unskip\
+\newblock
+\APACrefYear{1998}.
+\newblock
+\APACrefbtitle {Reinforcement learning: An introduction} {Reinforcement
+  learning: An introduction}.
+\newblock
+\APACaddressPublisher{}{MIT press}.
+\PrintBackRefs{\CurrentBib}
+
+\bibitem [\protect \citeauthoryear {%
 Vinyals%
 , Fortunato%
 \BCBL {}\ \BBA {} Jaitly%
@@ -170,6 +195,30 @@ Vinyals, O.%
 \newblock
 \BIn{} \APACrefbtitle {Advances in Neural Information Processing Systems}
   {Advances in neural information processing systems}\ (\BPGS\ 2692--2700).
+\PrintBackRefs{\CurrentBib}
+
+\bibitem [\protect \citeauthoryear {%
+Williams%
+}{%
+Williams%
+}{%
+{\protect \APACyear {1992}}%
+}]{%
+1992_Williams}
+\APACinsertmetastar {%
+1992_Williams}%
+\begin{APACrefauthors}%
+Williams, R\BPBI J.%
+\end{APACrefauthors}%
+\unskip\
+\newblock
+\APACrefYearMonthDay{1992}{}{}.
+\newblock
+{\BBOQ}\APACrefatitle {Simple statistical gradient-following algorithms for
+  connectionist reinforcement learning} {Simple statistical gradient-following
+  algorithms for connectionist reinforcement learning}.{\BBCQ}
+\newblock
+\APACjournalVolNumPages{Machine learning}{8}{3-4}{229--256}.
 \PrintBackRefs{\CurrentBib}
 
 \end{thebibliography}

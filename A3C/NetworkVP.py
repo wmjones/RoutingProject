@@ -245,7 +245,7 @@ class NetworkVP:
                     colocate = False
                 if Config.LR_DECAY_OFF == 0:
                     self.lr = tf.train.exponential_decay(
-                        Config.LEARNING_RATE, self.global_step, 500000,
+                        Config.LEARNING_RATE, self.global_step, 200000,
                         .9, staircase=True, name="learning_rate")
                 else:
                     self.lr = Config.LEARNING_RATE

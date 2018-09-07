@@ -1619,6 +1619,34 @@ elif Config.MODEL_SETTING == 359:
     Config.RNN_HIDDEN_DIM = 128
     Config.USE_BAHDANAU = 1
     Config.RUN_TIME = 129600
+elif Config.MODEL_SETTING == 360:
+    Config.DIRECTION = 5
+    Config.REINFORCE = 1
+    Config.LEARNING_RATE = 1e-3
+    Config.RUN_TIME = 129600
+elif Config.MODEL_SETTING == 361:
+    Config.DIRECTION = 5
+    Config.REINFORCE = 1
+    Config.LEARNING_RATE = 1e-4
+    Config.RUN_TIME = 129600
+elif Config.MODEL_SETTING == 362:
+    Config.DIRECTION = 5
+    Config.REINFORCE = 1
+    Config.LEARNING_RATE = 1e-3
+    Config.RNN_HIDDEN_DIM = 32
+    Config.RUN_TIME = 129600
+elif Config.MODEL_SETTING == 363:
+    Config.DIRECTION = 5
+    Config.REINFORCE = 1
+    Config.LEARNING_RATE = 1e-3
+    Config.RNN_HIDDEN_DIM = 64
+    Config.RUN_TIME = 129600
+elif Config.MODEL_SETTING == 364:
+    Config.DIRECTION = 5
+    Config.REINFORCE = 1
+    Config.LEARNING_RATE = 1e-3
+    Config.RNN_HIDDEN_DIM = 128
+    Config.RUN_TIME = 129600
 
 ConfigParse = configparser.ConfigParser()
 ConfigParse.optionxform = str

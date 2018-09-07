@@ -63,43 +63,17 @@ The researcher can use SL to evaluate the value of a given NNA with the hope tha
 \section{RL Review}
 
 In this section I will review
+
 % http://colah.github.io/posts/2015-08-Understanding-LSTMs/
 
-intro to RNN, REINFORCE, Actor-Critic, A3C, GA3C
 
-
-The policy gradient theorem states that if we let
-\begin{equation*}
-  J(\theta)\dot{=}v_{\pi_{\theta}}(s_0)
-\end{equation*}
-
-denote the true value function for $\pi_\theta$, the policy determined by $\theta$. Then the policy gradient theorem states that
-\begin{equation*}
-  \nabla J(\theta)=\sum_s \mu_\pi(s)\sum_a \nabla \pi(a|s)r_\pi(s,a)
-\end{equation*}
-
-where $r_\pi(s,a)$ is the reward from taking action $a$ in state $s$, and $\mu_\pi(s)$ is the expected number of time steps $t$ on which $S_t=s$ given $s_0$ and following $\pi$. This theorem is valuable since we can sample this expected value which is done in the REINFORCE algorithm where
-
-\begin{equation*}
-  \nabla J(\theta)=\mathbb{E}_\pi\bigg[ \beta^tR_t\frac{\nabla_\theta\pi(A_t|S_t,\theta)}{\pi(A_t|S_t,\theta)}\bigg]
-\end{equation*}
-
-where $R_t$ is the observed reward from step $t$ to the end, $A_t$ is the sampled action in the sampled state $S_t$, and $\beta$ is the discount parameter. Since software implementations of neural networks use Autograd which will automatically analytically compute the gradient of the network with respect to its trainable parameters $\theta$ this equation is now easy to compute.
-
-\begin{equation*}
-  J(\theta|s)=\mathbb{E}_{\pi \sim p_\theta(.|s)}L(\pi|s)
-\end{equation*}
-
-\begin{equation*}
-  \nabla_\theta J(\theta|s)=\mathbb{E}_{\pi \sim p_\theta(.|s)}\bigg[ (L(\pi|s)-b(s))\nabla_\theta \log p_\theta(\pi|s) \bigg]
-\end{equation*}
 
 \section{Experimental Design}
 % cite bill cooks book for describing TSP
 In this section I propose an experimental design in order to study the affect that Neural Net architecture and hyperparameter choice has on both supervised and reinforcement learning. I will describe the set of Neural Net architectures and hyperparameters that will be evaluated and the methods used to evaluate the performance of each method. In order to parameterize the policy function I will use a Recurrent Neural Network with LSTM cells. This method is advantageous since it is able construct the policy iteratively rather than determining the route in one step. This is done by letting the probability of a given route be determined by the following
 
 \begin{equation*}
-  p(y_1,\dots,y_T |x_1,\dots, x_T)=\prod_{t=1}^{T}p(y_t|y_1,\dots,y_{t-1},c)
+  p_\theta(\pi|s)=p_\theta(y_1,\dots,y_T |x_1,\dots, x_T)=\prod_{t=1}^{T}p_\theta(y_t|y_1,\dots,y_{t-1},c)
 \end{equation*}
 
 Let $x=(x_1,\dots,x_T)$ be a sequence where $x_i$ is the x-y coordinates for point $i$, $y_t$ is the id of the point traveled to at time $t$ and $c$ is a context vector. In order to prevent the policy from choosing a previously chosen location I store in memory a record of each location chosen and then penalize the probability of moving to that location so that it cannot be chosen.
@@ -122,7 +96,7 @@ where $f$ is an LSTM and $c=h_T$.
 Once the encoder has constructed the context vector $c$ the decoder then determines the output probability at each step using the formulas
 
 \begin{equation*}
-  p(y_t|y_1,\dots,y_{t-1}, c)=g(y_{t-1},s_t, c)
+  p_\theta(y_t|y_1,\dots,y_{t-1}, c)=g(y_{t-1},s_t, c)
 \end{equation*}
 
 \begin{equation*}
@@ -269,8 +243,54 @@ never worked ideas PPO, moving average, sequence cost, use time, direction 4 or 
     while the method is general it's implementation is anything but general
 (Sub Ideas SL can be used to narrow subset but not all SL will work for RL)
 
+\section*{Appendix 1: The Policy Gradient Method}
 
-\citet{2016_Mnih}
+The policy gradient theorem states that if we let
+\begin{equation*}
+  J(\theta)\dot{=}v_{\pi_{\theta}}(s_0)
+\end{equation*}
+
+denote the true value function for $\pi_\theta$, the policy determined by $\theta$ then
+
+\begin{equation*}
+  \nabla J(\theta)=\sum_s \mu_\pi(s)\sum_a \nabla \pi(a|s)r_\pi(s,a)
+\end{equation*}
+
+where $r_\pi(s,a)$ is the reward from taking action $a$ in state $s$, and $\mu_\pi(s)$ is the expected number of time steps $t$ on which $S_t=s$ given $s_0$ and following $\pi$ \citep{1998_Sutton}. This theorem is valuable since we can sample this expected value which is done in the REINFORCE algorithm where
+
+\begin{equation*}
+  \nabla J(\theta)=\mathbb{E}_{\pi_\theta}\bigg[ \beta^tR_t\frac{\nabla_\theta\pi_\theta(A_t|S_t)}{\pi_\theta(A_t|S_t)}\bigg]
+\end{equation*}
+
+where $R_t$ is the observed reward from step $t$ to the end, $A_t$ is the sampled action in the sampled state $S_t$, and $\beta$ is the discount parameter \citep{1992_Williams}. Since software implementations of neural networks use Autograd which will automatically analytically compute the gradient of the network with respect to its trainable parameters $\theta$ through backpropagation this equation is now easy to compute.
+
+Improvements to this algorithm include the addition of a separate trainable network called a critic network. This network is used to decrease the variance of the policy parameter update. The addition of a critic network changes the gradient calculation to
+
+\begin{equation*}
+  \nabla_\theta J(\theta|s)=\mathbb{E}_{\pi \sim p_\theta(.|s)}\bigg[ (L(\pi|s)-\hat{v}_\phi(s))\nabla_\theta \log p_\theta(\pi|s) \bigg]
+\end{equation*}
+
+where $\hat{v}_\phi(s)$ is a neural network parameterized by $\phi$.
+
+\begin{algorithm}[H]
+  \caption{Actor-Critic Method}
+  \begin{algorithmic}[1]
+    \Procedure{}{} Given $p_\theta(.|s)$, $\hat{v}_\phi(s)$ and step sizes $\alpha_1, \alpha_2$
+    \State Initialize policy parameter $\theta$ and state-value parameters $\phi$
+    \While{Training}
+    \State Generate an episode $S_0, A_0, r_1,\dots,S_{T-1},A_{T-1},r_T$ following $\pi_\theta(\cdot|\cdot)$.
+    \For{$t=1,\dots,T$}
+    \State $R_t \leftarrow $ return from step $t$
+    \State $\phi \leftarrow \phi + \alpha_1 (R_t-\hat{v}_\phi(S_t) )\nabla_\phi\hat{v}_\phi(S_t)$
+    \State $\theta \leftarrow \theta + \alpha_2 \beta^t (R_t-\hat{v}_\phi(S_t) )\nabla_\theta \log(\pi_\theta(A_t|S_t))$
+    \EndFor
+    \EndWhile
+    \EndProcedure
+  \end{algorithmic}
+\end{algorithm}
+
+This method can be use parallelization in order to more efficiently use multiple CPU threads. This method was introduced in
+\citet{2016_Mnih} and is called Asynchronous Advantage Actor-Critic (A3C) and has been shown to increase the speed for which the policy can be trained and the parallelization has also been shown to help stabilize the parameter updates. See \citep{1998_Sutton} for a more detailed introduction to the REINFORCE, and Actor-Critic methods and see \citep{2016_Mnih} for a detailed description of A3C.
 
 \bibliographystyle{apacite}
 \bibliography{bibliography.bib}

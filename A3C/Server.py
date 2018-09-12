@@ -45,6 +45,7 @@ class Server:
         test_or_route = batch_or_route[0]
         t_end = time.time() + Config.RUN_TIME
         step = -1
+        self.plot(test_state[0], test_or_route, 0)
         while time.time() < t_end:
             step += 1
             batch_state, batch_or_cost, batch_or_route, batch_depot_location = self.env.next_batch(Config.TRAINING_MIN_BATCH_SIZE)
@@ -69,8 +70,8 @@ class Server:
             if step % 10000 == 0:
             # if True:
                 test_pred_route, _ = self.model.predict(test_state, [test_depot_location])
-                self.plot(test_state[0], test_pred_route[0][0], self.model.get_global_step())
-                self.plot(test_state[0], test_or_route, 0)
+                if step % 100000 == 0:
+                    self.plot(test_state[0], test_pred_route[0][0], self.model.get_global_step())
                 print("Saving Model...")
                 self.model._model_save()
                 print("Done Saving Model")

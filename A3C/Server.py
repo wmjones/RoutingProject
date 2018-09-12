@@ -42,7 +42,7 @@ class Server:
         batch_state, batch_or_cost, batch_or_route, batch_depot_location = self.env.next_batch(Config.TRAINING_MIN_BATCH_SIZE)
         test_state = np.asarray([batch_state[0]], dtype=np.float32)
         test_depot_location = batch_depot_location[0]
-        # test_or_route = batch_or_route[0]
+        test_or_route = batch_or_route[0]
         t_end = time.time() + Config.RUN_TIME
         step = -1
         while time.time() < t_end:
@@ -69,8 +69,8 @@ class Server:
             if step % 10000 == 0:
             # if True:
                 test_pred_route, _ = self.model.predict(test_state, [test_depot_location])
-                # self.plot(test_state[0], test_pred_route[0][0], self.model.get_global_step())
-                # self.plot(test_state[0], test_or_route, 1)
+                self.plot(test_state[0], test_pred_route[0][0], self.model.get_global_step())
+                self.plot(test_state[0], test_or_route, 0)
                 print("Saving Model...")
                 self.model._model_save()
                 print("Done Saving Model")
@@ -81,7 +81,7 @@ class Server:
                     batch_eval_pred_route, batch_eval_pred_cost = self.eval_model.predict(batch_state, batch_depot_location)
                 elif Config.SAMPLING == 1:
                     self.eval_model = NetworkVP(Config.DEVICE, DECODER_TYPE=2)
-                    batch_eval_pred_route, batch_eval_pred_cost = self.eval_model.predict(batch_state, batch_depot_location, 2)
+                    batch_eval_pred_route, batch_eval_pred_cost = self.eval_model.predict(batch_state, batch_depot_location, 10)
                 else:
                     batch_eval_pred_route = batch_pred_route
                 batch_eval_sampled_cost = self.env.cost(batch_state, batch_eval_pred_route)

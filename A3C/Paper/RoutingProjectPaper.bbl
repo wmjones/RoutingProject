@@ -1,6 +1,32 @@
 \begin{thebibliography}{}
 
 \bibitem [\protect \citeauthoryear {%
+Applegate%
+, Bixby%
+, Chvatal%
+\BCBL {}\ \BBA {} Cook%
+}{%
+Applegate%
+\ \protect \BOthers {.}}{%
+{\protect \APACyear {2006}}%
+}]{%
+2006_concorde}
+\APACinsertmetastar {%
+2006_concorde}%
+\begin{APACrefauthors}%
+Applegate, D.%
+, Bixby, R.%
+, Chvatal, V.%
+\BCBL {}\ \BBA {} Cook, W.%
+\end{APACrefauthors}%
+\unskip\
+\newblock
+\APACrefYearMonthDay{2006}{}{}.
+\newblock
+\APACrefbtitle {Concorde TSP solver.} {Concorde tsp solver.}
+\PrintBackRefs{\CurrentBib}
+
+\bibitem [\protect \citeauthoryear {%
 Babaeizadeh%
 , Frosio%
 , Tyree%
@@ -57,6 +83,93 @@ Bahdanau, D.%
   translate}.{\BBCQ}
 \newblock
 \APACjournalVolNumPages{arXiv preprint arXiv:1409.0473}{}{}{}.
+\PrintBackRefs{\CurrentBib}
+
+\bibitem [\protect \citeauthoryear {%
+Bello%
+, Pham%
+, Le%
+, Norouzi%
+\BCBL {}\ \BBA {} Bengio%
+}{%
+Bello%
+\ \protect \BOthers {.}}{%
+{\protect \APACyear {2016}}%
+}]{%
+2016_Bello}
+\APACinsertmetastar {%
+2016_Bello}%
+\begin{APACrefauthors}%
+Bello, I.%
+, Pham, H.%
+, Le, Q\BPBI V.%
+, Norouzi, M.%
+\BCBL {}\ \BBA {} Bengio, S.%
+\end{APACrefauthors}%
+\unskip\
+\newblock
+\APACrefYearMonthDay{2016}{}{}.
+\newblock
+{\BBOQ}\APACrefatitle {Neural combinatorial optimization with reinforcement
+  learning} {Neural combinatorial optimization with reinforcement
+  learning}.{\BBCQ}
+\newblock
+\APACjournalVolNumPages{arXiv preprint arXiv:1611.09940}{}{}{}.
+\PrintBackRefs{\CurrentBib}
+
+\bibitem [\protect \citeauthoryear {%
+Hessel%
+\ \protect \BOthers {.}}{%
+Hessel%
+\ \protect \BOthers {.}}{%
+{\protect \APACyear {2017}}%
+}]{%
+2017_Hessel}
+\APACinsertmetastar {%
+2017_Hessel}%
+\begin{APACrefauthors}%
+Hessel, M.%
+, Modayil, J.%
+, Van~Hasselt, H.%
+, Schaul, T.%
+, Ostrovski, G.%
+, Dabney, W.%
+\BDBL {}Silver, D.%
+\end{APACrefauthors}%
+\unskip\
+\newblock
+\APACrefYearMonthDay{2017}{}{}.
+\newblock
+{\BBOQ}\APACrefatitle {Rainbow: Combining improvements in deep reinforcement
+  learning} {Rainbow: Combining improvements in deep reinforcement
+  learning}.{\BBCQ}
+\newblock
+\APACjournalVolNumPages{arXiv preprint arXiv:1710.02298}{}{}{}.
+\PrintBackRefs{\CurrentBib}
+
+\bibitem [\protect \citeauthoryear {%
+Hochreiter%
+\ \BBA {} Schmidhuber%
+}{%
+Hochreiter%
+\ \BBA {} Schmidhuber%
+}{%
+{\protect \APACyear {1997}}%
+}]{%
+1997_LSTM}
+\APACinsertmetastar {%
+1997_LSTM}%
+\begin{APACrefauthors}%
+Hochreiter, S.%
+\BCBT {}\ \BBA {} Schmidhuber, J.%
+\end{APACrefauthors}%
+\unskip\
+\newblock
+\APACrefYearMonthDay{1997}{}{}.
+\newblock
+{\BBOQ}\APACrefatitle {Long short-term memory} {Long short-term memory}.{\BBCQ}
+\newblock
+\APACjournalVolNumPages{Neural computation}{9}{8}{1735--1780}.
 \PrintBackRefs{\CurrentBib}
 
 \bibitem [\protect \citeauthoryear {%
@@ -118,6 +231,95 @@ Mnih, V.%
 \PrintBackRefs{\CurrentBib}
 
 \bibitem [\protect \citeauthoryear {%
+Nazari%
+, Oroojlooy%
+, Snyder%
+\BCBL {}\ \BBA {} Tak{\'a}{\v{c}}%
+}{%
+Nazari%
+\ \protect \BOthers {.}}{%
+{\protect \APACyear {2018}}%
+}]{%
+2018_Nazari}
+\APACinsertmetastar {%
+2018_Nazari}%
+\begin{APACrefauthors}%
+Nazari, M.%
+, Oroojlooy, A.%
+, Snyder, L\BPBI V.%
+\BCBL {}\ \BBA {} Tak{\'a}{\v{c}}, M.%
+\end{APACrefauthors}%
+\unskip\
+\newblock
+\APACrefYearMonthDay{2018}{}{}.
+\newblock
+{\BBOQ}\APACrefatitle {Deep Reinforcement Learning for Solving the Vehicle
+  Routing Problem} {Deep reinforcement learning for solving the vehicle routing
+  problem}.{\BBCQ}
+\newblock
+\APACjournalVolNumPages{arXiv preprint arXiv:1802.04240}{}{}{}.
+\PrintBackRefs{\CurrentBib}
+
+\bibitem [\protect \citeauthoryear {%
+Silver%
+\ \protect \BOthers {.}}{%
+Silver%
+\ \protect \BOthers {.}}{%
+{\protect \APACyear {2016}}%
+}]{%
+2016_Silver}
+\APACinsertmetastar {%
+2016_Silver}%
+\begin{APACrefauthors}%
+Silver, D.%
+, Huang, A.%
+, Maddison, C\BPBI J.%
+, Guez, A.%
+, Sifre, L.%
+, Van Den~Driessche, G.%
+\BDBL {}others%
+\end{APACrefauthors}%
+\unskip\
+\newblock
+\APACrefYearMonthDay{2016}{}{}.
+\newblock
+{\BBOQ}\APACrefatitle {Mastering the game of Go with deep neural networks and
+  tree search} {Mastering the game of go with deep neural networks and tree
+  search}.{\BBCQ}
+\newblock
+\APACjournalVolNumPages{nature}{529}{7587}{484}.
+\PrintBackRefs{\CurrentBib}
+
+\bibitem [\protect \citeauthoryear {%
+Silver%
+\ \protect \BOthers {.}}{%
+Silver%
+\ \protect \BOthers {.}}{%
+{\protect \APACyear {2017}}%
+}]{%
+2017_Silver}
+\APACinsertmetastar {%
+2017_Silver}%
+\begin{APACrefauthors}%
+Silver, D.%
+, Schrittwieser, J.%
+, Simonyan, K.%
+, Antonoglou, I.%
+, Huang, A.%
+, Guez, A.%
+\BDBL {}others%
+\end{APACrefauthors}%
+\unskip\
+\newblock
+\APACrefYearMonthDay{2017}{}{}.
+\newblock
+{\BBOQ}\APACrefatitle {Mastering the game of Go without human knowledge}
+  {Mastering the game of go without human knowledge}.{\BBCQ}
+\newblock
+\APACjournalVolNumPages{Nature}{550}{7676}{354}.
+\PrintBackRefs{\CurrentBib}
+
+\bibitem [\protect \citeauthoryear {%
 Sutskever%
 , Vinyals%
 \BCBL {}\ \BBA {} Le%
@@ -125,7 +327,7 @@ Sutskever%
 Sutskever%
 \ \protect \BOthers {.}}{%
 {\protect \APACyear {2014}}%
-}]{%
+{\protect \APACexlab {{\protect \BCnt {1}}}}}]{%
 2014_sut}
 \APACinsertmetastar {%
 2014_sut}%
@@ -136,7 +338,35 @@ Sutskever, I.%
 \end{APACrefauthors}%
 \unskip\
 \newblock
-\APACrefYearMonthDay{2014}{}{}.
+\APACrefYearMonthDay{2014{\protect \BCnt {1}}}{}{}.
+\newblock
+{\BBOQ}\APACrefatitle {Sequence to sequence learning with neural networks}
+  {Sequence to sequence learning with neural networks}.{\BBCQ}
+\newblock
+\BIn{} \APACrefbtitle {Advances in neural information processing systems}
+  {Advances in neural information processing systems}\ (\BPGS\ 3104--3112).
+\PrintBackRefs{\CurrentBib}
+
+\bibitem [\protect \citeauthoryear {%
+Sutskever%
+, Vinyals%
+\BCBL {}\ \BBA {} Le%
+}{%
+Sutskever%
+\ \protect \BOthers {.}}{%
+{\protect \APACyear {2014}}%
+{\protect \APACexlab {{\protect \BCnt {2}}}}}]{%
+2014_Sutskever}
+\APACinsertmetastar {%
+2014_Sutskever}%
+\begin{APACrefauthors}%
+Sutskever, I.%
+, Vinyals, O.%
+\BCBL {}\ \BBA {} Le, Q\BPBI V.%
+\end{APACrefauthors}%
+\unskip\
+\newblock
+\APACrefYearMonthDay{2014{\protect \BCnt {2}}}{}{}.
 \newblock
 {\BBOQ}\APACrefatitle {Sequence to sequence learning with neural networks}
   {Sequence to sequence learning with neural networks}.{\BBCQ}

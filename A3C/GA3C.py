@@ -1212,14 +1212,14 @@ elif Config.MODEL_SETTING == 303:
     Config.LEARNING_RATE = 1e-3
     Config.RNN_HIDDEN_DIM = 32
     Config.RUN_TIME = 129600
-elif Config.MODEL_SETTING == 304:  # optimal 1.002
+elif Config.MODEL_SETTING == 304:
     Config.DIRECTION = 1
     Config.REINFORCE = 1
     Config.LR_DECAY_OFF = 1
     Config.LEARNING_RATE = 1e-3
     Config.RNN_HIDDEN_DIM = 64
     Config.RUN_TIME = 129600
-elif Config.MODEL_SETTING == 305:  # optimal 1.001
+elif Config.MODEL_SETTING == 305:
     Config.DIRECTION = 1
     Config.REINFORCE = 1
     Config.LR_DECAY_OFF = 1
@@ -1445,39 +1445,39 @@ elif Config.MODEL_SETTING == 336:
     Config.LR_DECAY_OFF = 1
     Config.LEARNING_RATE = 1e-2
     Config.RUN_TIME = 129600
-elif Config.MODEL_SETTING == 337:
+elif Config.MODEL_SETTING == 337:  # looking good
     Config.DIRECTION = 10
     Config.REINFORCE = 1
-    Config.LR_DECAY_OFF = 1
+    # Config.LR_DECAY_OFF = 1
     Config.LEARNING_RATE = 1e-3
-    Config.RUN_TIME = 129600
-elif Config.MODEL_SETTING == 338:
+    Config.RUN_TIME = 216000
+elif Config.MODEL_SETTING == 338:  # looking good
     Config.DIRECTION = 10
     Config.REINFORCE = 1
-    Config.LR_DECAY_OFF = 1
+    # Config.LR_DECAY_OFF = 1
     Config.LEARNING_RATE = 1e-4
-    Config.RUN_TIME = 129600
-elif Config.MODEL_SETTING == 339:
+    Config.RUN_TIME = 216000
+elif Config.MODEL_SETTING == 339:  # looking good
     Config.DIRECTION = 10
     Config.REINFORCE = 1
-    Config.LR_DECAY_OFF = 1
+    # Config.LR_DECAY_OFF = 1
     Config.LEARNING_RATE = 1e-3
     Config.RNN_HIDDEN_DIM = 32
-    Config.RUN_TIME = 129600
-elif Config.MODEL_SETTING == 340:
+    Config.RUN_TIME = 216000
+elif Config.MODEL_SETTING == 340:  # looking good
     Config.DIRECTION = 10
     Config.REINFORCE = 1
-    Config.LR_DECAY_OFF = 1
+    # Config.LR_DECAY_OFF = 1
     Config.LEARNING_RATE = 1e-3
     Config.RNN_HIDDEN_DIM = 64
-    Config.RUN_TIME = 129600
-elif Config.MODEL_SETTING == 341:
+    Config.RUN_TIME = 216000
+elif Config.MODEL_SETTING == 341:  # looking good
     Config.DIRECTION = 10
     Config.REINFORCE = 1
-    Config.LR_DECAY_OFF = 1
+    # Config.LR_DECAY_OFF = 1
     Config.LEARNING_RATE = 1e-3
     Config.RNN_HIDDEN_DIM = 128
-    Config.RUN_TIME = 129600
+    Config.RUN_TIME = 216000
 elif Config.MODEL_SETTING == 342:
     Config.DIRECTION = 10
     Config.REINFORCE = 1
@@ -1624,7 +1624,7 @@ elif Config.MODEL_SETTING == 360:
     Config.REINFORCE = 1
     Config.LEARNING_RATE = 1e-3
     Config.RUN_TIME = 129600
-elif Config.MODEL_SETTING == 361:
+elif Config.MODEL_SETTING == 361:  # looking good
     Config.DIRECTION = 5
     Config.REINFORCE = 1
     Config.LEARNING_RATE = 1e-4

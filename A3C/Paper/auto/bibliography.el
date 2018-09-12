@@ -4,9 +4,11 @@
    (LaTeX-add-bibitems
     "1992_Williams"
     "1995_Boyan"
+    "1997_LSTM"
     "1998_Sutton"
     "2000_Sutton"
     "2002_Tesauro"
+    "2006_concorde"
     "2014_sut"
     "2014_bah"
     "2014_Sutskever"

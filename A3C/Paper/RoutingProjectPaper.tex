@@ -6,6 +6,7 @@
 \usepackage{algorithm}
 \usepackage{algpseudocode}
 \usepackage{graphicx}
+\usepackage{caption}
 \graphicspath{{../Paper_figs/}}
 \pdfimageresolution=300
 
@@ -44,6 +45,12 @@
 \section{Introduction}
 \label{intro}
 
+\citep{2016_Silver}
+
+\citep{2017_Silver}
+
+\citep{2017_Hessel}
+
 Talk about how RL is very general method to solve DP problems, is really cool, and can do amazing things (GO, ATARI)
 Talk about application to OR with TSP and how it is a big problem, talk about how feas constraint is annoying, and large cont state space, very applicable to a lot of problems
 Why isnt it applied more?
@@ -60,13 +67,20 @@ The researcher can use SL to evaluate the value of a given NNA with the hope tha
 % $\frac{(n-1)!}{2}$ number of possible routes and has continuous state space where each problem is drawn from $[0, 1]^n$
 % for tsp 20 there are \num{6.08e16} possible routes
 
-\section{RL Review}
+\section{Previous Work}
 
-In this section I will review
-
-% http://colah.github.io/posts/2015-08-Understanding-LSTMs/
+The Traveling Salesman Problem (TSP) is a well studied combinatorial optimization problem and many exact and approximate methods have been developed to solve it. The problem was first formulated in 1930 and it is often used as a benchmark for many optimization methods. The current best exact dynamic programming algorithm for TSP has a complexity of $\mathcal{O}(2^nn^2)$ which makes it infeasible on problems larger than 40 points. While calculating the optimal route exactly is infeasible for most problems many approximate methods that rely on heuristic approaches have been able to perform well on much larger problem instances. Modern TSP solvers, which rely on handcrafted heuristics that determine how to navigate the space of feasible policies efficiently are able to solve TSP instances with thousands of points. \citep{2006_concorde} introduced the Concorde Algorithm which makes use of cutting plane algorithms is regarded as the current best TSP solver and ...
 
 
+\citep{2014_sut}
+
+\citep{2014_Sutskever}
+
+\citep{2015_Vinyals}
+
+\citep{2016_Bello}
+
+\citep{2018_Nazari}
 
 \section{Experimental Design}
 % cite bill cooks book for describing TSP
@@ -103,7 +117,7 @@ Once the encoder has constructed the context vector $c$ the decoder then determi
   s_t=f(s_{t-1},y_{t-1},c_t)
 \end{equation*}
 
-where $g(y_{t-1},s_t, c)$ is the softmax of the output of the decoder's LSTM cells and $f(s_{t-1},y_{t-1},c_t)$ is how the LSTM cell updates its hidden state. In this paper $p(y_t|y_1,\dots,y_{t-1}, c)$ is the probability that the route moves to the location $y$ in step $t$.
+where $g(y_{t-1},s_t, c)$ is the softmax of the output of the decoder's LSTM cells and $f(s_{t-1},y_{t-1},c_t)$ is how the LSTM cell updates its hidden state. In this paper $p_\theta(y_t|y_1,\dots,y_{t-1}, c)$ is the probability that the route moves to the location $y$ in step $t$.
 
 \subsection{Bidirectional Encoder/Decoder}
 
@@ -114,7 +128,7 @@ The second major Neural Network architecture that I use the bidirectional Encode
 The final architecture is from \citet{2015_Vinyals} where there is no longer an encoder and the probability of moving to the next point is simplified to the following
 
 \begin{equation*}
-  p(y_t|y_1,\dots,y_{t-1}, c)=\text{softmax}(c)
+  p_\theta(y_t|y_1,\dots,y_{t-1}, c)=\text{softmax}(c)
 \end{equation*}
 
 where $h_t$ is the LSTM's hidden state at step $t$ and $c$ is the context vector. The context vector is calculated using an attention layer.
@@ -164,12 +178,6 @@ I this section I analyze the main experimental results. First I show that when t
 
 \subsubsection{Hyperparameter and Architecture Choice}
 
-\begin{figure}[H]
-  \centering
-  \caption{Table of Supervised Learning Experimental Results}
-  \label{fig_sl_table}
-\end{figure}
-
 In \hyperref[fig_sl_table]{Figure ?} the results from training the 35 different methods is presented. It shows that while the methods that used a unidirectional and bidirectional encoder were able to achieve near optimal results on the TSP 20 that they had very inconsistent performance when hyperparameters were slightly changed. This can be seen by comparing 200, 202, and 205 where the learning rate was changed and the performance was changed significantly.
 
 \hyperref[fig_sl_table]{Figure ?} also shows that unidirectional encoder/decoder was only able to train using the Luong Attention mechanism, the bidirectional encoder/decoder was able to be trained with both attention mechanisms and the pointer network was only able to be trained using the Bahanadu attention mechanism. While the experimental evidence shows that the best run for the unidirectional and bidirectional encoder out performed the best run for the pointer network, the pointer network was more robust to changes in the hyper parameters and was more consistently able to achieve a performance within 10\% of the optimal route length.
@@ -185,11 +193,24 @@ In \hyperref[fig_sr_trainrate]{Figure ?} we can see that while the best run that
 \subsubsection{In Sample Variance}
 \begin{figure}[H]
   \centering
-  \includegraphics[scale=2.5]{fig_samp_var}
-  \caption{Plot of relative length over training time for 205}
+  \includegraphics[scale=1]{sl_samp_samp_var_1_plot}
+  \caption{Multiple Training Runs of the Unidirectional Encoder/Decoder \\ Attention=Luong, LR=1e-3,  of cells=128}
   \label{fig_samp_var}
 \end{figure}
 
+\begin{figure}[H]
+  \centering
+  \includegraphics[scale=1]{sl_samp_samp_var_2_plot}
+  \caption{Multiple Training Runs of the Bidirectional Encoder/Decoder \\ Attention=Luong, LR=1e-3,  of cells=128}
+  \label{fig_samp_var}
+\end{figure}
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[scale=1]{sl_samp_samp_var_3_plot}
+  \caption{Multiple Training Runs of the Pointer Network \\ Attention=Bah, LR=1e-3,  of cells=128}
+  \label{fig_samp_var}
+\end{figure}
 
 The experiment also provided evidence of significant in sample variance. Identical runs of a method often yielded very different results when only the initial random seed was changed. This can be seen in  \hyperref[samp_var]{Figure ?} where the relative length of 3 different runs of 205 are plotted over the time the method was trained. This plot shows that a method that can yield optimal performance can have difficulty reproducing the same performance when rerun. This is a major problem for reproducibility since even if the architecture and hyperparameters are the same different seeds for the RNG can cause significant differences in performance for the method. The in sample variance also is a problem for further research in this field since the evaluation of a newly proposed architecture can be noisy which makes tuning hyperparameters difficult. These problems could be avoided by performing many sample runs and reporting both the best case and average case for the method however, this can be extremely computationally intensive and many researchers choose to not report the frequency for which their architecture trained successfully.
 
@@ -241,7 +262,91 @@ never worked ideas PPO, moving average, sequence cost, use time, direction 4 or 
 \section{Conclusion}
 (Main Idea is to show how it is necessary to build a specific architecture to solve specific problems)
     while the method is general it's implementation is anything but general
-(Sub Ideas SL can be used to narrow subset but not all SL will work for RL)
+    (Sub Ideas SL can be used to narrow subset but not all SL will work for RL)
+
+\section*{Tables}
+
+\begin{figure}[!p]
+  \centering
+  \begin{tabular}{l|l|l|l|r}
+    Architecture & Attention & \# of cells & LR & Relative Length\\
+    \hline
+    Unidirectional & Luong & 128 & 1e-2 & 2.77\\
+    Unidirectional & Luong & 128 & 1e-3 & 1.00\\ % plot for sample variance
+    Unidirectional & Luong & 128 & 1e-4 & 1.99\\
+    Unidirectional & Luong & 32 & 1e-3 & 2.13\\
+    Unidirectional & Luong & 64 & 1e-3 & 1.01\\
+    Unidirectional & Bah & 128 & 1e-2 & 2.76\\
+    Unidirectional & Bah & 128 & 1e-3 & 2.43\\
+    Unidirectional & Bah & 128 & 1e-4 & 2.45\\
+    Unidirectional & Bah & 32 & 1e-3 & 2.66\\
+    Unidirectional & Bah & 64 & 1e-3 & 2.61\\
+    Bidirectional & Luong & 128 & 1e-2 & 2.28\\
+    Bidirectional & Luong & 128 & 1e-3 & 1.00\\ % plot for sample variance
+    Bidirectional & Luong & 128 & 1e-4 & 2.08\\
+    Bidirectional & Luong & 32 & 1e-3 & 1.50\\
+    Bidirectional & Luong & 64 & 1e-3 & 1.01\\
+    Bidirectional & Bah & 128 & 1e-2 & 2.77\\
+    Bidirectional & Bah & 128 & 1e-3 & 1.50\\
+    Bidirectional & Bah & 128 & 1e-4 & 2.17\\
+    Bidirectional & Bah & 32 & 1e-3 & 1.00\\
+    Bidirectional & Bah & 64 & 1e-3 & 2.38\\
+    Pointer & Luong & 128 & 1e-2 & 2.22\\
+    Pointer & Luong & 128 & 1e-3 & 1.12\\
+    Pointer & Luong & 128 & 1e-4 & 1.54\\
+    Pointer & Luong & 32 & 1e-3 & 1.51\\
+    Pointer & Luong & 64 & 1e-3 & 1.57\\
+    Pointer & Bah & 128 & 1e-2 & 1.21\\
+    Pointer & Bah & 128 & 1e-3 & 1.06\\ % plot for sample variance
+    Pointer & Bah & 128 & 1e-4 & 1.07\\
+    Pointer & Bah & 32 & 1e-3 & 1.11\\
+    Pointer & Bah & 64 & 1e-3 & 1.07
+   \end{tabular}
+  \caption{Table of Supervised Learning Experimental Results}
+  \label{fig_sl_table}
+\end{figure}
+
+
+\begin{figure}[!p]
+  \centering
+  \begin{tabular}{l|l|l|l|r}
+    Architecture & Attention & \# of cells & LR & Relative Length\\
+    \hline
+    Unidirectional & Luong & 128 & 1e-2 & 2.75\\
+    Unidirectional & Luong & 128 & 1e-3 & 2.74\\
+    Unidirectional & Luong & 128 & 1e-4 & 2.84\\
+    Unidirectional & Luong & 32 & 1e-3 & 2.64\\
+    Unidirectional & Luong & 64 & 1e-3 & 2.74\\
+    Unidirectional & Bah & 128 & 1e-2 & 2.76\\
+    Unidirectional & Bah & 128 & 1e-3 & 2.73\\
+    Unidirectional & Bah & 128 & 1e-4 & 2.74\\
+    Unidirectional & Bah & 32 & 1e-3 & 2.71\\
+    Unidirectional & Bah & 64 & 1e-3 & 2.74\\
+    Bidirectional & Luong & 128 & 1e-2 & \\
+    Bidirectional & Luong & 128 & 1e-3 & \\
+    Bidirectional & Luong & 128 & 1e-4 & \\
+    Bidirectional & Luong & 32 & 1e-3 & \\
+    Bidirectional & Luong & 64 & 1e-3 & \\
+    Bidirectional & Bah & 128 & 1e-2 & \\
+    Bidirectional & Bah & 128 & 1e-3 & \\
+    Bidirectional & Bah & 128 & 1e-4 & \\
+    Bidirectional & Bah & 32 & 1e-3 & \\
+    Bidirectional & Bah & 64 & 1e-3 & \\
+    Pointer & Luong & 128 & 1e-2 & 2.65\\
+    Pointer & Luong & 128 & 1e-3 & 1.03\\
+    Pointer & Luong & 128 & 1e-4 & 1.12\\
+    Pointer & Luong & 32 & 1e-3 & 1.15\\
+    Pointer & Luong & 64 & 1e-3 & 1.04\\
+    Pointer & Bah & 128 & 1e-2 & 1.11\\
+    Pointer & Bah & 128 & 1e-3 & \\  %2.65
+    Pointer & Bah & 128 & 1e-4 & \\  %2.19
+    Pointer & Bah & 32 & 1e-3 & \\  %1.59
+    Pointer & Bah & 64 & 1e-3 &
+   \end{tabular}
+  \caption{Table of Reinforcement Learning Experimental Results}
+  \label{fig_sl_table}
+\end{figure}
+
 
 \section*{Appendix 1: The Policy Gradient Method}
 
@@ -253,10 +358,10 @@ The policy gradient theorem states that if we let
 denote the true value function for $\pi_\theta$, the policy determined by $\theta$ then
 
 \begin{equation*}
-  \nabla J(\theta)=\sum_s \mu_\pi(s)\sum_a \nabla \pi(a|s)r_\pi(s,a)
+  \nabla J(\theta)=\sum_s \mu_\pi(s)\sum_a \nabla \pi_\theta(a|s)r_{\pi_/theta}(s,a)
 \end{equation*}
 
-where $r_\pi(s,a)$ is the reward from taking action $a$ in state $s$, and $\mu_\pi(s)$ is the expected number of time steps $t$ on which $S_t=s$ given $s_0$ and following $\pi$ \citep{1998_Sutton}. This theorem is valuable since we can sample this expected value which is done in the REINFORCE algorithm where
+where $r_\pi(s,a)$ is the reward from taking action $a$ in state $s$, and $\mu_\pi(s)$ is the expected number of time steps $t$ on which $S_t=s$ given $s_0$ and following $\pi_\theta$ \citep{1998_Sutton}. This theorem is valuable since we can sample this expected value which is done in the REINFORCE algorithm where
 
 \begin{equation*}
   \nabla J(\theta)=\mathbb{E}_{\pi_\theta}\bigg[ \beta^tR_t\frac{\nabla_\theta\pi_\theta(A_t|S_t)}{\pi_\theta(A_t|S_t)}\bigg]
@@ -291,6 +396,14 @@ where $\hat{v}_\phi(s)$ is a neural network parameterized by $\phi$.
 
 This method can be use parallelization in order to more efficiently use multiple CPU threads. This method was introduced in
 \citet{2016_Mnih} and is called Asynchronous Advantage Actor-Critic (A3C) and has been shown to increase the speed for which the policy can be trained and the parallelization has also been shown to help stabilize the parameter updates. See \citep{1998_Sutton} for a more detailed introduction to the REINFORCE, and Actor-Critic methods and see \citep{2016_Mnih} for a detailed description of A3C.
+
+\section*{Appendix 2: Recurrent Neural Networks}
+
+A recurrent neural network (RNN) is a class of artificial neural networks where output of a cell is directed back as input in to the cell again. This allows the network to exhibit temporal dynamic behavior for a sequence. Unlike feedforward neural networks RNN's maintain a hidden state $h_t$ that is changed as the network iteratively processes input which allows the network to process sequences.
+
+In this paper I use long short-term memory (LSTM) as the central component of my RNN. LSTM cells have parameterized functions for processing the input $x_t$, updating the cell's hidden state $h_t$, and determining the output of the cell $y_t$ \citep{1997_LSTM}. These functions are called the input gate, forget gate, and output gate respectively. The input gate is a sigmoid layer which decides which elements will be potentially added to the current hidden state as a function of the previous hidden state and the current input. Next the forget gate is composed of a sigmoid layer that decides which components of the cell's hidden state to keep for the next step as a function of the previous cell's hidden state and the current input. Finally, the output gate determines the output of the cell as a function of the input and the new hidden state. The parameters of these functions are then trained to minimize a loss function using a gradient decent optimizer such as ADAM.
+
+Please see \href{http://colah.github.io/posts/2015-08-Understanding-LSTMs/}{Understanding LSTM Networks} for an introduction to LSTM Networks.
 
 \bibliographystyle{apacite}
 \bibliography{bibliography.bib}

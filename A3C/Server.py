@@ -108,8 +108,8 @@ class Server:
                 print(np.mean(batch_sampled_cost))
                 print("avg_batch_eval_sampled_cost:")
                 print(np.mean(batch_eval_sampled_cost))
-            if self.model.get_global_step() > 3000000:
-                break
+            # if self.model.get_global_step() > 3000000:
+            #     break
 
             # for i in range(len(batch_pred_route)):
             #     if len(batch_pred_route[i]) > len(np.unique(batch_pred_route[i])):

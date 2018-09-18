@@ -1,32 +1,6 @@
 \begin{thebibliography}{}
 
 \bibitem [\protect \citeauthoryear {%
-Applegate%
-, Bixby%
-, Chvatal%
-\BCBL {}\ \BBA {} Cook%
-}{%
-Applegate%
-\ \protect \BOthers {.}}{%
-{\protect \APACyear {2006}}%
-}]{%
-2006_concorde}
-\APACinsertmetastar {%
-2006_concorde}%
-\begin{APACrefauthors}%
-Applegate, D.%
-, Bixby, R.%
-, Chvatal, V.%
-\BCBL {}\ \BBA {} Cook, W.%
-\end{APACrefauthors}%
-\unskip\
-\newblock
-\APACrefYearMonthDay{2006}{}{}.
-\newblock
-\APACrefbtitle {Concorde TSP solver.} {Concorde tsp solver.}
-\PrintBackRefs{\CurrentBib}
-
-\bibitem [\protect \citeauthoryear {%
 Babaeizadeh%
 , Frosio%
 , Tyree%
@@ -231,33 +205,34 @@ Mnih, V.%
 \PrintBackRefs{\CurrentBib}
 
 \bibitem [\protect \citeauthoryear {%
-Nazari%
-, Oroojlooy%
-, Snyder%
-\BCBL {}\ \BBA {} Tak{\'a}{\v{c}}%
+Schulman%
+, Wolski%
+, Dhariwal%
+, Radford%
+\BCBL {}\ \BBA {} Klimov%
 }{%
-Nazari%
+Schulman%
 \ \protect \BOthers {.}}{%
-{\protect \APACyear {2018}}%
+{\protect \APACyear {2017}}%
 }]{%
-2018_Nazari}
+2017_Schulman}
 \APACinsertmetastar {%
-2018_Nazari}%
+2017_Schulman}%
 \begin{APACrefauthors}%
-Nazari, M.%
-, Oroojlooy, A.%
-, Snyder, L\BPBI V.%
-\BCBL {}\ \BBA {} Tak{\'a}{\v{c}}, M.%
+Schulman, J.%
+, Wolski, F.%
+, Dhariwal, P.%
+, Radford, A.%
+\BCBL {}\ \BBA {} Klimov, O.%
 \end{APACrefauthors}%
 \unskip\
 \newblock
-\APACrefYearMonthDay{2018}{}{}.
+\APACrefYearMonthDay{2017}{}{}.
 \newblock
-{\BBOQ}\APACrefatitle {Deep Reinforcement Learning for Solving the Vehicle
-  Routing Problem} {Deep reinforcement learning for solving the vehicle routing
-  problem}.{\BBCQ}
+{\BBOQ}\APACrefatitle {Proximal policy optimization algorithms} {Proximal
+  policy optimization algorithms}.{\BBCQ}
 \newblock
-\APACjournalVolNumPages{arXiv preprint arXiv:1802.04240}{}{}{}.
+\APACjournalVolNumPages{arXiv preprint arXiv:1707.06347}{}{}{}.
 \PrintBackRefs{\CurrentBib}
 
 \bibitem [\protect \citeauthoryear {%
@@ -327,7 +302,7 @@ Sutskever%
 Sutskever%
 \ \protect \BOthers {.}}{%
 {\protect \APACyear {2014}}%
-{\protect \APACexlab {{\protect \BCnt {1}}}}}]{%
+}]{%
 2014_sut}
 \APACinsertmetastar {%
 2014_sut}%
@@ -338,35 +313,7 @@ Sutskever, I.%
 \end{APACrefauthors}%
 \unskip\
 \newblock
-\APACrefYearMonthDay{2014{\protect \BCnt {1}}}{}{}.
-\newblock
-{\BBOQ}\APACrefatitle {Sequence to sequence learning with neural networks}
-  {Sequence to sequence learning with neural networks}.{\BBCQ}
-\newblock
-\BIn{} \APACrefbtitle {Advances in neural information processing systems}
-  {Advances in neural information processing systems}\ (\BPGS\ 3104--3112).
-\PrintBackRefs{\CurrentBib}
-
-\bibitem [\protect \citeauthoryear {%
-Sutskever%
-, Vinyals%
-\BCBL {}\ \BBA {} Le%
-}{%
-Sutskever%
-\ \protect \BOthers {.}}{%
-{\protect \APACyear {2014}}%
-{\protect \APACexlab {{\protect \BCnt {2}}}}}]{%
-2014_Sutskever}
-\APACinsertmetastar {%
-2014_Sutskever}%
-\begin{APACrefauthors}%
-Sutskever, I.%
-, Vinyals, O.%
-\BCBL {}\ \BBA {} Le, Q\BPBI V.%
-\end{APACrefauthors}%
-\unskip\
-\newblock
-\APACrefYearMonthDay{2014{\protect \BCnt {2}}}{}{}.
+\APACrefYearMonthDay{2014}{}{}.
 \newblock
 {\BBOQ}\APACrefatitle {Sequence to sequence learning with neural networks}
   {Sequence to sequence learning with neural networks}.{\BBCQ}

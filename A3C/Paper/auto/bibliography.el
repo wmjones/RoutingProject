@@ -17,7 +17,6 @@
     "2016_ga3c"
     "2016_Mnih"
     "2016_Jaderberg"
-    "2016_Babaeizadeh"
     "2016_Silver"
     "2016_Bello"
     "2017_Silver"

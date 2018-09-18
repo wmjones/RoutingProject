@@ -69,18 +69,25 @@ The researcher can use SL to evaluate the value of a given NNA with the hope tha
 
 \section{Previous Work}
 
-The Traveling Salesman Problem (TSP) is a well studied combinatorial optimization problem and many exact and approximate methods have been developed to solve it. The problem was first formulated in 1930 and it is often used as a benchmark for many optimization methods. The current best exact dynamic programming algorithm for TSP has a complexity of $\mathcal{O}(2^nn^2)$ which makes it infeasible on problems larger than 40 points. While calculating the optimal route exactly is infeasible for most problems many approximate methods that rely on heuristic approaches have been able to perform well on much larger problem instances. Modern TSP solvers, which rely on handcrafted heuristics that determine how to navigate the space of feasible policies efficiently are able to solve TSP instances with thousands of points. \citep{2006_concorde} introduced the Concorde Algorithm which makes use of cutting plane algorithms is regarded as the current best TSP solver and ...
+The Traveling Salesman Problem (TSP) is a well studied combinatorial optimization problem and many exact and approximate methods have been developed to solve it. The problem was first formulated in 1930 and it is often used as a benchmark for many optimization methods. The current best exact dynamic programming algorithm for TSP has a complexity of $\mathcal{O}(2^nn^2)$ which makes it infeasible on problems larger than 40 points. While calculating the optimal route exactly is infeasible for most problems many approximate methods that rely on heuristic approaches have been able to perform well on problem instances with much more than 40 points. Modern TSP solvers, which rely on handcrafted heuristics that determine how to navigate the space of feasible policies efficiently are able to solve TSP instances with thousands of points. % \citep{2006_concorde} introduced the Concorde Algorithm which makes use of cutting plane algorithms is regarded as the current best TSP solver and ...
 
+Google's vehicle routing problem solver (OR-Tools) relies on a combination of local search algorithms and metaheuristics specifically crafted for the TSP. OR-Tools applies hand-engineered heuristics such as 2-opt to move from one potential solution to the next and then uses a metaheuristic such as guided local search, which escapes local minima by putting a penalty on solution features that are known to decrease performance \citep{2016_Bello}.
 
-\citep{2014_sut}
+While these methods are very successful in solving the TSP the search heuristics are often not successful for newly encountered problems. Since search algorithms have the same performance when averaged over all problems, each application must carefully select the appropriate heuristics for each problem. The difficulty of finding the best heuristics for each problem has lead to research into finding a more general approach.
 
-\citep{2014_Sutskever}
+Motivated by recent success in using recurrent neural networks (RNN) to train on problems with a sequence for input and output researchers have studied the application of RNN's to the TSP \citep{2014_sut}.
 
-\citep{2015_Vinyals}
+Major advancements in the field of neural machine translation has yielded neural network architectures that are able to translate a sentences which are encoded as sequences from one language to another \citep{2014_bah}.
 
-\citep{2016_Bello}
+Training a artificial neural network is most commonly done using label of the correct output however, for the TSP the use of labels would rely on another method that is close to optimal to determine the route that would then be used as a label. Reinforcement learning offers an alternative method to train the network which does not require labels and instead is trained by interacting with an environment and attempting to update parameters so that the reward obtained from the network's policy is maximized. Recent improvements in this field such as increasing performance by combining multiple methods \citep{2017_Hessel}, increasing the ability to use available computational resources \citep{2016_ga3c}, and improving sample efficiency \citep{2017_Schulman} has lead to researchers attempting to use reinforcement learning on new problems.
 
-\citep{2018_Nazari}
+Recent research on the use of reinforcement learning to solve the TSP began with \citep{2015_Vinyals} who introduced a network architecture called a Pointer Network. \citep{2016_Bello} further improved the performance of the architecture presented by \citep{2015_Vinyals} through several different small architecture changes and various post processing steps.
+
+% talk about how the architecture needs to be specific to the problem
+% talk about how there are too many possible architectures
+%
+% talk about how there are too many hyperparameters
+
 
 \section{Experimental Design}
 % cite bill cooks book for describing TSP
@@ -172,50 +179,32 @@ where $W_\alpha \in \mathbb{R}^{n \times n}$ is a weight matrix.
 
 \section{Results}
 
-I this section I analyze the main experimental results. First I show that when training using supervised learning that as the Neural Network Architecture becomes more specialized to the problem of interest there is an increase in performance per hour holding all else constant. Then I show that the quicker that the method trained with supervised learning lead to an increase in performance when trained using reinforcement learning and that many methods that could be trained using supervised learning were not able to be trained using reinforcement learning.
+I this section I analyze the main experimental results. First I show that when training using supervised learning that as the Neural Network Architecture becomes more specialized to the problem of interest there is an increase in performance per hour holding all else constant. Then I show that the quicker that the method trained with supervised learning leads to an increase in performance when trained using reinforcement learning and that many methods that could be trained using supervised learning were not able to be trained using reinforcement learning.
 
 \subsection{Supervised Learning}
 
 \subsubsection{Hyperparameter and Architecture Choice}
 
-In \hyperref[fig_sl_table]{Figure ?} the results from training the 35 different methods is presented. It shows that while the methods that used a unidirectional and bidirectional encoder were able to achieve near optimal results on the TSP 20 that they had very inconsistent performance when hyperparameters were slightly changed. This can be seen by comparing 200, 202, and 205 where the learning rate was changed and the performance was changed significantly.
+In \hyperref[fig_sl_table]{Figure \ref{fig_sl_table}} the results from training the 35 different methods is presented. It shows that while the methods that used a unidirectional and bidirectional encoder were able to achieve near optimal results on the TSP 20 that they had very inconsistent performance when hyperparameters were slightly changed. This can be seen by comparing 200, 202, and 205 where the learning rate was changed and the performance was changed significantly.
 
-\hyperref[fig_sl_table]{Figure ?} also shows that unidirectional encoder/decoder was only able to train using the Luong Attention mechanism, the bidirectional encoder/decoder was able to be trained with both attention mechanisms and the pointer network was only able to be trained using the Bahanadu attention mechanism. While the experimental evidence shows that the best run for the unidirectional and bidirectional encoder out performed the best run for the pointer network, the pointer network was more robust to changes in the hyper parameters and was more consistently able to achieve a performance within 10\% of the optimal route length.
+\hyperref[fig_sl_table]{Figure \ref{fig_sl_table}} also shows that unidirectional encoder/decoder was only able to train using the Luong Attention mechanism, the bidirectional encoder/decoder was able to be trained with both attention mechanisms and the pointer network was only able to be trained using the Bahanadu attention mechanism. While the experimental evidence shows that the best run for the unidirectional and bidirectional encoder out performed the best run for the pointer network, the pointer network was more robust to changes in the hyper parameters and was more consistently able to achieve a performance within 10\% of the optimal route length.
 
-\begin{figure}[H]
-  \centering
-  \caption{Plot of average rel len for 205 and 220}
-  \label{fig_sr_trainrate}
-\end{figure}
-
-In \hyperref[fig_sr_trainrate]{Figure ?} we can see that while the best run that used a unidirectional encoder/decoder architecture was able to achieve optimal results the average performance improvement per hour of training time is less the average for methods that used a pointer network architecture. This suggests that the pointer network is more consistently able to achieve performance improvements to paramaterized policy during the course of training than the encoder/decoder framework is.
+In \hyperref[fig_sl_table]{Figure \ref{fig_sl_table}} we can see that while the best run that used a unidirectional encoder/decoder architecture was able to achieve optimal results the average performance improvement per hour of training time is less the average for methods that used a pointer network architecture. This suggests that the pointer network is more consistently able to achieve performance improvements to paramaterized policy during the course of training than the encoder/decoder framework is.
 
 \subsubsection{In Sample Variance}
-\begin{figure}[H]
-  \centering
-  \includegraphics[scale=1]{sl_samp_samp_var_1_plot}
-  \caption{Multiple Training Runs of the Unidirectional Encoder/Decoder \\ Attention=Luong, LR=1e-3,  of cells=128}
-  \label{fig_samp_var}
-\end{figure}
 
-\begin{figure}[H]
-  \centering
-  \includegraphics[scale=1]{sl_samp_samp_var_2_plot}
-  \caption{Multiple Training Runs of the Bidirectional Encoder/Decoder \\ Attention=Luong, LR=1e-3,  of cells=128}
-  \label{fig_samp_var}
-\end{figure}
+The experiment also provided evidence of significant in sample variance. Identical runs of a method often yielded very different results when only the initial random seed was changed. This can be seen in  \hyperref[fig_sl_samp_var_1]{Figure \ref{fig_sl_samp_var_1}} where the relative length of multiple different runs of the best performing Unidirectional Encoder/Decoder architecture are plotted over the time that the method was trained. This plot shows that a method that can yield optimal performance can have difficulty reproducing the same performance when rerun. This in sample variance is also present in the best performing Bidirectional Encoder/Decoder architecture which can be seen in \hyperref[fig_sl_samp_var_2]{Figure \ref{fig_sl_samp_var_2}}. While the Unidirectional and Bidirectional Encoder/Decoder architectures exhibited a high degree of in sample variance the pointer network does not. \hyperref[fig_sl_samp_var_3]{Figure \ref{fig_sl_samp_var_3}} shows that the best performing Pointer network architecture is able to train consistently to a low relative length but did not have a run that performed as well as the best Unidirectional or Bidirectional Encoder/Decoder architectures.
 
-\begin{figure}[H]
-  \centering
-  \includegraphics[scale=1]{sl_samp_samp_var_3_plot}
-  \caption{Multiple Training Runs of the Pointer Network \\ Attention=Bah, LR=1e-3,  of cells=128}
-  \label{fig_samp_var}
-\end{figure}
-
-The experiment also provided evidence of significant in sample variance. Identical runs of a method often yielded very different results when only the initial random seed was changed. This can be seen in  \hyperref[samp_var]{Figure ?} where the relative length of 3 different runs of 205 are plotted over the time the method was trained. This plot shows that a method that can yield optimal performance can have difficulty reproducing the same performance when rerun. This is a major problem for reproducibility since even if the architecture and hyperparameters are the same different seeds for the RNG can cause significant differences in performance for the method. The in sample variance also is a problem for further research in this field since the evaluation of a newly proposed architecture can be noisy which makes tuning hyperparameters difficult. These problems could be avoided by performing many sample runs and reporting both the best case and average case for the method however, this can be extremely computationally intensive and many researchers choose to not report the frequency for which their architecture trained successfully.
+The in sample variance that can occur with these methods can be a major problem for reproducibility since even if the architecture and hyperparameters are the same different seeds for the RNG can cause significant differences in performance for the method. The in sample variance also is a problem for further research in this field since the evaluation of a newly proposed architecture can be noisy which makes tuning hyperparameters difficult. These problems could be avoided by performing many sample runs and reporting both the best case and average case for the method however, this can be extremely computationally intensive and many researchers choose to not report the frequency for which their architecture trained successfully.
 
 
 \subsection{Reinforcement Learning}
+
+In \hyperref[fig_rl_table]{Figure \ref{fig_rl_table}} the average relative length of the best run for each method when trained using reinforcement learning is presented. This table shows that the Unidirectional and Bidirectional Encoder/Decoder networks failed completely to train using reinforcement learning for any hyperparameter setting. \hyperref[fig_rl_samp_var_1]{Figure \ref{fig_rl_samp_var_1}} and \hyperref[fig_rl_samp_var_2]{Figure \ref{fig_rl_samp_var_2}} show that while these methods were able to be trained using supervised learning their performance when first initialized is that of a random policy and that there is no improvement throughout the course of training. This behavior is consistent for all the different hyperparameter choices for the Unidirectional and Bidirectional Encoder/Decoder architectures. These results show that evaluating the affect that different hyperparameters have on an architecture's performance is difficult to determine. This suggests that hyperparameter tuning is not possible when the neural network architecture is not specialized enough for the problem of interest so that reinforcement learning is possible. This can be a significant barrier for research in this area since when evaluating the performance of a newly proposed network architecture it is not possible to determine if poor performance is due to bad hyperparameter choices or if the issue is with the network architecture. Additionally, the high computational cost of each sample run can prohibit using the average of multiple runs to evaluate the effect that hyperparameters have on performance.
+
+\hyperref[fig_rl_samp_var_3]{Figure \ref{fig_rl_samp_var_3}} presents the relative length of multiple different runs for the best performing Pointer Network architecture. This figure shows that once the neural network architecture is specialized enough for a given problem and the hyperparameters are tuned reinforcement learning can be used to learn the optimal policy function in combinatorial optimization problems. These results replicate the findings of \citet{2016_Bello}.
+
+\hyperref[fig_rl_samp_var_4]{Figure \ref{fig_rl_samp_var_4}} shows that a training is not always monotonic and that the sample variance observed in the supervised learning is present again for reinforcement learning. This shows that a single training run of a neural network may not be representative of the potential performance and so multiple runs for each architecture are needed to evaluate performance.
 
 % The first NNA that I studied was a unidirectional encoder/decoder framework for NMT. This method was able to train using SL but did not work when the state was embeded, bahanadu attention was used, or when the policy was not decoded using a greedy decoder.
 
@@ -257,7 +246,7 @@ The experiment also provided evidence of significant in sample variance. Identic
 % not working with bah 44, 45, 57, 65, 94, 99
 % not working with luong 10, 11, 23, 24, 25, 26, 27, 36, 38, 39, 40, 42, 43, 54, 55, 66, 84, 85, 86, 87, 88, 89, 91, 92, 93, 100, 101, 102, 103, 104, 105, 106, 107, 108, 109, 110
 
-never worked ideas PPO, moving average, sequence cost, use time, direction 4 or 6, beam search, PCA
+% never worked ideas PPO, moving average, sequence cost, use time, direction 4 or 6, beam search, PCA
 
 \section{Conclusion}
 (Main Idea is to show how it is necessary to build a specific architecture to solve specific problems)
@@ -344,9 +333,64 @@ never worked ideas PPO, moving average, sequence cost, use time, direction 4 or 
     Pointer & Bah & 64 & 1e-3 &
    \end{tabular}
   \caption{Table of Reinforcement Learning Experimental Results}
-  \label{fig_sl_table}
+  \label{fig_rl_table}
 \end{figure}
 
+\begin{figure}[H]
+  \centering
+  \captionsetup{justification=centering}
+  \includegraphics[scale=.8]{sl_samp_samp_var_1_plot}
+  \caption{Multiple Training Runs of the Unidirectional Encoder/Decoder Using Supervised Learning\\ Attention=Luong, LR=1e-3,  of cells=128}
+  \label{fig_sl_samp_var_1}
+\end{figure}
+
+\begin{figure}[H]
+  \centering
+  \captionsetup{justification=centering}
+  \includegraphics[scale=.8]{sl_samp_samp_var_2_plot}
+  \caption{Multiple Training Runs of the Bidirectional Encoder/Decoder Using Supervised Learning\\ Attention=Luong, LR=1e-3,  of cells=128}
+  \label{fig_sl_samp_var_2}
+\end{figure}
+
+\begin{figure}[H]
+  \centering
+  \captionsetup{justification=centering}
+  \includegraphics[scale=.8]{sl_samp_samp_var_3_plot}
+  \caption{Multiple Training Runs of the Pointer Network Using Supervised Learning\\ Attention=Bah, LR=1e-3,  of cells=128}
+  \label{fig_sl_samp_var_3}
+\end{figure}
+
+\begin{figure}[H]
+  \centering
+  \captionsetup{justification=centering}
+  \includegraphics[scale=.8]{rl_samp_samp_var_1_plot}
+  \caption{Multiple Training Runs of the Unidirectional Encoder/Decoder Using Reinforcement Learning\\ Attention=Luong, LR=1e-3,  of cells=128}
+  \label{fig_rl_samp_var_1}
+\end{figure}
+
+\begin{figure}[H]
+  \centering
+  \captionsetup{justification=centering}
+  \includegraphics[scale=.8]{rl_samp_samp_var_2_plot}
+  \caption{Multiple Training Runs of the Bidirectional Encoder/Decoder Using Reinforcement Learning\\ Attention=Luong, LR=1e-3,  of cells=128}
+  \label{fig_rl_samp_var_2}
+\end{figure}
+
+\begin{figure}[H]
+  \centering
+  \captionsetup{justification=centering}
+  \includegraphics[scale=.8]{rl_samp_samp_var_3_plot}
+  \caption{Multiple Training Runs of the Pointer Network Using Reinforcement Learning\\ Attention=Luong, LR=1e-3,  of cells=128}
+  \label{fig_rl_samp_var_3}
+\end{figure}
+
+\begin{figure}[H]
+  \centering
+  \captionsetup{justification=centering}
+  \includegraphics[scale=.8]{rl_samp_samp_var_4_plot}
+  \caption{Multiple Training Runs of the Pointer Network Using Reinforcement Learning\\ Attention=Luong, LR=1e-4,  of cells=128}
+  \label{fig_rl_samp_var_4}
+\end{figure}
 
 \section*{Appendix 1: The Policy Gradient Method}
 

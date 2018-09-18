@@ -1446,34 +1446,44 @@ elif Config.MODEL_SETTING == 336:
     Config.LEARNING_RATE = 1e-2
     Config.RUN_TIME = 129600
 elif Config.MODEL_SETTING == 337:  # looking good
-    Config.DIRECTION = 10
+    Config.DIRECTION = 5
     Config.REINFORCE = 1
+    Config.STOCHASTIC = 1
+    Config.INVERSE_SOFTMAX_TEMP = 5.0
     # Config.LR_DECAY_OFF = 1
     Config.LEARNING_RATE = 1e-3
     Config.RUN_TIME = 216000
 elif Config.MODEL_SETTING == 338:  # looking good
-    Config.DIRECTION = 10
+    Config.DIRECTION = 5
     Config.REINFORCE = 1
+    Config.STOCHASTIC = 1
+    Config.INVERSE_SOFTMAX_TEMP = 5.0
     # Config.LR_DECAY_OFF = 1
     Config.LEARNING_RATE = 1e-4
     Config.RUN_TIME = 216000
 elif Config.MODEL_SETTING == 339:  # looking good
-    Config.DIRECTION = 10
+    Config.DIRECTION = 5
     Config.REINFORCE = 1
+    Config.STOCHASTIC = 1
+    Config.INVERSE_SOFTMAX_TEMP = 5.0
     # Config.LR_DECAY_OFF = 1
     Config.LEARNING_RATE = 1e-3
     Config.RNN_HIDDEN_DIM = 32
     Config.RUN_TIME = 216000
 elif Config.MODEL_SETTING == 340:  # looking good
-    Config.DIRECTION = 10
+    Config.DIRECTION = 5
     Config.REINFORCE = 1
+    Config.STOCHASTIC = 1
+    Config.INVERSE_SOFTMAX_TEMP = 5.0
     # Config.LR_DECAY_OFF = 1
     Config.LEARNING_RATE = 1e-3
     Config.RNN_HIDDEN_DIM = 64
     Config.RUN_TIME = 216000
 elif Config.MODEL_SETTING == 341:  # looking good
-    Config.DIRECTION = 10
+    Config.DIRECTION = 5
     Config.REINFORCE = 1
+    Config.STOCHASTIC = 1
+    Config.INVERSE_SOFTMAX_TEMP = 5.0
     # Config.LR_DECAY_OFF = 1
     Config.LEARNING_RATE = 1e-3
     Config.RNN_HIDDEN_DIM = 128
